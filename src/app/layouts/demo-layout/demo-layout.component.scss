@@ -20,10 +20,15 @@ a, button { transition: background var(--hermes-duration), border-color var(--he
 
 @media(min-width:1024px) {
   .administrative { display: grid; grid-template-columns: 244px minmax(0,1fr); }
-  .administrative .sidebar { display: flex; flex-direction: column; gap: 18px; padding: 28px 16px; border-right: 1px solid var(--hermes-border); background: var(--hermes-surface); overflow: auto; }
+  .administrative .sidebar { display: flex; flex-direction: column; gap: 18px; padding: 28px 16px; border-right: 1px solid #16345f; background: var(--hermes-navy); color: white; overflow: auto; }
+  .administrative .sidebar .brand { color: white; }
+  .administrative .sidebar .brand small { color: rgba(255,255,255,.64); }
+  .administrative .sidebar .brand img { background: white; }
   .sidebar nav { display: grid; gap: 3px; }
-  .sidebar nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; color: var(--hermes-text-secondary); text-decoration: none; border-radius: 4px; font-size: 14px; }
-  .sidebar nav a:hover { background: var(--hermes-blue-light); color: var(--hermes-blue); }
+  .sidebar nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; color: rgba(255,255,255,.74); text-decoration: none; border-radius: 4px; font-size: 14px; }
+  .sidebar nav a:hover { background: rgba(255,255,255,.08); color: white; }
+  .sidebar nav a.active { background: var(--hermes-amber); color: var(--hermes-navy) !important; }
+  .administrative .logout { border-color: rgba(255,255,255,.2); background: transparent; color: white; }
   .logout { margin-top: auto; }
   .administrative .compact { display: none; }
 }

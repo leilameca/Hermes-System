@@ -41,11 +41,13 @@
 
       <aside class="demo-access" aria-labelledby="demo-access-title">
         <h3 id="demo-access-title">Accesos de demostración</h3>
+        <p>Selecciona un perfil para autocompletar las credenciales.</p>
         <div class="profiles">
           @for (user of demoUsers; track user.email) {
             <button type="button" (click)="fill(user)">
-              <span>{{ user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : user.role === 'agente' ? 'Agente' : 'Cliente' }}</span>
+              <span class="profile-role">{{ user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : user.role === 'agente' ? 'Agente' : 'Cliente' }}</span>
               <strong>{{ user.name }}</strong>
+              <span class="profile-arrow" aria-hidden="true">→</span>
             </button>
           }
         </div>
