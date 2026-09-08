@@ -1,0 +1,60 @@
+// Los espacios parten de 4 px. Usar estas variables antes de agregar medidas nuevas.
+:root {
+  color-scheme: light;
+  --hermes-navy: #0B1736;
+  --hermes-blue: #163B82;
+  --hermes-canvas: #F7F6F2;
+  --hermes-surface: #FFFFFF;
+  --hermes-graphite: #20242C;
+  --hermes-muted: #6D7480;
+  --hermes-border: #E3E5E8;
+  --hermes-amber: #D08A32;
+  --hermes-critical: #B94343;
+
+  // El gris de apoyo mantiene contraste para texto pequeño sobre Canvas.
+  --hermes-text-secondary: #5B626E;
+  --hermes-control-border: #868D98;
+  --hermes-blue-light: #EDF1F7;
+  --hermes-critical-light: #FBF0F0;
+  --hermes-amber-light: #FBF3E8;
+  --hermes-space-1: 4px;
+  --hermes-space-2: 8px;
+  --hermes-space-3: 12px;
+  --hermes-space-4: 16px;
+  --hermes-space-5: 20px;
+  --hermes-space-6: 24px;
+  --hermes-space-8: 32px;
+  --hermes-space-10: 40px;
+  --hermes-space-12: 48px;
+  --hermes-space-16: 64px;
+  --hermes-space-20: 80px;
+  --hermes-font: Arial, Helvetica, sans-serif;
+  --hermes-text-xs: 0.75rem;
+  --hermes-text-sm: 0.875rem;
+  --hermes-text-base: 1rem;
+  --hermes-text-lg: 1.125rem;
+  --hermes-title-3: 1.25rem;
+  --hermes-title-2: clamp(1.375rem, 2vw, 1.75rem);
+  --hermes-title-1: clamp(2rem, 3.8vw, 3rem);
+  --hermes-display: clamp(2.5rem, 5vw, 4rem);
+  --hermes-radius: 3px;
+  --hermes-page-width: 1280px;
+  --hermes-control-height: 48px;
+  --hermes-duration: 160ms;
+
+  --ion-font-family: var(--hermes-font);
+  --ion-background-color: var(--hermes-canvas);
+  --ion-text-color: var(--hermes-graphite);
+  --ion-color-primary: #163B82;
+  --ion-color-primary-rgb: 22, 59, 130;
+  --ion-color-primary-contrast: #FFFFFF;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #133472;
+  --ion-color-primary-tint: #2D4F8F;
+  --ion-color-danger: #B94343;
+  --ion-color-danger-rgb: 185, 67, 67;
+  --ion-color-danger-contrast: #FFFFFF;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #A33B3B;
+  --ion-color-danger-tint: #C05656;
+}

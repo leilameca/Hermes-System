@@ -1,0 +1,140 @@
+﻿<main class="page stack">
+  <div><p class="eyebrow">{{ space.label }} / Hermes System</p><h1>{{ data()['label'] }}</h1></div>
+  @if (message) { <p class="notice" role="status">{{ message }}</p> }
+  @switch (kind()) {
+    @case ('home') {
+      <p class="intro">{{ space.description }}</p>
+      <section class="metrics" aria-label="Resumen operativo">
+        @if (role === 'super-admin') {
+          <article><strong>2</strong><span>Empresas activas</span></article><article><strong>2</strong><span>Suscripciones</span></article><article><strong>RD$ 6,800</strong><span>Ingreso mensual</span></article>
+        } @else if (role === 'cliente') {
+          <article><strong>{{ state.reservations().length }}</strong><span>Mis reservas</span></article><article><strong>1</strong><span>Contrato pendiente</span></article><article><strong>2</strong><span>Vehículos en catálogo</span></article>
+        } @else {
+          <article><strong>2</strong><span>Vehículos de la empresa</span></article><article><strong>1</strong><span>Entrega programada</span></article><article><strong>1</strong><span>Incidente en revisión</span></article>
+        }
+      </section>
+      @if (role === 'admin') {
+        <section class="workboard" aria-label="Pendientes de administracion">
+          @for (item of adminQueue; track item.label) {
+            <a class="work-item" [routerLink]="link(item.path)"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></a>
+          }
+        </section>
+      }
+      @if (role === 'super-admin') {
+        <section class="workboard" aria-label="Estado de plataforma">
+          @for (item of platformHealth; track item.label) {
+            <article class="work-item"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></article>
+          }
+        </section>
+      }
+      @if (role === 'cliente') { <section class="highlight"><p class="eyebrow">Tu próxima reserva · 12 octubre</p><h2>Toyota Corolla</h2><p>Recogida en Santo Domingo · 09:00 a. m.</p><a class="button" [routerLink]="link('reservas/reservation-001')">Ver mi reserva →</a></section> }
+      @if (role === 'agente') {
+        <section class="highlight"><p class="eyebrow">Próxima operación · 12 octubre</p><h2>Entrega a Laura Méndez</h2><p>Toyota Corolla · A987601 · 09:00 a. m.</p><a class="button" [routerLink]="link('entrega/vehicle-001')">Iniciar entrega →</a></section>
+        <section class="timeline" aria-label="Agenda del dia">
+          @for (task of todayTasks; track task.time) {
+            <a class="timeline-row" [routerLink]="link(task.path)"><span>{{ task.time }}</span><div><strong>{{ task.title }}</strong><p>{{ task.detail }}</p></div></a>
+          }
+        </section>
+      }
+      <h2>Explora tu espacio</h2><section class="cards">@for (area of space.areas.slice(1); track area.path) {
+        <a class="card area" [routerLink]="link(area.path)"><span aria-hidden="true">{{ area.icon }}</span><h3>{{ area.label }}</h3><span>Ver área →</span></a>
+      }</section>
+    }
+    @case ('explore') {
+      <p>Encuentra un vehículo para tu viaje. Tarifas en pesos dominicanos.</p>
+      <form class="panel stack" (ngSubmit)="searchVehicles()"><label>Marca o modelo<input name="search" [(ngModel)]="search" placeholder="Ej. Toyota Corolla"></label><label>Categoría<select name="category" [(ngModel)]="category"><option value="">Todas las categorías</option><option value="sedan">Sedán</option><option value="suv">SUV</option></select></label><button class="button" type="submit">Buscar vehículos →</button></form>
+      <h2>Vehículos destacados</h2><section class="cards">@for (v of vehicles; track v.id) {
+        <a class="card" [routerLink]="vehicleLink(v.id)"><img [src]="v.imageUrl" [alt]="v.brand + ' ' + v.model"><h3>{{ v.brand }} {{ v.model }}</h3><p>{{ v.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }} / día</p><span>Ver vehículo →</span></a>
+      }</section>
+    }
+    @case ('vehicles') {
+      @if (role === 'cliente') { <a class="text-link" [routerLink]="link('explorar')">← Modificar búsqueda</a> }
+      <p>{{ filteredVehicles().length }} vehículos {{ role === 'admin' ? 'en la flota de tu empresa' : 'encontrados' }}</p>
+      <section class="cards">@for (v of filteredVehicles(); track v.id) {
+        <a class="card" [routerLink]="vehicleLink(v.id)"><img [src]="v.imageUrl" [alt]="v.brand + ' ' + v.model"><span class="badge">{{ statuses[v.status].label }}</span><h2>{{ v.brand }} {{ v.model }}</h2><p>{{ v.year }} · {{ v.seats }} pasajeros · Automático</p><strong>{{ v.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }} / día</strong><span>Ver detalle →</span></a>
+      } @empty { <p class="notice">No hay vehículos que coincidan. Modifica la búsqueda para ver otras opciones.</p> }</section>
+    }
+    @case ('vehicle') {
+      @if (vehicle(); as v) {
+        <section class="detail"><img [src]="v.imageUrl" [alt]="v.brand + ' ' + v.model"><div class="panel stack"><span class="badge">{{ statuses[v.status].label }}</span><h2>{{ v.brand }} {{ v.model }}</h2><p class="text-secondary">{{ role === 'cliente' ? 'Listo para cotizar con deposito y cobertura incluida.' : 'Ficha operacional con estado, kilometraje y proximos movimientos.' }}</p><dl><dt>Placa</dt><dd>{{ v.plate }}</dd><dt>Año</dt><dd>{{ v.year }}</dd><dt>Capacidad</dt><dd>{{ v.seats }} pasajeros</dd><dt>Transmision</dt><dd>{{ v.transmission === 'automatic' ? 'Automatica' : 'Manual' }}</dd><dt>Kilometraje</dt><dd>{{ v.mileage }} km</dd><dt>Tarifa diaria</dt><dd>{{ v.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }}</dd></dl>
+        <section class="mini-grid" aria-label="Datos rapidos"><article><strong>Seguro</strong><span>Basico incluido</span></article><article><strong>Combustible</strong><span>Entrega 3/4</span></article><article><strong>Sucursal</strong><span>Santo Domingo</span></article></section>
+        @if (role === 'cliente') { <a class="button" [routerLink]="link('reservas/nueva')" [queryParams]="{vehiculo: v.id}">Nueva reserva →</a> }
+        @if (role === 'agente') { <a class="button" [routerLink]="link('entrega/' + v.id)">Iniciar entrega →</a><a class="button secondary" [routerLink]="link('devolucion/' + v.id)">Iniciar devolución →</a> }
+        @if (role === 'admin') { <a class="button" [routerLink]="link('mantenimiento')">Ver mantenimiento →</a><a [routerLink]="link('reservas')">Ver reservas</a> }
+        </div></section>
+      } @else { <p class="notice">Este vehículo no existe en el catálogo.</p><a [routerLink]="link(space.home)">Volver al inicio</a> }
+    }
+    @case ('new-reservation') {
+      @if (vehicle(); as v) {
+        <form class="panel stack" (ngSubmit)="createReservation()"><h2>{{ v.brand }} {{ v.model }}</h2><p>{{ v.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }} por día · Sucursal Santo Domingo</p><label>Recogida<input type="date" name="start" [(ngModel)]="startsAt" required></label><label>Devolución<input type="date" name="end" [(ngModel)]="endsAt" [min]="startsAt" required></label><p>{{ days }} días · Total: <strong>{{ days * v.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }}</strong></p><p class="notice">Solicitud preparada. No se realiza ningún cobro.</p><button class="button" type="submit">Crear reserva →</button></form>
+      } @else { <p class="notice">Vehículo no encontrado.</p><a [routerLink]="link('explorar')">Elegir vehículo</a> }
+    }
+    @case ('reservas') {
+      @if (role === 'cliente') { <a class="button" [routerLink]="link('explorar')">Explorar vehículos →</a> }
+      @for (r of state.reservations(); track r.id) { <article class="panel stack"><div class="row"><h2>{{ vehicleName(r.vehicleId) }}</h2><span class="badge">{{ r.status === 'confirmed' ? 'Confirmada' : 'Pendiente' }}</span></div><p>{{ r.id }} · {{ r.startsAt | date:'dd MMM yyyy' }} — {{ r.endsAt | date:'dd MMM yyyy' }}</p><strong>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</strong>
+        @if (role === 'cliente') { <a [routerLink]="link('reservas/' + r.id)">Ver detalle de reserva →</a> } @else { <a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo →</a><a [routerLink]="link('operaciones')">Ver operaciones →</a> }
+      </article> }
+    }
+    @case ('reservation') {
+      @if (reservation(); as r) { <section class="panel stack"><span class="badge">{{ r.status === 'confirmed' ? 'Confirmada' : 'Pendiente' }}</span><h2>{{ vehicleName(r.vehicleId) }}</h2><p>{{ r.id }}</p><dl><dt>Recogida</dt><dd>{{ r.startsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Devolución</dt><dd>{{ r.endsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Sucursal</dt><dd>Santo Domingo</dd><dt>Total</dt><dd>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</dd></dl><div class="actions"><a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo</a><a [routerLink]="link('contratos')">Contrato</a><a [routerLink]="link('facturas')">Factura</a><a [routerLink]="link('incidentes')">Reportar incidente</a></div></section> }
+      @else { <p class="notice">La reserva no existe o ya no está disponible.</p><a [routerLink]="link('reservas')">Volver a mis reservas</a> }
+    }
+    @case ('operaciones') {
+      <p>Agenda de operaciones · Sucursal Santo Domingo</p>
+      @for (operation of ['entrega', 'devolucion']; track operation) { <article class="panel stack"><span class="badge">Programada</span><h2>{{ operation === 'entrega' ? 'Entrega · 12 octubre, 09:00' : 'Devolución · 15 octubre, 09:00' }}</h2><p>Laura Méndez · Toyota Corolla · A987601</p>
+        @if (role === 'agente') { <a class="button" [routerLink]="link(operation + '/vehicle-001')">Abrir {{ operation === 'entrega' ? 'entrega' : 'devolución' }} →</a> } @else { <a [routerLink]="vehicleLink('vehicle-001')">Ver vehículo →</a><a [routerLink]="link('inspecciones')">Ver inspecciones →</a> }
+      </article> }
+    }
+    @case ('scan') {
+      <form class="panel stack" (ngSubmit)="scan()"><div class="scan" aria-hidden="true">▣</div><h2>Identificar vehículo</h2><p>Ingresa una placa del catálogo para abrir su ficha operacional.</p><label>Placa o código<input name="code" [(ngModel)]="scanCode" required></label><button class="button" type="submit">Escanear vehículo →</button><p class="text-secondary">Placas disponibles: A987601 · G987602</p></form>
+    }
+    @case ('handover') {  }
+    @case ('return') {  }
+    @case ('checklist') {  }
+    @case ('evidence') {  }
+    @case ('signature') {  }
+    @case ('empresas') {
+      <section class="cards">@for (t of companies; track t.id) { <a class="card" [routerLink]="link('empresas/' + t.id)"><span class="badge">Activa</span><h2>{{ t.name }}</h2><p>{{ t.city }}</p><span>Ver empresa →</span></a> }</section>
+    }
+    @case ('company') {
+      @if (company(); as t) { <section class="panel stack"><span class="badge">Activa</span><h2>{{ t.name }}</h2><dl><dt>Ciudad</dt><dd>{{ t.city }}</dd><dt>Correo</dt><dd>{{ t.email }}</dd><dt>Teléfono</dt><dd>{{ t.phone }}</dd><dt>Plan</dt><dd>{{ t.id === 'tenant-001' ? 'Profesional' : 'Esencial' }}</dd></dl><a [routerLink]="link('suscripciones')">Ver suscripciones →</a><a [routerLink]="link('planes')">Ver planes →</a></section> } @else { <p class="notice">Empresa no encontrada.</p><a [routerLink]="link('empresas')">Ver empresas</a> }
+    }
+    @case ('planes') {
+      <p>Planes y precios de referencia para la plataforma.</p><section class="cards">@for (plan of plans; track plan.name) { <article class="card"><h2>{{ plan.name }}</h2><strong>{{ plan.price | currency:'DOP':'RD$ ':'1.0-0' }} / mes</strong><p>{{ plan.detail }}</p><ul class="plain-list">@for (feature of plan.features; track feature) { <li>{{ feature }}</li> }</ul><button class="button secondary" type="button" (click)="simulateAction('Cambio al plan ' + plan.name)">Seleccionar plan</button><a [routerLink]="link('suscripciones')">Ver suscripciones →</a></article> }</section>
+    }
+    @case ('clientes') {
+      <section class="filters"><input aria-label="Buscar cliente" placeholder="Buscar por nombre, correo o ciudad"><button class="button secondary" type="button" (click)="simulateAction('Filtro de clientes')">Filtrar</button></section>
+      @for (customer of customers; track customer.id) { <article class="panel stack"><div class="row"><h2>{{ customer.name }}</h2><span class="badge">Activo</span></div><p>{{ customer.email }} · {{ customer.phone }}</p><p>{{ customer.city }} · 2 reservas historicas · sin balance vencido</p><div class="actions"><a [routerLink]="link('reservas')">Ver reservas</a><button class="button secondary" type="button" (click)="simulateAction('Nota de cliente')">Agregar nota</button></div></article> }
+    }
+    @case ('perfil') {
+      <form class="panel stack" (ngSubmit)="message = 'Cambios guardados temporalmente.'"><h2>{{ role === 'cliente' ? 'Laura Méndez' : 'Carlos · Agente de operaciones' }}</h2><p>Perfil · {{ space.label }}</p><label>Nombre<input name="name" [ngModel]="role === 'cliente' ? driver : 'Carlos'" required></label><label>Correo<input name="email" type="email" [ngModel]="role === 'cliente' ? email : 'carlos@example.com'" required></label><label>Teléfono<input name="phone" type="tel" [(ngModel)]="phone" required></label><button class="button" type="submit">Guardar cambios</button>@if (role === 'cliente') { <div class="actions"><a [routerLink]="link('contratos')">Contratos</a><a [routerLink]="link('facturas')">Facturas</a></div> }</form>
+    }
+    @case ('configuracion') {
+      <form class="panel stack" (ngSubmit)="message = 'Configuración simulada. No se guardan cambios al salir.'"><h2>Datos de la empresa</h2><label>Nombre comercial<input name="company" [(ngModel)]="companyName" required></label><label>Moneda<select name="currency" ngModel="DOP"><option value="DOP">Peso dominicano (DOP)</option></select></label><label class="check"><input type="checkbox" name="notifications" [(ngModel)]="notifications"> Mostrar avisos operativos</label><button class="button" type="submit">Simular guardar configuración</button></form>
+    }
+    @case ('plataforma') {
+      <section class="panel stack"><h2>Hermes System · Plataforma SaaS</h2><span class="badge">Operativa</span><dl><dt>Empresas activas</dt><dd>2</dd><dt>Planes disponibles</dt><dd>3</dd><dt>Version de maqueta</dt><dd>Etapa 4</dd><dt>Integraciones</dt><dd>Preparadas para etapas posteriores</dd></dl><div class="actions"><a [routerLink]="link('empresas')">Gestionar empresas →</a><a [routerLink]="link('planes')">Consultar planes →</a><button class="button secondary" type="button" (click)="simulateAction('Revision de salud de plataforma')">Revisar salud</button></div></section>
+    }
+    @case ('not-found') { <p class="notice">Esta dirección no corresponde a una pantalla del espacio {{ space.label }}.</p><a class="button" [routerLink]="link(space.home)">Volver al inicio →</a> }
+    @default {
+      @if (kind() === 'incidentes') {
+        @for (item of state.incidents(); track item.title) { <article class="panel stack"><div class="row"><h2>{{ item.title }}</h2><span class="badge">{{ item.status }}</span></div><p>{{ item.detail }}</p><button class="button secondary" type="button" (click)="simulateAction('Seguimiento de incidente')">Registrar seguimiento</button></article> }
+        <form class="panel stack" (ngSubmit)="reportIncident()"><h2>Reportar un incidente</h2><label>Descripción<textarea name="incident" [(ngModel)]="incident" required minlength="5" rows="3" placeholder="Ej. Golpe leve en defensa trasera al devolver"></textarea></label><button type="submit" class="button">Guardar incidente</button></form>
+      } @else {
+        @for (record of records(); track record.title) { <article class="panel stack record"><div class="row"><div><h2>{{ record.title }}</h2><p class="text-secondary">{{ record.meta }}</p></div><span class="badge">{{ state.payments()[record.title] || record.status }}</span></div><p>{{ record.detail }}</p>@if (record.amount) { <strong>{{ record.amount | currency:'DOP':'RD$ ':'1.0-0' }}</strong> }<div class="actions"><button class="button secondary" type="button" (click)="kind() === 'facturacion' ? state.updatePayment(record.title, 'Pagada') : simulateAction(record.action || 'Accion')">{{ record.action || 'Abrir' }}</button>@if (kind() === 'inspecciones') { <button class="button" type="button" (click)="saveInspection()">Guardar inspeccion</button> }</div><details><summary>Ver informacion</summary><p>{{ record.detail }}</p><p>Registro asociado a Quisqueya Rent-a-Car.</p></details></article> }
+      }
+    }
+  }
+  @if (['handover', 'return', 'checklist', 'evidence', 'signature'].includes(kind())) {
+    @if (vehicle(); as v) {
+      <p>{{ v.brand }} {{ v.model }} · {{ v.plate }} · Flujo de {{ flow() === 'entrega' ? 'entrega' : 'devolución' }}</p>
+      <nav class="steps" aria-label="Pasos de la operación"><a [routerLink]="flowLink()">1. Resumen</a><a [routerLink]="flowLink('/checklist')">2. Checklist</a><a [routerLink]="flowLink('/evidencias')">3. Evidencias</a><a [routerLink]="flowLink('/firma')">4. Firma</a></nav>
+      @if (kind() === 'handover' || kind() === 'return') { <section class="panel stack"><h2>Resumen de la operación</h2><p>Vehículo: {{ v.brand }} {{ v.model }} · Sucursal Santo Domingo</p><p>Kilometraje inicial: {{ v.mileage }} km · Combustible: ¾</p><p>Revisa el vehículo, documenta su estado y completa la firma.</p><a class="button" [routerLink]="flowLink('/checklist')">Comenzar checklist →</a></section> }
+      @if (kind() === 'checklist') { <section class="panel stack"><h2>Verificación del vehículo</h2>@for (label of checks; track label; let i = $index) { <label class="check"><input type="checkbox" [ngModel]="step().checks[i]" (ngModelChange)="check(i, $event)">{{ label }}</label> }<p>{{ allChecked() ? 'Revisión completada.' : 'Marca los cuatro puntos para completar la revisión.' }}</p><a class="button" [routerLink]="flowLink('/evidencias')">Continuar a evidencias →</a></section> }
+      @if (kind() === 'evidence') { <section class="panel stack"><h2>Registro visual</h2><p>Adjunta evidencia visual del estado del vehículo.</p>@if (step().evidence) { <img class="evidence" [src]="v.imageUrl" [alt]="'Evidencia: ' + v.model"><p class="badge">1 evidencia añadida</p> }<button type="button" class="button secondary" (click)="state.update(stepKey(), { evidence: !step().evidence })">{{ step().evidence ? 'Quitar evidencia' : 'Añadir evidencia' }}</button><a class="button" [routerLink]="flowLink('/firma')">Continuar a firma →</a></section> }
+      @if (kind() === 'signature') { <form class="panel stack" (ngSubmit)="sign()"><h2>Conformidad</h2><p>Firma mediante nombre escrito para cerrar la operación.</p><p>Checklist: {{ allChecked() ? 'Completo' : 'Pendiente' }} · Evidencias: {{ step().evidence ? '1 añadida' : 'Pendientes' }}</p><label>Nombre del firmante<input name="signature" [(ngModel)]="signatureName" required></label><label class="check"><input type="checkbox" name="consent" [(ngModel)]="consent" required> Confirmo que la información revisada es correcta.</label><button class="button" type="submit" [disabled]="!allChecked() || !step().evidence || !consent || !signatureName.trim()">Firmar operación</button>@if (step().signed) { <p class="notice" role="status">Operación completada.</p> }<a [routerLink]="link('operaciones')">Volver a operaciones →</a></form> }
+    } @else { <p class="notice">Vehículo no encontrado para esta operación.</p><a [routerLink]="link('operaciones')">Volver a operaciones</a> }
+  }
+  <footer class="page-footer"><span>Hermes System · {{ space.label }}</span><span>Quisqueya Rent-a-Car</span></footer>
+</main>
+

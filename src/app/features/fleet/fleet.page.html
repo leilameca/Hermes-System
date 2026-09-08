@@ -1,0 +1,45 @@
+<ion-content>
+  <main class="hermes-page">
+    <hermes-page-header eyebrow="Catálogo / Vehículos" title="La flota."
+      description="Cada vehículo tiene su lugar. Consulta sus características, tarifa y estado en una sola vista." />
+
+    <section class="filters" aria-label="Filtros de vehículos">
+      <ion-input class="hermes-input" fill="outline" label="Buscar vehículo" labelPlacement="stacked"
+        placeholder="Marca, modelo o placa" [ngModel]="query()" (ionInput)="query.set($event.detail.value ?? '')"
+        type="search" [clearInput]="true" />
+      <ion-select class="hermes-select" fill="outline" label="Estado" labelPlacement="stacked"
+        interface="popover" [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <ion-select-option value="all">Todos los estados</ion-select-option>
+        @for (option of statusOptions; track option.value) {
+          <ion-select-option [value]="option.value">{{ option.label }}</ion-select-option>
+        }
+      </ion-select>
+      <ion-select class="hermes-select" fill="outline" label="Empresa" labelPlacement="stacked"
+        interface="popover" [ngModel]="tenantId()" (ngModelChange)="tenantId.set($event)">
+        <ion-select-option value="all">Todas las empresas</ion-select-option>
+        @for (tenant of tenants(); track tenant.id) {
+          <ion-select-option [value]="tenant.id">{{ tenant.name }}</ion-select-option>
+        }
+      </ion-select>
+    </section>
+
+    <div class="results-heading">
+      <p role="status" aria-live="polite"><strong>{{ filteredVehicles().length }}</strong> de {{ vehicles().length }} vehículos</p>
+      <ion-button fill="clear" (click)="resetFilters()" [disabled]="!query() && status() === 'all' && tenantId() === 'all'">Limpiar filtros</ion-button>
+    </div>
+
+    @if (filteredVehicles().length) {
+      <section class="vehicle-grid" aria-label="Resultados del catálogo">
+        @for (vehicle of filteredVehicles(); track vehicle.id) { <hermes-vehicle-card [vehicle]="vehicle" /> }
+      </section>
+    } @else {
+      <section class="empty-state">
+        <p class="eyebrow">Sin coincidencias</p>
+        <h2>No encontramos ese vehículo.</h2>
+        <p>Prueba con otra marca, modelo o placa, o quita los filtros para ver la flota completa.</p>
+        <ion-button fill="outline" (click)="resetFilters()">Ver toda la flota</ion-button>
+      </section>
+    }
+    <footer class="page-footer"><span>Tarifas diarias en pesos dominicanos</span><span>Catálogo e imágenes de demostración</span></footer>
+  </main>
+</ion-content>

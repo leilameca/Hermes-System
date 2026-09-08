@@ -1,0 +1,25 @@
+:host { display: flex; flex-direction: column; height: 100%; background: var(--hermes-navy); color: white; padding: var(--hermes-space-10) var(--hermes-space-5) var(--hermes-space-8); }
+.brand { display: flex; align-items: center; gap: var(--hermes-space-3); margin: 0 var(--hermes-space-2); color: white; text-decoration: none; font-size: 19px; font-weight: 600; letter-spacing: 0.15em; }
+.brand-mark { display: flex; justify-content: center; align-items: center; width: 38px; height: 42px; border: 1px solid #74809A; font-family: Georgia, serif; font-size: 29px; font-weight: 400; letter-spacing: -0.08em; }
+.brand small { display: block; margin-top: 3px; color: #B5BDCC; font-size: 9px; font-weight: 400; letter-spacing: 0.35em; }
+.nav-label { margin: var(--hermes-space-16) var(--hermes-space-3) var(--hermes-space-4); color: #AAB4C6; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; }
+nav { display: grid; gap: var(--hermes-space-2); }
+nav a { display: flex; align-items: center; gap: var(--hermes-space-3); min-height: 48px; padding: var(--hermes-space-3); border-left: 2px solid transparent; color: #C5CDD9; font-size: var(--hermes-text-sm); text-decoration: none; transition: background var(--hermes-duration), color var(--hermes-duration); }
+nav a:hover { background: #142442; color: white; }
+nav a.active { background: #1B2B49; border-left-color: var(--hermes-amber); color: white; }
+ion-icon { font-size: 19px; flex-shrink: 0; }
+.nav-number { margin-left: auto; font-size: 10px; color: #B0BACA; }
+.nav-footer { margin-top: auto; padding: var(--hermes-space-12) var(--hermes-space-3) 0; }
+.footer-line { display: block; width: 24px; height: 2px; margin-bottom: var(--hermes-space-5); background: var(--hermes-amber); }
+.nav-footer p { font-size: 22px; line-height: 1.3; letter-spacing: -0.02em; }
+.nav-footer small { display: block; margin-top: var(--hermes-space-5); color: #AAB4C6; font-size: 9px; letter-spacing: 0.12em; }
+a:focus-visible { outline-color: white; }
+@media (max-width: 767px) {
+  :host { padding: 0 max(var(--hermes-space-3), env(safe-area-inset-right)) env(safe-area-inset-bottom) max(var(--hermes-space-3), env(safe-area-inset-left)); background: var(--hermes-surface); border-top: 1px solid var(--hermes-border); }
+  .brand, .nav-label, .nav-footer, .nav-number { display: none; }
+  nav { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--hermes-space-2); }
+  nav a { flex-direction: column; justify-content: center; gap: 5px; min-height: 68px; padding: var(--hermes-space-2) 0; border-left: 0; border-top: 2px solid transparent; color: var(--hermes-text-secondary); font-size: 10px; }
+  nav a.active { color: var(--hermes-blue); border-top-color: var(--hermes-blue); background: transparent; }
+  nav a:hover { background: var(--hermes-canvas); color: var(--hermes-blue); }
+  a:focus-visible { outline-color: var(--hermes-blue); outline-offset: -4px; }
+}

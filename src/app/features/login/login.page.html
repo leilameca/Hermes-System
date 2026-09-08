@@ -1,0 +1,46 @@
+<ion-content>
+  <main class="login-shell">
+    <section class="login-panel" aria-labelledby="login-title">
+      <div class="brand-block">
+        <img class="logo" src="assets/brand/hermes-logo.jpeg" alt="Hermes System">
+        <p class="brand">Hermes <span>System</span></p>
+        <h1 id="login-title">Acceso operativo</h1>
+        <p>Gestiona reservas, flota y entregas con una vista clara de cada movimiento.</p>
+      </div>
+
+      <form class="login-form" (ngSubmit)="submit()">
+        @if (error) { <p class="error" role="alert">{{ error }}</p> }
+
+        <label>Usuario o correo
+          <input name="email" type="email" [(ngModel)]="email" autocomplete="username" required>
+        </label>
+
+        <label>Contraseña
+          <span class="password-row">
+            <input name="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" autocomplete="current-password" required>
+            <button type="button" class="icon-button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </span>
+        </label>
+
+        <button class="primary" type="submit" [disabled]="loading || !email || !password">
+          {{ loading ? 'Validando...' : 'Iniciar sesión' }}
+        </button>
+      </form>
+    </section>
+
+    <aside class="demo-access" aria-labelledby="demo-access-title">
+      <p class="eyebrow">Accesos de demostración</p>
+      <h2 id="demo-access-title">Perfiles disponibles</h2>
+      <div class="profiles">
+        @for (user of demoUsers; track user.email) {
+          <button type="button" (click)="fill(user)">
+            <strong>{{ user.name }}</strong>
+            <span>{{ user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : user.role === 'agente' ? 'Agente' : 'Cliente' }}</span>
+          </button>
+        }
+      </div>
+    </aside>
+  </main>
+</ion-content>

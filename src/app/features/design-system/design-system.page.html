@@ -1,0 +1,97 @@
+<ion-content>
+  <main class="hermes-page">
+    <hermes-page-header eyebrow="Referencia / Identidad" title="El lenguaje de Hermes."
+      description="Una base común para diseñar con claridad. Tipografía, espacio y fotografía al servicio de cada decisión." />
+    <p class="guide-intro">Sobrio en la forma.<br><span>Preciso en la información.</span></p>
+
+    <section class="guide-section" aria-labelledby="color-title">
+      <div class="guide-heading"><p class="eyebrow">01 / Color</p><h2 id="color-title">Una paleta con intención.</h2><p>El navy construye la identidad; el azul señala las acciones. Ámbar y rojo se reservan para lo que necesita atención.</p></div>
+      <div class="palette">
+        @for (color of palette; track color.token) {
+          <div class="swatch">
+            <div class="swatch-color" [style.background]="'var(' + color.token + ')'" aria-hidden="true"></div>
+            <h3>{{ color.name }}</h3><p class="hex">{{ color.hex }}</p><p>{{ color.usage }}</p>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="guide-section" aria-labelledby="type-title">
+      <div class="guide-heading"><p class="eyebrow">02 / Tipografía</p><h2 id="type-title">Jerarquía antes que decoración.</h2><p>Una familia sans serif del sistema, lectura cómoda y cifras fáciles de comparar. Sin fuentes externas.</p></div>
+      <div class="type-list">
+        <div><span class="type-label">Título principal / 32–48 px</span><p class="type-h1">Cada recorrido cuenta.</p></div>
+        <div><span class="type-label">Título de sección / 22–28 px</span><p class="type-h2">La flota, en orden.</p></div>
+        <div><span class="type-label">Título de ficha / 20 px</span><p class="type-h3">Toyota Corolla</p></div>
+        <div><span class="type-label">Texto / 16 px</span><p>Información clara para acompañar cada operación.</p></div>
+        <div><span class="type-label">Texto secundario / 14 px</span><p class="text-secondary text-small">Automático · 5 pasajeros · Santo Domingo</p></div>
+        <div><span class="type-label">Etiqueta / 12 px</span><p class="eyebrow">Información del vehículo</p></div>
+      </div>
+    </section>
+
+    <section class="guide-section" aria-labelledby="space-title">
+      <div class="guide-heading"><p class="eyebrow">03 / Espacio</p><h2 id="space-title">Dejar respirar la información.</h2><p>Escala basada en 4 px. Espacios cortos para relacionar elementos y amplios para separar secciones.</p></div>
+      <div class="spacing-list">
+        @for (space of spacing; track space) {
+          <div><span class="spacing-bar" [style.width.px]="space" aria-hidden="true"></span><span>{{ space }} px</span></div>
+        }
+      </div>
+    </section>
+
+    <section class="guide-section" aria-labelledby="controls-title">
+      <div class="guide-heading"><p class="eyebrow">04 / Controles</p><h2 id="controls-title">Acciones que se entienden.</h2><p>Botones de 48 px, bordes discretos y etiquetas permanentes. Prueba un nombre corto para ver el estado de error.</p></div>
+      <form class="example-form" [formGroup]="form" (ngSubmit)="validateExample()" (input)="saved.set(false)" novalidate>
+        <ion-input class="hermes-input" fill="outline" label="Nombre de la vista" labelPlacement="stacked"
+          placeholder="Ej. Flota de Santo Domingo" formControlName="name"
+          helperText="Escribe al menos 3 caracteres." errorText="Introduce un nombre de al menos 3 caracteres." [maxlength]="60" />
+        <ion-textarea class="hermes-input" fill="outline" label="Nota (opcional)" labelPlacement="stacked"
+          placeholder="Una descripción breve" formControlName="note" [autoGrow]="true" [rows]="3" [maxlength]="160" />
+        <ion-input class="hermes-input" fill="outline" label="Referencia no editable" labelPlacement="stacked"
+          value="HERMES / DEMO" [disabled]="true" />
+        <div class="actions">
+          <ion-button type="submit">Validar ejemplo</ion-button>
+          <ion-button type="button" fill="outline" (click)="resetExample()">Restablecer</ion-button>
+          <ion-button type="button" fill="clear" [disabled]="true">No disponible</ion-button>
+        </div>
+        @if (submitted() && form.invalid) {
+          <p class="notice notice--critical" role="alert">Revisa el nombre de la vista antes de continuar.</p>
+        }
+        @if (saved()) {
+          <p class="notice" role="status">Ejemplo validado. No se envió ni se guardó información fuera de esta pantalla.</p>
+        }
+      </form>
+    </section>
+
+    <section class="guide-section" aria-labelledby="states-title">
+      <div class="guide-heading"><p class="eyebrow">05 / Estados</p><h2 id="states-title">El texto lleva el mensaje.</h2><p>Una línea acompaña la etiqueta. Los estados siguen siendo comprensibles sin depender del color.</p></div>
+      <div class="stack">
+        <div class="state-list">
+          <hermes-status label="Disponible" tone="info" />
+          <hermes-status label="Reservado" tone="warning" />
+          <hermes-status label="En alquiler" tone="neutral" />
+          <hermes-status label="En mantenimiento" tone="critical" />
+        </div>
+        <p class="notice notice--warning">Ejemplo de aviso: revisa el nivel de combustible antes de la entrega.</p>
+        <p class="notice notice--critical">Ejemplo de incidencia: falta completar una inspección.</p>
+      </div>
+    </section>
+
+    <section class="guide-section guide-section--wide" aria-labelledby="metrics-title">
+      <div class="guide-heading"><p class="eyebrow">06 / Métricas</p><h2 id="metrics-title">Los números, sin ruido.</h2><p>Valor, contexto y una línea de separación. Sin tarjetas ni indicadores de crecimiento inventados.</p></div>
+      <div class="metric-grid">
+        <hermes-metric label="Vehículos" [value]="vehicles().length" description="Catálogo de demostración" />
+        <hermes-metric label="Moneda" value="DOP" description="Pesos dominicanos" />
+        <hermes-metric label="Fuente" value="Local" description="Información de ejemplo" />
+        <hermes-metric label="Referencia" value="01" description="Ejemplo de cifra tabular" />
+      </div>
+    </section>
+
+    <section class="guide-section" aria-labelledby="photo-title">
+      <div class="guide-heading"><p class="eyebrow">07 / Fotografía</p><h2 id="photo-title">El vehículo, protagonista.</h2><p>Encuadre 3:2, luz natural y tratamiento uniforme. Cada ficha conserva sus datos si la imagen no está disponible.</p></div>
+      <div class="photo-examples">
+        @if (vehicles()[0]; as vehicle) { <hermes-vehicle-card [vehicle]="vehicle" /> }
+        <div><hermes-vehicle-image alt="Ejemplo de ficha sin fotografía" /><p class="example-caption">Alternativa cuando falta una imagen.</p></div>
+      </div>
+    </section>
+    <footer class="page-footer"><span>Hermes / Sistema visual 01</span><span>Una identidad compartida para cada pantalla</span></footer>
+  </main>
+</ion-content>

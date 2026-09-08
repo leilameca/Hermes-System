@@ -1,0 +1,61 @@
+* { box-sizing: border-box; }
+body { font-size: var(--hermes-text-base); line-height: 1.5; }
+h1, h2, h3, p, figure, dl { margin: 0; }
+h1, h2, h3 { color: var(--hermes-navy); font-weight: 600; text-wrap: balance; }
+h1 { font-size: var(--hermes-title-1); line-height: 1.12; letter-spacing: -0.045em; }
+h2 { font-size: var(--hermes-title-2); line-height: 1.25; letter-spacing: -0.025em; }
+h3 { font-size: var(--hermes-title-3); line-height: 1.35; letter-spacing: -0.02em; }
+a { color: var(--hermes-blue); text-underline-offset: 5px; }
+button, input, select, textarea { font: inherit; }
+img { display: block; max-width: 100%; }
+::selection { background: var(--hermes-blue); color: white; }
+:focus-visible { outline: 2px solid var(--hermes-blue); outline-offset: 4px; }
+
+.hermes-page, .page {
+  max-width: var(--hermes-page-width);
+  margin: 0 auto;
+  padding: var(--hermes-space-10) var(--hermes-space-12) var(--hermes-space-12);
+}
+.eyebrow {
+  color: var(--hermes-text-secondary);
+  font-size: var(--hermes-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.text-secondary { color: var(--hermes-text-secondary); }
+.text-small { font-size: var(--hermes-text-sm); }
+.text-display { font-size: var(--hermes-display); line-height: 1.1; letter-spacing: -0.045em; color: var(--hermes-navy); }
+.numeral { font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: var(--hermes-space-6); }
+.actions { display: flex; align-items: center; gap: var(--hermes-space-3); flex-wrap: wrap; }
+.hermes-section { margin-top: var(--hermes-space-12); }
+.section-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--hermes-space-5); margin-bottom: var(--hermes-space-6); }
+.section-heading p { margin-top: var(--hermes-space-2); }
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--hermes-border); }
+.metric-grid > * + * { border-left: 1px solid var(--hermes-border); }
+.vehicle-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--hermes-space-6); }
+.text-link { display: inline-flex; align-items: center; gap: var(--hermes-space-3); min-height: 44px; font-size: var(--hermes-text-sm); font-weight: 600; text-decoration: none; }
+.text-link:hover { text-decoration: underline; }
+.page-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--hermes-space-3); margin-top: var(--hermes-space-12); padding-top: var(--hermes-space-5); border-top: 1px solid var(--hermes-border); color: var(--hermes-text-secondary); font-size: var(--hermes-text-xs); }
+.empty-state { padding: var(--hermes-space-12) var(--hermes-space-6); border-block: 1px solid var(--hermes-border); text-align: center; }
+.empty-state p { max-width: 480px; margin: var(--hermes-space-3) auto var(--hermes-space-5); color: var(--hermes-text-secondary); }
+.notice { padding: var(--hermes-space-4) var(--hermes-space-5); border-left: 2px solid var(--hermes-blue); background: var(--hermes-blue-light); font-size: var(--hermes-text-sm); }
+.notice--critical { border-color: var(--hermes-critical); background: var(--hermes-critical-light); }
+.notice--warning { border-color: var(--hermes-amber); background: var(--hermes-amber-light); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 1199px) {
+  .hermes-page, .page { padding-inline: var(--hermes-space-8); }
+  .vehicle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .hermes-page, .page { padding: var(--hermes-space-8) var(--hermes-space-5); }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric-grid > :nth-child(3) { border-left: 0; }
+  .metric-grid > :nth-child(n + 3) { border-top: 1px solid var(--hermes-border); }
+  .section-heading { align-items: flex-start; flex-wrap: wrap; gap: var(--hermes-space-3); }
+}
+@media (max-width: 539px) { .vehicle-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Hermes System",
+  "type": "angular-standalone",
+  "integrations": { "capacitor": {} }
+}

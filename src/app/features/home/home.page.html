@@ -1,0 +1,86 @@
+<ion-content>
+  <main class="hermes-page">
+    <hermes-page-header eyebrow="Operación / Vista general" title="Todo en perspectiva."
+      description="Tu flota, tus empresas y los próximos recorridos. Una visión clara de la operación.">
+      <ion-button routerLink="/flota">Explorar flota <span class="button-arrow" aria-hidden="true">↗</span></ion-button>
+    </hermes-page-header>
+
+    @if (data$ | async; as data) {
+      <section class="metric-grid" aria-label="Resumen de la flota de demostración">
+        <hermes-metric label="Vehículos en flota" [value]="data.vehicles.length" description="Todas las empresas" />
+        <hermes-metric label="Disponibles" [value]="data.available" description="Listos para un nuevo recorrido" />
+        <hermes-metric label="Reservados" [value]="data.reserved" description="Con una reserva de ejemplo" />
+        <hermes-metric label="Reservas" [value]="data.reservations.length" description="Registros de demostración" />
+      </section>
+
+      @if (data.featured; as featured) {
+        <section class="featured hermes-section" aria-labelledby="featured-title">
+          <div class="featured-copy">
+            <p class="eyebrow">En la flota / {{ featured.year }}</p>
+            <div>
+              <hermes-status label="Disponible" tone="info" />
+              <h2 id="featured-title">{{ featured.brand }}<br>{{ featured.model }}.</h2>
+              <p class="featured-description">Espacio para el próximo recorrido.</p>
+            </div>
+            <div>
+              <p class="featured-price"><strong>{{ featured.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }}</strong> / día</p>
+              <a class="text-link" [routerLink]="['/flota', featured.id]">Conocer el vehículo <span aria-hidden="true">↗</span></a>
+            </div>
+          </div>
+          <figure>
+            <hermes-vehicle-image [src]="featured.imageUrl" [alt]="featured.imageAlt || featured.model" [priority]="true" />
+            <figcaption>01 / {{ featured.brand }} {{ featured.model }} <span>Imagen ilustrativa</span></figcaption>
+          </figure>
+        </section>
+      }
+
+      <section class="hermes-section" aria-labelledby="fleet-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">El catálogo</p><h2 id="fleet-title">Una flota, distintos recorridos.</h2></div>
+          <a class="text-link" routerLink="/flota">Ver todos los vehículos <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="vehicle-grid">
+          @for (vehicle of data.vehicles; track vehicle.id) {
+            <hermes-vehicle-card [vehicle]="vehicle" />
+          }
+        </div>
+      </section>
+
+      <div class="operations-grid">
+        <section class="hermes-section" aria-labelledby="reservations-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">Agenda de ejemplo</p><h2 id="reservations-title">Próximas reservas</h2></div>
+            <span class="record-count">{{ data.reservations.length }} registros</span>
+          </div>
+          <ul class="reservation-list">
+            @for (reservation of data.reservationRows; track reservation.id) {
+              <li>
+                <div class="reservation-date">
+                  <strong>{{ reservation.startsAt | date:'dd':'-0400' }}</strong>
+                  <span>{{ reservation.startsAt | date:'MMM':'-0400' }}</span>
+                </div>
+                <div class="reservation-info">
+                  <h3>{{ reservation.vehicle?.brand }} {{ reservation.vehicle?.model }}</h3>
+                  <p>{{ reservation.tenant?.name }}</p>
+                  <p>{{ reservation.startsAt | date:'dd/MM':'-0400' }} — {{ reservation.endsAt | date:'dd/MM/yyyy':'-0400' }}</p>
+                </div>
+                <hermes-status [label]="reservation.status === 'confirmed' ? 'Confirmada' : 'Pendiente'"
+                  [tone]="reservation.status === 'confirmed' ? 'info' : 'warning'" />
+              </li>
+            }
+          </ul>
+        </section>
+        <section class="hermes-section" aria-labelledby="companies-title">
+          <div class="section-heading"><div><p class="eyebrow">Nuestra red</p><h2 id="companies-title">Empresas</h2></div></div>
+          <ul class="company-list">
+            @for (tenant of data.tenants; track tenant.id) {
+              <li><h3>{{ tenant.name }}</h3><p>{{ tenant.city }}</p></li>
+            }
+          </ul>
+          <p class="network-summary">{{ data.tenants.length }} empresas · {{ data.users.length }} usuarios de demostración</p>
+        </section>
+      </div>
+    }
+    <footer class="page-footer"><span>Hermes System / Gestión automotriz</span><span>Datos e imágenes de demostración</span></footer>
+  </main>
+</ion-content>
