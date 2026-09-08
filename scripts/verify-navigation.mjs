@@ -98,12 +98,15 @@ try {
   await open('/');
   await until("location.pathname === '/login'");
   assert.equal(await evaluate("document.body.innerText.includes('Demo Role Selector')"), false);
-  assert.equal(await evaluate("document.querySelector('h1')?.textContent.trim() === 'Acceso operativo'"), true);
+  assert.equal(await evaluate("document.querySelector('h1')?.textContent.trim() === 'Movilidad bajo control.'"), true);
+  assert.equal(await evaluate("document.querySelector('#login-title')?.textContent.trim() === 'Bienvenido a Hermes'"), true);
   assert.equal(await evaluate("document.querySelector('.logo')?.naturalWidth > 0"), true);
   assert.equal(await evaluate("document.querySelectorAll('.profiles button').length"), 4);
+  await evaluate("document.querySelector('.profiles button').click()");
+  assert.equal(await evaluate("document.querySelector('input[name=email]').value === 'cliente@hermes.demo' && document.querySelector('input[name=password]').value === 'Hermes123' && document.querySelector('input[name=password]').type === 'text' && location.pathname === '/login'"), true);
 
   await evaluate("(() => { const form = document.querySelector('form'); form.querySelector('input[name=email]').value='nadie@hermes.demo'; form.querySelector('input[name=email]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('input[name=password]').value='mal'; form.querySelector('input[name=password]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('button[type=submit]').click(); })()");
-  await until("document.body.innerText.includes('Usuario o contraseña incorrectos.')");
+  await until("document.body.innerText.includes('El correo o la contraseña no coinciden.')");
 
   for (const [email, home] of users) {
     await evaluate("localStorage.clear()");
@@ -136,10 +139,11 @@ try {
   }
 
   assert.deepEqual(errors, []);
-  console.log(`OK: login inicial, 4 usuarios, logout, ${count} rutas, navegacion movil por rol y sin selector principal.`);
+  console.log(`OK: login inicial, 4 usuarios, logout, ${count} rutas, navegación móvil por rol y sin selector principal.`);
 } finally {
-  chrome.kill();
-  server.close();
-  await new Promise(done => setTimeout(done, 500));
+  chrome.kill('SIGKILL');
+  chrome.stdio[3]?.destroy();
+  chrome.stdio[4]?.destroy();
+  await new Promise(done => server.close(done));
   if (profile.startsWith(resolve(tmpdir()) + sep) && profile.includes('hermes-navigation-')) await rm(profile, { recursive: true, force: true, maxRetries: 5 }).catch(() => {});
 }

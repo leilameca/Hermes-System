@@ -24,6 +24,7 @@ export class LoginPage {
   fill(user: DemoUser) {
     this.email = user.email;
     this.password = user.password;
+    this.showPassword = true;
     this.error = '';
   }
 
@@ -35,7 +36,7 @@ export class LoginPage {
     const user = this.auth.login(this.email, this.password);
     this.loading = false;
     if (!user) {
-      this.error = 'Usuario o contraseña incorrectos.';
+      this.error = 'El correo o la contraseña no coinciden.';
       return;
     }
     await this.router.navigateByUrl(user.home);
