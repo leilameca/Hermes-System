@@ -32,7 +32,8 @@ td, th, p, a, dd, dt, span, strong, small { overflow-wrap: anywhere; }
 .text-small { font-size: var(--hermes-text-sm); }
 .text-display { font-size: var(--hermes-display); line-height: 1.1; letter-spacing: -0.045em; color: var(--hermes-navy); }
 .numeral { font-variant-numeric: tabular-nums; }
-.stack { display: grid; gap: var(--hermes-space-6); }
+.stack { display: grid; gap: var(--hermes-space-6); min-width: 0; }
+.stack > * { min-width: 0; }
 .actions { display: flex; align-items: center; gap: var(--hermes-space-3); flex-wrap: wrap; }
 .hermes-section { margin-top: var(--hermes-space-12); }
 .section-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--hermes-space-5); margin-bottom: var(--hermes-space-6); }

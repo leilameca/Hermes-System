@@ -26,6 +26,7 @@ import { DEMO_RECORDS } from './demo-records';
 import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
 import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
+import { AuthDemoService } from '../../core/services/auth-demo.service';
 
 @Injectable({ providedIn: 'root' })
 export class DemoState {
@@ -60,7 +61,9 @@ export class DemoScreenPage {
   private readonly router = inject(Router);
   private readonly network = inject(NetworkService);
   private readonly offline = inject(OfflineService);
+  private readonly auth = inject(AuthDemoService);
   readonly state = inject(DemoState);
+  readonly currentUser = this.auth.user;
   readonly data = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
   readonly params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
@@ -214,6 +217,10 @@ export class DemoScreenPage {
   }
   simulateAction(label: string) {
     this.message = label + ' actualizado en esta sesion.';
+  }
+  logout() {
+    this.auth.logout();
+    void this.router.navigateByUrl('/login');
   }
   async saveInspection() {
     this.state.saveInspection(this.stepKey());

@@ -57,6 +57,7 @@ export const ADMIN_ROUTES = space('admin', [
   screen('flota', 'Flota', 'vehicles'),
   screen('flota/:id', 'Detalle del vehiculo', 'vehicle'),
   ...DEMO_SPACES.admin.areas.slice(2).map(area => screen(area.path, area.label)),
+  screen('perfil', 'Mi perfil'),
 ]);
 
 export const SUPER_ADMIN_ROUTES = space('super-admin', [
@@ -66,4 +67,5 @@ export const SUPER_ADMIN_ROUTES = space('super-admin', [
   screen('planes', 'Planes'),
   screen('suscripciones', 'Suscripciones'),
   screen('plataforma', 'Plataforma'),
+  screen('perfil', 'Mi perfil'),
 ]);

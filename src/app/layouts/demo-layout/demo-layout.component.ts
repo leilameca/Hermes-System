@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IonIcon } from '@ionic/angular/standalone';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { chevronBackOutline, logOutOutline, menuOutline, notificationsOutline } from 'ionicons/icons';
+import { chevronBackOutline, chevronDownOutline, logOutOutline, menuOutline, notificationsOutline } from 'ionicons/icons';
 import { AuthDemoService } from '../../core/services/auth-demo.service';
 import { DEMO_SPACES, DemoArea, DemoRole } from '../../features/demo/demo-navigation';
 import { OfflineBannerComponent } from '../../shared/components/offline-banner/offline-banner.component';
@@ -22,23 +22,35 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
         }
       </nav>
       <div class="sidebar-account">
-        <strong>{{ user()?.name }}</strong>
-        <span>{{ space.label }}</span>
-        <button class="logout" type="button" (click)="logout()"><ion-icon [icon]="logOutIcon" aria-hidden="true" />Cerrar sesión</button>
+        <a class="sidebar-profile" [routerLink]="['/', role, profilePath()]">
+          <span class="avatar" aria-hidden="true">{{ user()?.name?.slice(0, 1) }}</span>
+          <span><strong>{{ user()?.name }}</strong><small>{{ space.label }}</small></span>
+        </a>
       </div>
     </aside>
 
     <div class="workspace">
       <header>
-        <button type="button" class="back" (click)="back()" aria-label="Volver a la pantalla anterior"><ion-icon [icon]="backIcon" aria-hidden="true" />Atrás</button>
+        <button type="button" class="back" (click)="back()" aria-label="Volver a la pantalla anterior"><ion-icon [icon]="backIcon" aria-hidden="true" /><span>Atrás</span></button>
         <a class="brand compact" [routerLink]="homeLink()"><img src="assets/brand/hermes-logo.jpeg" alt="">Hermes</a>
         <span class="context">{{ pageContext() }}</span>
         <div class="account">
           <button class="notification" type="button" aria-label="Notificaciones"><ion-icon [icon]="notificationIcon" aria-hidden="true" /></button>
           <hermes-theme-toggle />
-          <a [routerLink]="['/', role, profilePath()]">{{ user()?.name }}</a>
-          <span class="avatar" aria-hidden="true">{{ user()?.name?.slice(0, 1) }}</span>
-          <button type="button" (click)="logout()">Cerrar sesión</button>
+          <div class="user-menu">
+            <button class="account-trigger" type="button" (click)="accountOpen.set(!accountOpen())" [attr.aria-expanded]="accountOpen()" aria-label="Abrir perfil de usuario">
+              <span class="user-name">{{ user()?.name }}</span>
+              <span class="avatar" aria-hidden="true">{{ user()?.name?.slice(0, 1) }}</span>
+              <ion-icon class="account-chevron" [icon]="chevronIcon" aria-hidden="true" />
+            </button>
+            @if (accountOpen()) {
+              <div class="account-panel">
+                <div class="account-identity"><strong>{{ user()?.name }}</strong><span>{{ user()?.email }}</span><small>{{ space.label }}</small></div>
+                <a [routerLink]="['/', role, profilePath()]" (click)="accountOpen.set(false)">Ver perfil</a>
+                <button class="menu-logout" type="button" (click)="logout()"><ion-icon [icon]="logOutIcon" aria-hidden="true" />Cerrar sesión</button>
+              </div>
+            }
+          </div>
         </div>
       </header>
       <hermes-offline-banner />
@@ -73,10 +85,12 @@ export class DemoLayoutComponent {
   readonly user = this.auth.user;
   readonly administrative = this.role === 'admin' || this.role === 'super-admin';
   readonly menuOpen = signal(false);
+  readonly accountOpen = signal(false);
   readonly backIcon = chevronBackOutline;
   readonly logOutIcon = logOutOutline;
   readonly menuIcon = menuOutline;
   readonly notificationIcon = notificationsOutline;
+  readonly chevronIcon = chevronDownOutline;
   private previous: string[] = [];
   private current = this.router.url;
 
@@ -90,13 +104,14 @@ export class DemoLayoutComponent {
         if (this.current !== event.urlAfterRedirects) this.previous.push(this.current);
         this.current = event.urlAfterRedirects;
         this.menuOpen.set(false);
+        this.accountOpen.set(false);
         document.querySelector('.content')?.scrollTo(0, 0);
       }
     });
   }
 
   homeLink() { return ['/', this.role, this.space.home]; }
-  profilePath() { return this.role === 'admin' || this.role === 'super-admin' ? this.space.home : 'perfil'; }
+  profilePath() { return 'perfil'; }
   pageContext() { return this.labelFor(this.space.areas.find(area => this.router.url.includes('/' + area.path)) ?? this.space.areas[0]); }
   labelFor(area: DemoArea) { return area.label.replace('Dashboard SaaS', 'Resumen').replace('Dashboard', 'Resumen'); }
 

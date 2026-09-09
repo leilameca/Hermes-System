@@ -8,12 +8,12 @@
 .brand { display: inline-flex; align-items: center; gap: 8px; color: var(--hermes-navy); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; }
 .brand img { width: 32px; height: 32px; object-fit: contain; border-radius: 3px; mix-blend-mode: multiply; }
 .brand small { color: var(--hermes-blue); font-size: 10px; }
-header { display: grid; grid-template-columns: auto auto minmax(0,1fr) auto; align-items: center; gap: 18px; min-height: 64px; padding: 10px 28px; background: rgba(255,255,255,.92); border-bottom: 1px solid var(--hermes-border); }
+header { position: relative; z-index: 20; display: grid; grid-template-columns: auto auto minmax(0,1fr) auto; align-items: center; gap: 18px; min-height: 64px; padding: 10px 28px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--hermes-border); }
 button { min-height: 42px; border: 0; background: transparent; color: var(--hermes-blue); cursor: pointer; }
 .back { display: inline-flex; align-items: center; gap: 5px; padding: 0; font-weight: 650; }
 .back ion-icon { font-size: 18px; }
 .context { color: var(--hermes-text-secondary); font-size: 14px; }
-.account { display: grid; grid-template-columns: auto auto auto auto auto; align-items: center; gap: 10px; min-width: 0; font-size: 13px; }
+.account { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 0; font-size: 13px; }
 .account a { color: var(--hermes-navy); font-weight: 700; text-decoration: none; }
 .account span { color: var(--hermes-text-secondary); }
 .account button, .logout { border: 1px solid var(--hermes-border); padding: 0 12px; background: white; border-radius: 4px; }
@@ -22,10 +22,23 @@ button { min-height: 42px; border: 0; background: transparent; color: var(--herm
 .account .notification { width: 36px; min-height: 36px; padding: 0; border-radius: 50%; color: var(--hermes-navy); }
 .account .notification ion-icon { font-size: 18px; }
 .avatar { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--hermes-navy); border-radius: 50%; background: #fff8ee; color: var(--hermes-navy) !important; font-weight: 800; }
-.sidebar-account { margin-top: auto; display: grid; gap: 5px; padding: 14px 12px; border-top: 1px solid rgba(255,255,255,.15); color: white; }
-.sidebar-account strong { font-size: 13px; }
-.sidebar-account span { color: rgba(255,255,255,.62); font-size: 12px; }
-.sidebar-account .logout { justify-self: start; margin-top: 8px; }
+.user-menu { position: relative; }
+.account-trigger { display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 3px 6px 3px 10px !important; border-color: transparent !important; background: transparent !important; color: var(--hermes-navy) !important; font-weight: 700; }
+.account-trigger:hover, .account-trigger[aria-expanded=true] { border-color: var(--hermes-border) !important; background: var(--hermes-canvas) !important; }
+.account-chevron { font-size: 14px; transition: transform var(--hermes-duration); }
+.account-trigger[aria-expanded=true] .account-chevron { transform: rotate(180deg); }
+.account-panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; display: grid; gap: 4px; width: min(272px,calc(100vw - 24px)); padding: 10px; border: 1px solid var(--hermes-border); border-radius: 6px; background: var(--hermes-surface); box-shadow: 0 18px 42px rgba(11,23,54,.16); }
+.account-identity { display: grid; gap: 2px; padding: 8px 10px 12px; border-bottom: 1px solid var(--hermes-border); }
+.account-identity span, .account-identity small { color: var(--hermes-text-secondary); font-size: 12px; }
+.account-panel > a, .account-panel > button { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 9px 10px; border: 0; border-radius: 4px; background: transparent; text-align: left; }
+.account-panel > a:hover, .account-panel > button:hover { background: var(--hermes-blue-light); }
+.account-panel .menu-logout { color: var(--hermes-critical); }
+.sidebar-account { margin-top: auto; padding: 14px 6px 0; border-top: 1px solid rgba(255,255,255,.15); }
+.sidebar-profile { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 10px; align-items: center; padding: 7px; border-radius: 5px; color: white; text-decoration: none; }
+.sidebar-profile:hover { background: rgba(255,255,255,.08); }
+.sidebar-profile > span:last-child { display: grid; min-width: 0; }
+.sidebar-profile strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-profile small { color: rgba(255,255,255,.62); font-size: 11px; }
 .content { flex: 1; min-width: 0; min-height: 0; overflow: auto; }
 .bottom, .more-menu { display: none; }
 a, button { transition: background var(--hermes-duration), border-color var(--hermes-duration), color var(--hermes-duration); }
@@ -53,9 +66,8 @@ a, button { transition: background var(--hermes-duration), border-color var(--he
 }
 
 @media(max-width:1023px) {
-  header { grid-template-columns: auto auto 1fr; padding: 8px 16px; gap: 12px; }
+  header { grid-template-columns: auto auto minmax(0,1fr) auto; padding: 8px 16px; gap: 12px; }
   .context { display: none; }
-  .account { grid-column: 1 / -1; grid-template-columns: auto auto 1fr auto auto; padding-top: 4px; border-top: 1px solid var(--hermes-border); }
   .sidebar-account { display: none; }
   .bottom { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: rgba(255,255,255,.96); border-top: 1px solid var(--hermes-border); padding: 4px 4px max(4px,env(safe-area-inset-bottom)); box-shadow: 0 -12px 28px rgba(11,23,54,.08); }
   .bottom a, .bottom button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 58px; padding: 6px 2px; color: var(--hermes-text-secondary); text-align: center; text-decoration: none; border-radius: 4px; font-size: 11px; }
@@ -67,17 +79,17 @@ a, button { transition: background var(--hermes-duration), border-color var(--he
 }
 
 @media(max-width:520px) {
-  header { grid-template-columns: auto 1fr; }
-  .compact { justify-self: end; }
-  .account { grid-template-columns: auto auto 1fr auto; }
-  .account a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .account button:last-child { display: none; }
+  header { grid-template-columns: auto minmax(0,1fr) auto; min-height: 58px; padding-inline: 12px; }
+  .compact { display: none; }
+  .back span, .user-name, .account-chevron { display: none; }
+  .back { width: 38px; justify-content: center; }
+  .account { gap: 4px; }
+  .account-trigger { padding: 3px !important; }
   .bottom a, .bottom button { font-size: 10px; }
 }
 
 @media(max-width:380px) {
-  header { padding-inline: 12px; }
-  .brand.compact { max-width: 92px; overflow: hidden; }
+  .account .notification { display: none; }
   .bottom ion-icon { font-size: 19px; }
   .bottom a, .bottom button { min-height: 54px; }
 }
