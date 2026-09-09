@@ -37,13 +37,17 @@ import { VehicleImageComponent } from '../vehicle-image/vehicle-image.component'
     .vehicle-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--hermes-space-2); }
     .vehicle-meta .eyebrow { font-size: 10px; }
     h3 { margin-top: var(--hermes-space-3); }
-    h3 a { color: var(--hermes-navy); text-decoration: none; }
+    h3 a { color: var(--hermes-heading); text-decoration: none; }
     h3 a:hover { text-decoration: underline; }
     .specs { margin-top: var(--hermes-space-2); color: var(--hermes-text-secondary); font-size: var(--hermes-text-xs); line-height: 1.7; }
     .vehicle-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--hermes-space-2); padding-top: var(--hermes-space-3); }
     .vehicle-footer p { white-space: nowrap; }
-    .vehicle-footer strong { font-size: var(--hermes-text-lg); color: var(--hermes-navy); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .vehicle-footer strong { font-size: var(--hermes-text-lg); color: var(--hermes-heading); font-weight: 600; font-variant-numeric: tabular-nums; }
     .vehicle-footer p span { font-size: var(--hermes-text-xs); color: var(--hermes-text-secondary); }
+    @media(max-width:420px) {
+      .vehicle-footer { align-items: flex-start; flex-direction: column; }
+      .vehicle-footer .text-link { min-height: 36px; }
+    }
   `],
 })
 export class VehicleCardComponent {

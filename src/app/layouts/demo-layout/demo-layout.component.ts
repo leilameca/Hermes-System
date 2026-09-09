@@ -1,36 +1,47 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { IonIcon } from '@ionic/angular/standalone';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { chevronBackOutline, logOutOutline, menuOutline, notificationsOutline } from 'ionicons/icons';
 import { AuthDemoService } from '../../core/services/auth-demo.service';
 import { DEMO_SPACES, DemoArea, DemoRole } from '../../features/demo/demo-navigation';
+import { OfflineBannerComponent } from '../../shared/components/offline-banner/offline-banner.component';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-demo-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, OfflineBannerComponent, ThemeToggleComponent],
   template: `<div class="shell" [class.administrative]="administrative" [class.agent]="role === 'agente'">
     <aside class="sidebar">
       <a class="brand" [routerLink]="homeLink()"><img src="assets/brand/hermes-logo.jpeg" alt="">Hermes <small>System</small></a>
       <p class="eyebrow">{{ space.label }}</p>
       <nav aria-label="Navegación principal">
         @for (area of desktopAreas(); track area.path) {
-          <a [routerLink]="['/', role, area.path]" routerLinkActive="active" ariaCurrentWhenActive="page"><span aria-hidden="true">{{ area.icon }}</span>{{ labelFor(area) }}</a>
+          <a [routerLink]="['/', role, area.path]" routerLinkActive="active" ariaCurrentWhenActive="page"><ion-icon [icon]="area.icon" aria-hidden="true" />{{ labelFor(area) }}</a>
         }
       </nav>
-      <button class="logout" type="button" (click)="logout()">Cerrar sesión</button>
+      <div class="sidebar-account">
+        <strong>{{ user()?.name }}</strong>
+        <span>{{ space.label }}</span>
+        <button class="logout" type="button" (click)="logout()"><ion-icon [icon]="logOutIcon" aria-hidden="true" />Cerrar sesión</button>
+      </div>
     </aside>
 
     <div class="workspace">
       <header>
-        <button type="button" class="back" (click)="back()" aria-label="Volver a la pantalla anterior">← Atrás</button>
+        <button type="button" class="back" (click)="back()" aria-label="Volver a la pantalla anterior"><ion-icon [icon]="backIcon" aria-hidden="true" />Atrás</button>
         <a class="brand compact" [routerLink]="homeLink()"><img src="assets/brand/hermes-logo.jpeg" alt="">Hermes</a>
         <span class="context">{{ pageContext() }}</span>
         <div class="account">
+          <button class="notification" type="button" aria-label="Notificaciones"><ion-icon [icon]="notificationIcon" aria-hidden="true" /></button>
+          <hermes-theme-toggle />
           <a [routerLink]="['/', role, profilePath()]">{{ user()?.name }}</a>
-          <span>{{ space.label }}</span>
+          <span class="avatar" aria-hidden="true">{{ user()?.name?.slice(0, 1) }}</span>
           <button type="button" (click)="logout()">Cerrar sesión</button>
         </div>
       </header>
+      <hermes-offline-banner />
 
       @if (menuOpen()) {
         <nav class="more-menu" aria-label="Más secciones">
@@ -44,10 +55,10 @@ import { DEMO_SPACES, DemoArea, DemoRole } from '../../features/demo/demo-naviga
 
       <nav class="bottom" aria-label="Navegación móvil">
         @for (area of mobileAreas(); track area.path) {
-          <a [routerLink]="['/', role, area.path]" routerLinkActive="active" ariaCurrentWhenActive="page" [class.scan-tab]="role === 'agente' && area.path === 'escanear'"><span aria-hidden="true">{{ area.icon }}</span>{{ labelFor(area) }}</a>
+          <a [routerLink]="['/', role, area.path]" routerLinkActive="active" ariaCurrentWhenActive="page" [class.scan-tab]="role === 'agente' && area.path === 'escanear'"><ion-icon [icon]="area.icon" aria-hidden="true" />{{ labelFor(area) }}</a>
         }
         @if (moreAreas().length) {
-          <button type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()"><span aria-hidden="true">☰</span>Más</button>
+          <button type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()"><ion-icon [icon]="menuIcon" aria-hidden="true" />Más</button>
         }
       </nav>
     </div>
@@ -62,6 +73,10 @@ export class DemoLayoutComponent {
   readonly user = this.auth.user;
   readonly administrative = this.role === 'admin' || this.role === 'super-admin';
   readonly menuOpen = signal(false);
+  readonly backIcon = chevronBackOutline;
+  readonly logOutIcon = logOutOutline;
+  readonly menuIcon = menuOutline;
+  readonly notificationIcon = notificationsOutline;
   private previous: string[] = [];
   private current = this.router.url;
 

@@ -10,12 +10,12 @@ export interface DemoRecord {
 // Contenido exclusivamente local para recorrer las areas principales de la maqueta.
 export const DEMO_RECORDS: Record<string, DemoRecord[]> = {
   contratos: [
-    { title: 'CTR-2026-001 · Laura Mendez', detail: 'Toyota Corolla · 12-15 oct. 2026 · deposito cubierto y conductor principal validado.', status: 'Pendiente de firma', meta: 'Reserva reservation-001', action: 'Ver contrato mock' },
+    { title: 'CTR-2026-001 · Laura Mendez', detail: 'Toyota Corolla · 12-15 oct. 2026 · deposito cubierto y conductor principal validado.', status: 'Pendiente de firma', meta: 'Reserva reservation-001', action: 'Ver contrato' },
     { title: 'CTR-2026-004 · Cuenta corporativa', detail: 'Hyundai Tucson · tarifa convenio · cobertura extendida incluida.', status: 'Borrador', meta: 'Sucursal Santo Domingo', action: 'Revisar borrador' },
   ],
   facturas: [
-    { title: 'FAC-2026-001', detail: 'Alquiler Toyota Corolla · 3 dias · vencimiento 12 oct. 2026.', status: 'Pendiente', meta: 'Metodo: tarjeta terminada en 4421', amount: 8400, action: 'Ver factura mock' },
-    { title: 'FAC-2026-000', detail: 'Cargo administrativo de demostracion sin cobro real.', status: 'Pagada', meta: 'Referencia academica', amount: 1250, action: 'Abrir recibo' },
+    { title: 'FAC-2026-001', detail: 'Alquiler Toyota Corolla · 3 dias · vencimiento 12 oct. 2026.', status: 'Pendiente', meta: 'Metodo: tarjeta terminada en 4421', amount: 8400, action: 'Ver factura' },
+    { title: 'FAC-2026-000', detail: 'Cargo administrativo de referencia sin cobro real.', status: 'Pagada', meta: 'Referencia interna', amount: 1250, action: 'Abrir recibo' },
   ],
   facturacion: [
     { title: 'FAC-2026-001 · Laura Mendez', detail: 'Alquiler · vencimiento 12 oct. 2026 · sin pasarela conectada.', status: 'Pendiente', meta: 'Reserva reservation-001', amount: 8400, action: 'Marcar como pagada' },

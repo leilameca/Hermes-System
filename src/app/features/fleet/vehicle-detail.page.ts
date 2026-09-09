@@ -25,7 +25,7 @@ import { VEHICLE_CATEGORY, VEHICLE_STATUS } from '../../shared/presentation/vehi
           <div class="detail-grid">
             <figure>
               <hermes-vehicle-image [src]="vehicle.imageUrl" [alt]="vehicle.imageAlt || vehicle.model" [priority]="true" />
-              <figcaption>Imagen ilustrativa del vehículo. Catálogo de demostración.</figcaption>
+              <figcaption>Imagen ilustrativa del vehículo. Catálogo de flota.</figcaption>
             </figure>
             <section class="vehicle-details" aria-labelledby="details-title">
               <p class="eyebrow">Información del vehículo</p>
@@ -37,14 +37,14 @@ import { VEHICLE_CATEGORY, VEHICLE_STATUS } from '../../shared/presentation/vehi
                 <div><dt>Kilometraje</dt><dd>{{ vehicle.mileage | number }} km</dd></div>
               </dl>
               <div class="rate"><p class="eyebrow">Tarifa diaria</p><p><strong>{{ vehicle.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }}</strong> / día</p></div>
-              <p class="text-secondary text-small">Importe de ejemplo en pesos dominicanos.</p>
+              <p class="text-secondary text-small">Importe de referencia en pesos dominicanos.</p>
               <ion-button fill="outline" routerLink="/flota">Seguir explorando</ion-button>
             </section>
           </div>
         } @else {
           <section class="empty-state">
             <p class="eyebrow">Vehículo no encontrado</p><h1>Esta ficha no está disponible.</h1>
-            <p>El identificador no corresponde a un vehículo del catálogo de demostración.</p>
+            <p>El identificador no corresponde a un vehículo del catálogo de flota.</p>
             <ion-button routerLink="/flota">Ver la flota</ion-button>
           </section>
         }

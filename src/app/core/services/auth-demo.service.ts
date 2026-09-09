@@ -12,10 +12,10 @@ export interface DemoUser {
 const STORAGE_KEY = 'hermes.mock.session';
 
 export const DEMO_USERS: readonly DemoUser[] = [
-  { email: 'cliente@hermes.demo', password: 'Hermes123', name: 'Laura Mendez', role: 'cliente', home: '/cliente/inicio' },
-  { email: 'agente@hermes.demo', password: 'Hermes123', name: 'Carlos Reyes', role: 'agente', home: '/agente/inicio' },
-  { email: 'admin@hermes.demo', password: 'Hermes123', name: 'Mariana Soto', role: 'admin', home: '/admin/dashboard' },
-  { email: 'superadmin@hermes.demo', password: 'Hermes123', name: 'Valeria Nunez', role: 'super-admin', home: '/super-admin/dashboard' },
+  { email: 'cliente@hermes.app', password: 'Hermes123', name: 'Laura Méndez', role: 'cliente', home: '/cliente/inicio' },
+  { email: 'agente@hermes.app', password: 'Hermes123', name: 'Carlos Reyes', role: 'agente', home: '/agente/inicio' },
+  { email: 'admin@hermes.app', password: 'Hermes123', name: 'Mariana Soto', role: 'admin', home: '/admin/dashboard' },
+  { email: 'superadmin@hermes.app', password: 'Hermes123', name: 'Valeria Núñez', role: 'super-admin', home: '/super-admin/dashboard' },
 ];
 
 @Injectable({ providedIn: 'root' })

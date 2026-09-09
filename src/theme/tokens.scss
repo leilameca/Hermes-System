@@ -17,6 +17,7 @@
   --hermes-blue-light: #EDF1F7;
   --hermes-critical-light: #FBF0F0;
   --hermes-amber-light: #FBF3E8;
+  --hermes-heading: var(--hermes-navy);
   --hermes-space-1: 4px;
   --hermes-space-2: 8px;
   --hermes-space-3: 12px;
@@ -57,4 +58,69 @@
   --ion-color-danger-contrast-rgb: 255, 255, 255;
   --ion-color-danger-shade: #A33B3B;
   --ion-color-danger-tint: #C05656;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --hermes-canvas: #070D1C;
+  --hermes-surface: #0F1728;
+  --hermes-graphite: #EEF1F6;
+  --hermes-muted: #9EA7B6;
+  --hermes-border: #263247;
+  --hermes-text-secondary: #A7B0BF;
+  --hermes-control-border: #44516A;
+  --hermes-blue-light: #16243D;
+  --hermes-critical-light: #311B21;
+  --hermes-amber-light: #2D2417;
+  --hermes-heading: #F8FAFC;
+
+  --ion-background-color: var(--hermes-canvas);
+  --ion-text-color: var(--hermes-graphite);
+  --ion-color-primary-shade: #1D4B9A;
+  --ion-color-primary-tint: #4267A7;
+}
+
+html[data-theme='dark'] {
+  body,
+  ion-content {
+    background: var(--hermes-canvas);
+  }
+
+  h1,
+  h2,
+  h3,
+  .kpi-card strong,
+  .work-item strong,
+  .quick-panel strong,
+  .status-grid strong {
+    color: var(--hermes-heading);
+  }
+
+  .login-shell {
+    background: linear-gradient(90deg,#050B17 0 36%, var(--hermes-canvas) 36% 100%);
+  }
+
+  .access-side::before,
+  .panel,
+  .card,
+  .kpi-card,
+  .list-panel,
+  .status-grid article,
+  .featured-vehicle,
+  .type-grid button,
+  .action-grid a {
+    background: var(--hermes-surface);
+    border-color: var(--hermes-border);
+  }
+
+  input,
+  select,
+  textarea,
+  .input-shell,
+  .icon-button,
+  .date-control {
+    background: #0B1324;
+    color: var(--hermes-graphite);
+    border-color: var(--hermes-control-border);
+  }
 }

@@ -4,4 +4,8 @@
 .results-heading p { color: var(--hermes-text-secondary); font-size: var(--hermes-text-sm); }
 .results-heading strong { color: var(--hermes-navy); }
 @media (max-width: 1199px) { .filters { grid-template-columns: 1fr 1fr; } .filters ion-input { grid-column: 1 / -1; } }
-@media (max-width: 539px) { .filters { grid-template-columns: 1fr; } }
+@media (max-width: 539px) {
+  .filters { grid-template-columns: 1fr; }
+  .results-heading { align-items: stretch; flex-direction: column; }
+  .results-heading ion-button { align-self: start; width: auto; }
+}

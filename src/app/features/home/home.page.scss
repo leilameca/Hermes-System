@@ -1,5 +1,5 @@
 .button-arrow { margin-left: var(--hermes-space-6); font-size: 18px; }
-.featured { display: grid; grid-template-columns: 0.8fr 1.6fr; gap: var(--hermes-space-8); align-items: stretch; }
+.featured { display: grid; grid-template-columns: minmax(0,0.8fr) minmax(0,1.6fr); gap: var(--hermes-space-8); align-items: stretch; }
 .featured-copy { display: flex; flex-direction: column; justify-content: space-between; gap: var(--hermes-space-6); padding-block: var(--hermes-space-2); }
 .featured-copy h2 { margin-top: var(--hermes-space-3); font-size: clamp(2.5rem, 4vw, 3.75rem); line-height: 1; letter-spacing: -0.045em; }
 .featured-description { margin-top: var(--hermes-space-4); color: var(--hermes-text-secondary); font-size: var(--hermes-text-sm); }
@@ -8,14 +8,14 @@
 .featured figure { min-width: 0; }
 figcaption { display: flex; justify-content: space-between; gap: var(--hermes-space-3); margin-top: var(--hermes-space-3); font-size: 10px; letter-spacing: 0.04em; color: var(--hermes-text-secondary); }
 .section-heading h2 { margin-top: var(--hermes-space-2); }
-.operations-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--hermes-space-12); }
+.operations-grid { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: var(--hermes-space-12); }
 .record-count { color: var(--hermes-text-secondary); font-size: var(--hermes-text-xs); white-space: nowrap; }
 .reservation-list, .company-list { padding: 0; margin: 0; list-style: none; border-top: 1px solid var(--hermes-border); }
 .reservation-list li { display: flex; align-items: center; gap: var(--hermes-space-5); padding-block: var(--hermes-space-6); border-bottom: 1px solid var(--hermes-border); }
 .reservation-date { min-width: 36px; display: grid; text-align: center; color: var(--hermes-navy); }
 .reservation-date strong { font-size: 28px; font-weight: 400; line-height: 1.1; }
 .reservation-date span { font-size: 10px; text-transform: uppercase; margin-top: var(--hermes-space-1); }
-.reservation-info { flex: 1; }
+.reservation-info { flex: 1; min-width: 0; }
 .reservation-info h3, .company-list h3 { font-size: var(--hermes-text-sm); }
 .reservation-info p, .company-list p { margin-top: var(--hermes-space-1); color: var(--hermes-text-secondary); font-size: var(--hermes-text-xs); }
 .company-list li { padding-block: var(--hermes-space-5); border-bottom: 1px solid var(--hermes-border); }
@@ -26,11 +26,18 @@ figcaption { display: flex; justify-content: space-between; gap: var(--hermes-sp
 }
 @media (max-width: 767px) {
   .featured { grid-template-columns: 1fr; }
-  .featured-copy { display: grid; grid-template-columns: 1fr 1fr; align-items: end; }
+  .featured-copy { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: end; }
   .featured-copy > .eyebrow { grid-column: 1 / -1; }
   .featured-copy h2 { font-size: 40px; }
   .featured-copy > div:last-child { text-align: right; }
   .reservation-list li { gap: var(--hermes-space-3); flex-wrap: wrap; }
+  figcaption { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 480px) {
+  .featured-copy { grid-template-columns: 1fr; }
+  .featured-copy > div:last-child { text-align: left; }
+  .reservation-list li { display: grid; grid-template-columns: 44px minmax(0,1fr); }
+  .reservation-list hermes-status { grid-column: 2; justify-self: start; }
 }
 @media (max-width: 359px) {
   .featured-copy { grid-template-columns: 1fr; }

@@ -1,13 +1,18 @@
 * { box-sizing: border-box; }
+html, body { width: 100%; min-width: 320px; overflow-x: hidden; }
 body { font-size: var(--hermes-text-base); line-height: 1.5; }
 h1, h2, h3, p, figure, dl { margin: 0; }
-h1, h2, h3 { color: var(--hermes-navy); font-weight: 600; text-wrap: balance; }
+h1, h2, h3 { color: var(--hermes-heading); font-weight: 600; text-wrap: balance; }
 h1 { font-size: var(--hermes-title-1); line-height: 1.12; letter-spacing: -0.045em; }
 h2 { font-size: var(--hermes-title-2); line-height: 1.25; letter-spacing: -0.025em; }
 h3 { font-size: var(--hermes-title-3); line-height: 1.35; letter-spacing: -0.02em; }
 a { color: var(--hermes-blue); text-underline-offset: 5px; }
 button, input, select, textarea { font: inherit; }
-img { display: block; max-width: 100%; }
+button { max-width: 100%; }
+input, select, textarea { min-width: 0; }
+img, video, canvas, svg { display: block; max-width: 100%; }
+table { max-width: 100%; }
+td, th, p, a, dd, dt, span, strong, small { overflow-wrap: anywhere; }
 ::selection { background: var(--hermes-blue); color: white; }
 :focus-visible { outline: 2px solid var(--hermes-blue); outline-offset: 4px; }
 
@@ -49,11 +54,20 @@ img { display: block; max-width: 100%; }
   .vehicle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 767px) {
-  .hermes-page, .page { padding: var(--hermes-space-8) var(--hermes-space-5); }
+  .hermes-page, .page { width: 100%; padding: var(--hermes-space-8) var(--hermes-space-5) calc(var(--hermes-space-16) + env(safe-area-inset-bottom)); }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metric-grid > :nth-child(3) { border-left: 0; }
   .metric-grid > :nth-child(n + 3) { border-top: 1px solid var(--hermes-border); }
   .section-heading { align-items: flex-start; flex-wrap: wrap; gap: var(--hermes-space-3); }
+  .actions { align-items: stretch; flex-direction: column; }
+  .actions > * { width: 100%; }
+  ion-button { width: 100%; }
+}
+@media (max-width: 420px) {
+  .hermes-page, .page { padding-inline: var(--hermes-space-4); }
+  .metric-grid { grid-template-columns: minmax(0, 1fr); }
+  .metric-grid > * { border-left: 0 !important; }
+  .metric-grid > * + * { border-top: 1px solid var(--hermes-border); }
 }
 @media (max-width: 539px) { .vehicle-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) {

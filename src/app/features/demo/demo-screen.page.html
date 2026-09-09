@@ -1,44 +1,133 @@
-﻿<main class="page stack">
-  <div><p class="eyebrow">{{ space.label }} / Hermes System</p><h1>{{ data()['label'] }}</h1></div>
+﻿<main class="page stack" [class.mobile-space]="role === 'cliente' || role === 'agente'" [class.admin-space]="role === 'admin'" [class.super-space]="role === 'super-admin'">
+  <div class="screen-heading">
+    <div>
+      <p class="eyebrow">{{ space.label }} / Hermes System</p>
+      <h1>{{ data()['label'] }}</h1>
+      @if (role === 'admin' && kind() === 'home') { <p>Bienvenida, Mariana. Aqui tienes un resumen de la operacion.</p> }
+    </div>
+    @if (role === 'admin' && kind() === 'home') {
+      <button class="date-control" type="button">1 sept. 2026 - 8 sept. 2026</button>
+    }
+  </div>
   @if (message) { <p class="notice" role="status">{{ message }}</p> }
   @switch (kind()) {
     @case ('home') {
-      <p class="intro">{{ space.description }}</p>
-      <section class="metrics" aria-label="Resumen operativo">
-        @if (role === 'super-admin') {
-          <article><strong>2</strong><span>Empresas activas</span></article><article><strong>2</strong><span>Suscripciones</span></article><article><strong>RD$ 6,800</strong><span>Ingreso mensual</span></article>
-        } @else if (role === 'cliente') {
-          <article><strong>{{ state.reservations().length }}</strong><span>Mis reservas</span></article><article><strong>1</strong><span>Contrato pendiente</span></article><article><strong>2</strong><span>Vehículos en catálogo</span></article>
-        } @else {
-          <article><strong>2</strong><span>Vehículos de la empresa</span></article><article><strong>1</strong><span>Entrega programada</span></article><article><strong>1</strong><span>Incidente en revisión</span></article>
-        }
-      </section>
       @if (role === 'admin') {
-        <section class="workboard" aria-label="Pendientes de administracion">
-          @for (item of adminQueue; track item.label) {
-            <a class="work-item" [routerLink]="link(item.path)"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></a>
+        <section class="admin-hero">
+          <div>
+            <p class="eyebrow">Centro de control</p>
+            <h2>Operación clara antes de abrir el patio.</h2>
+            <p>Reservas, disponibilidad y prioridades en una sola vista para tomar decisiones rapido.</p>
+          </div>
+          <img src="assets/images/vehicles/sportage.jpg" alt="Vehiculo de la flota Hermes">
+          <dl>
+            <dt>Proxima entrega</dt><dd>09:00 · Toyota Corolla</dd>
+            <dt>Sucursal</dt><dd>Santo Domingo</dd>
+          </dl>
+        </section>
+        <section class="kpi-grid" aria-label="Resumen administrativo">
+          @for (metric of adminMetrics; track metric.label) {
+            <article class="kpi-card"><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong><small>{{ metric.trend }}</small></article>
           }
         </section>
-      }
-      @if (role === 'super-admin') {
+        <section class="admin-dashboard">
+          <article class="panel chart-panel">
+            <div class="panel-title"><h2>Reservas por dia</h2><span>Ultimos 7 dias</span></div>
+            <div class="bar-chart" aria-label="Grafico de reservas por dia">
+              @for (day of bookingDays; track day.label) {
+                <span [style.height.%]="day.value * 2.2"><em>{{ day.label }}</em></span>
+              }
+            </div>
+          </article>
+          <article class="panel fleet-panel">
+            <div class="panel-title"><h2>Estado de la flota</h2><span>32 vehiculos</span></div>
+            <div class="fleet-ring"><strong>32</strong><span>Vehiculos</span></div>
+            <div class="fleet-list">
+              @for (item of fleetState; track item.label) {
+                <p><span class="state-dot" [class]="item.tone"></span>{{ item.label }}<strong>{{ item.value }}</strong></p>
+              }
+            </div>
+          </article>
+          <aside class="panel attention-panel">
+            <div class="panel-title"><h2>Atencion requerida</h2><a [routerLink]="link('operaciones')">Ver todas</a></div>
+            @for (item of attentionItems; track item.title) {
+              <a class="attention-row" [class]="item.tone" [routerLink]="link('operaciones')"><strong>{{ item.title }}</strong><span>{{ item.detail }}</span></a>
+            }
+          </aside>
+        </section>
+        <section class="admin-lower">
+          <article class="panel table-panel">
+            <div class="panel-title"><h2>Reservas recientes</h2><a [routerLink]="link('reservas')">Ver todas</a></div>
+            <table>
+              <thead><tr><th>Cliente</th><th>Vehiculo</th><th>Inicio</th><th>Fin</th><th>Estado</th></tr></thead>
+              <tbody>
+                @for (row of recentReservations; track row.client) {
+                  <tr><td>{{ row.client }}</td><td>{{ vehicleName(row.vehicleId) }}</td><td>{{ row.start }}</td><td>{{ row.end }}</td><td><span class="table-status">{{ row.status }}</span></td></tr>
+                }
+              </tbody>
+            </table>
+          </article>
+          <article class="panel quick-panel">
+            <div class="panel-title"><h2>Informacion rapida</h2></div>
+            @for (item of quickOps; track item.label) {
+              <p><strong>{{ item.value }}</strong><span>{{ item.label }}</span></p>
+            }
+          </article>
+          <article class="auto-block">
+            <img src="assets/images/vehicles/tucson.jpg" alt="Vehiculo Hermes en carretera">
+            <div><h2>Seguimos moviendo tus planes</h2><span></span></div>
+          </article>
+        </section>
+      } @else if (role === 'cliente') {
+        <section class="client-home">
+          <div class="mobile-hero">
+            <div>
+              <p class="eyebrow">Hola, Laura</p>
+              <h2>¿A donde te gustaria ir hoy?</h2>
+            </div>
+            <img src="assets/images/vehicles/tucson.jpg" alt="Hyundai Tucson disponible">
+            <input aria-label="Buscar vehiculo" placeholder="Buscar vehiculo...">
+          </div>
+          <div class="type-grid" aria-label="Tipos de vehiculo">
+            @for (type of vehicleTypes; track type) { <button type="button"><ion-icon [icon]="type === 'Pickup' ? cubeIcon : carIcon" aria-hidden="true" />{{ type }}</button> }
+          </div>
+          <div class="section-row"><h2>Recomendados</h2><a [routerLink]="link('explorar')">Explorar</a></div>
+          <section class="featured-vehicle">
+            <img src="assets/images/vehicles/corolla.jpg" alt="Toyota Corolla recomendado">
+            <div><h3>Toyota Corolla 2024</h3><p>Desde RD$ 2,800 / dia</p><span>Disponible en Santo Domingo</span></div>
+          </section>
+        </section>
+      } @else if (role === 'agente') {
+        <section class="agent-home">
+          <div class="mobile-hero compact-hero">
+            <div>
+              <p class="eyebrow">Hola, Carlos</p>
+              <h2>Operaciones del dia</h2>
+            </div>
+            <span>09:00</span>
+          </div>
+          <section class="action-grid">
+            @for (action of agentActions; track action.label) {
+              <a [routerLink]="link(action.path)"><ion-icon [icon]="action.icon" aria-hidden="true" /><strong>{{ action.label }}</strong><span>{{ action.value }}</span></a>
+            }
+          </section>
+          <div class="section-row"><h2>Proximas operaciones</h2><a [routerLink]="link('operaciones')">Ver todas</a></div>
+          <section class="timeline" aria-label="Agenda del dia">
+            @for (task of todayTasks; track task.time) {
+              <a class="timeline-row" [routerLink]="link(task.path)"><span>{{ task.time }}</span><div><strong>{{ task.title }}</strong><p>{{ task.detail }}</p></div></a>
+            }
+          </section>
+        </section>
+      } @else {
         <section class="workboard" aria-label="Estado de plataforma">
           @for (item of platformHealth; track item.label) {
             <article class="work-item"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></article>
           }
         </section>
+        <section class="cards corporate-cards">@for (company of companiesSummary; track company.id) {
+          <a class="card company-card" [routerLink]="link('empresas/' + company.id)"><span class="building-icon"><ion-icon [icon]="businessIcon" aria-hidden="true" /></span><div><h2>{{ companyNameFor(company.id) }}</h2><p>{{ company.vehicles }} vehiculos · {{ company.status }}</p><small>{{ companyCityFor(company.id) }}</small></div><span>›</span></a>
+        }</section>
       }
-      @if (role === 'cliente') { <section class="highlight"><p class="eyebrow">Tu próxima reserva · 12 octubre</p><h2>Toyota Corolla</h2><p>Recogida en Santo Domingo · 09:00 a. m.</p><a class="button" [routerLink]="link('reservas/reservation-001')">Ver mi reserva →</a></section> }
-      @if (role === 'agente') {
-        <section class="highlight"><p class="eyebrow">Próxima operación · 12 octubre</p><h2>Entrega a Laura Méndez</h2><p>Toyota Corolla · A987601 · 09:00 a. m.</p><a class="button" [routerLink]="link('entrega/vehicle-001')">Iniciar entrega →</a></section>
-        <section class="timeline" aria-label="Agenda del dia">
-          @for (task of todayTasks; track task.time) {
-            <a class="timeline-row" [routerLink]="link(task.path)"><span>{{ task.time }}</span><div><strong>{{ task.title }}</strong><p>{{ task.detail }}</p></div></a>
-          }
-        </section>
-      }
-      <h2>Explora tu espacio</h2><section class="cards">@for (area of space.areas.slice(1); track area.path) {
-        <a class="card area" [routerLink]="link(area.path)"><span aria-hidden="true">{{ area.icon }}</span><h3>{{ area.label }}</h3><span>Ver área →</span></a>
-      }</section>
     }
     @case ('explore') {
       <p>Encuentra un vehículo para tu viaje. Tarifas en pesos dominicanos.</p>
@@ -49,10 +138,28 @@
     }
     @case ('vehicles') {
       @if (role === 'cliente') { <a class="text-link" [routerLink]="link('explorar')">← Modificar búsqueda</a> }
-      <p>{{ filteredVehicles().length }} vehículos {{ role === 'admin' ? 'en la flota de tu empresa' : 'encontrados' }}</p>
-      <section class="cards">@for (v of filteredVehicles(); track v.id) {
-        <a class="card" [routerLink]="vehicleLink(v.id)"><img [src]="v.imageUrl" [alt]="v.brand + ' ' + v.model"><span class="badge">{{ statuses[v.status].label }}</span><h2>{{ v.brand }} {{ v.model }}</h2><p>{{ v.year }} · {{ v.seats }} pasajeros · Automático</p><strong>{{ v.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }} / día</strong><span>Ver detalle →</span></a>
-      } @empty { <p class="notice">No hay vehículos que coincidan. Modifica la búsqueda para ver otras opciones.</p> }</section>
+      @if (role === 'admin') {
+        <section class="fleet-toolbar">
+          <input aria-label="Buscar vehiculo" placeholder="Buscar vehiculo...">
+          <button class="icon-button" type="button" aria-label="Filtrar"><ion-icon [icon]="filterIcon" aria-hidden="true" /></button>
+        </section>
+        <nav class="tabs" aria-label="Filtros de flota"><a class="active">Todos</a><a>Disponibles</a><a>En alquiler</a><a>Mantenimiento</a></nav>
+        <section class="list-panel">
+          @for (v of filteredVehicles(); track v.id) {
+            <a class="vehicle-row" [routerLink]="vehicleLink(v.id)">
+              <img [src]="v.imageUrl" [alt]="v.brand + ' ' + v.model">
+              <div><h2>{{ v.brand }} {{ v.model }} {{ v.year }}</h2><p>{{ v.plate }} · {{ categoryLabel(v.category) }} · {{ v.mileage }} km</p></div>
+              <span class="badge">{{ statuses[v.status].label }}</span>
+              <strong>›</strong>
+            </a>
+          }
+        </section>
+      } @else {
+        <p>{{ filteredVehicles().length }} vehículos encontrados</p>
+        <section class="cards">@for (v of filteredVehicles(); track v.id) {
+          <a class="card" [routerLink]="vehicleLink(v.id)"><img [src]="v.imageUrl" [alt]="v.brand + ' ' + v.model"><span class="badge">{{ statuses[v.status].label }}</span><h2>{{ v.brand }} {{ v.model }}</h2><p>{{ v.year }} · {{ v.seats }} pasajeros · Automático</p><strong>{{ v.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }} / día</strong><span>Ver detalle →</span></a>
+        } @empty { <p class="notice">No hay vehículos que coincidan. Modifica la búsqueda para ver otras opciones.</p> }</section>
+      }
     }
     @case ('vehicle') {
       @if (vehicle(); as v) {
@@ -71,9 +178,21 @@
     }
     @case ('reservas') {
       @if (role === 'cliente') { <a class="button" [routerLink]="link('explorar')">Explorar vehículos →</a> }
-      @for (r of state.reservations(); track r.id) { <article class="panel stack"><div class="row"><h2>{{ vehicleName(r.vehicleId) }}</h2><span class="badge">{{ r.status === 'confirmed' ? 'Confirmada' : 'Pendiente' }}</span></div><p>{{ r.id }} · {{ r.startsAt | date:'dd MMM yyyy' }} — {{ r.endsAt | date:'dd MMM yyyy' }}</p><strong>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</strong>
-        @if (role === 'cliente') { <a [routerLink]="link('reservas/' + r.id)">Ver detalle de reserva →</a> } @else { <a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo →</a><a [routerLink]="link('operaciones')">Ver operaciones →</a> }
-      </article> }
+      @if (role === 'cliente') {
+        <nav class="tabs" aria-label="Estados de reserva"><a class="active">Activas</a><a>Finalizadas</a><a>Canceladas</a></nav>
+        <section class="list-panel">
+          @for (r of state.reservations(); track r.id) {
+            <a class="reservation-row" [routerLink]="link('reservas/' + r.id)">
+              <img [src]="vehicleImage(r.vehicleId)" [alt]="vehicleName(r.vehicleId)">
+              <div><h2>{{ vehicleName(r.vehicleId) }}</h2><p>{{ r.startsAt | date:'dd MMM' }} - {{ r.endsAt | date:'dd MMM' }}</p></div>
+              <span class="badge">{{ r.status === 'confirmed' ? 'Activa' : 'Pendiente' }}</span>
+              <strong>›</strong>
+            </a>
+          }
+        </section>
+      } @else {
+        @for (r of state.reservations(); track r.id) { <article class="panel stack"><div class="row"><h2>{{ vehicleName(r.vehicleId) }}</h2><span class="badge">{{ r.status === 'confirmed' ? 'Confirmada' : 'Pendiente' }}</span></div><p>{{ r.id }} · {{ r.startsAt | date:'dd MMM yyyy' }} — {{ r.endsAt | date:'dd MMM yyyy' }}</p><strong>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</strong><a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo →</a><a [routerLink]="link('operaciones')">Ver operaciones →</a></article> }
+      }
     }
     @case ('reservation') {
       @if (reservation(); as r) { <section class="panel stack"><span class="badge">{{ r.status === 'confirmed' ? 'Confirmada' : 'Pendiente' }}</span><h2>{{ vehicleName(r.vehicleId) }}</h2><p>{{ r.id }}</p><dl><dt>Recogida</dt><dd>{{ r.startsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Devolución</dt><dd>{{ r.endsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Sucursal</dt><dd>Santo Domingo</dd><dt>Total</dt><dd>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</dd></dl><div class="actions"><a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo</a><a [routerLink]="link('contratos')">Contrato</a><a [routerLink]="link('facturas')">Factura</a><a [routerLink]="link('incidentes')">Reportar incidente</a></div></section> }
@@ -81,12 +200,18 @@
     }
     @case ('operaciones') {
       <p>Agenda de operaciones · Sucursal Santo Domingo</p>
-      @for (operation of ['entrega', 'devolucion']; track operation) { <article class="panel stack"><span class="badge">Programada</span><h2>{{ operation === 'entrega' ? 'Entrega · 12 octubre, 09:00' : 'Devolución · 15 octubre, 09:00' }}</h2><p>Laura Méndez · Toyota Corolla · A987601</p>
-        @if (role === 'agente') { <a class="button" [routerLink]="link(operation + '/vehicle-001')">Abrir {{ operation === 'entrega' ? 'entrega' : 'devolución' }} →</a> } @else { <a [routerLink]="vehicleLink('vehicle-001')">Ver vehículo →</a><a [routerLink]="link('inspecciones')">Ver inspecciones →</a> }
-      </article> }
+      <section class="list-panel">
+        @for (operation of ['entrega', 'devolucion']; track operation) {
+          <article class="operation-row">
+            <img src="assets/images/vehicles/corolla.jpg" alt="Toyota Corolla">
+            <div><span class="badge">Programada</span><h2>{{ operation === 'entrega' ? 'Entrega · 12 octubre, 09:00' : 'Devolución · 15 octubre, 09:00' }}</h2><p>Laura Méndez · Toyota Corolla · A987601</p></div>
+            @if (role === 'agente') { <a class="button" [routerLink]="link(operation + '/vehicle-001')">Abrir</a> } @else { <a [routerLink]="vehicleLink('vehicle-001')">Ver vehículo</a> }
+          </article>
+        }
+      </section>
     }
     @case ('scan') {
-      <form class="panel stack" (ngSubmit)="scan()"><div class="scan" aria-hidden="true">▣</div><h2>Identificar vehículo</h2><p>Ingresa una placa del catálogo para abrir su ficha operacional.</p><label>Placa o código<input name="code" [(ngModel)]="scanCode" required></label><button class="button" type="submit">Escanear vehículo →</button><p class="text-secondary">Placas disponibles: A987601 · G987602</p></form>
+      <form class="panel stack" (ngSubmit)="scan()"><div class="scan" aria-hidden="true"><ion-icon [icon]="scanIcon" /></div><h2>Identificar vehículo</h2><p>Ingresa una placa del catálogo para abrir su ficha operacional.</p><label>Placa o código<input name="code" [(ngModel)]="scanCode" required></label><button class="button" type="submit">Escanear vehículo →</button><p class="text-secondary">Placas disponibles: A987601 · G987602</p></form>
     }
     @case ('handover') {  }
     @case ('return') {  }
@@ -94,7 +219,9 @@
     @case ('evidence') {  }
     @case ('signature') {  }
     @case ('empresas') {
-      <section class="cards">@for (t of companies; track t.id) { <a class="card" [routerLink]="link('empresas/' + t.id)"><span class="badge">Activa</span><h2>{{ t.name }}</h2><p>{{ t.city }}</p><span>Ver empresa →</span></a> }</section>
+      <section class="list-panel corporate-list">@for (company of companiesSummary; track company.id) {
+        <a class="company-row" [routerLink]="link('empresas/' + company.id)"><span class="building-icon"><ion-icon [icon]="businessIcon" aria-hidden="true" /></span><div><h2>{{ companyNameFor(company.id) }}</h2><p>{{ company.vehicles }} vehiculos · {{ company.status }}</p></div><strong>›</strong></a>
+      }</section>
     }
     @case ('company') {
       @if (company(); as t) { <section class="panel stack"><span class="badge">Activa</span><h2>{{ t.name }}</h2><dl><dt>Ciudad</dt><dd>{{ t.city }}</dd><dt>Correo</dt><dd>{{ t.email }}</dd><dt>Teléfono</dt><dd>{{ t.phone }}</dd><dt>Plan</dt><dd>{{ t.id === 'tenant-001' ? 'Profesional' : 'Esencial' }}</dd></dl><a [routerLink]="link('suscripciones')">Ver suscripciones →</a><a [routerLink]="link('planes')">Ver planes →</a></section> } @else { <p class="notice">Empresa no encontrada.</p><a [routerLink]="link('empresas')">Ver empresas</a> }
@@ -110,7 +237,7 @@
       <form class="panel stack" (ngSubmit)="message = 'Cambios guardados temporalmente.'"><h2>{{ role === 'cliente' ? 'Laura Méndez' : 'Carlos · Agente de operaciones' }}</h2><p>Perfil · {{ space.label }}</p><label>Nombre<input name="name" [ngModel]="role === 'cliente' ? driver : 'Carlos'" required></label><label>Correo<input name="email" type="email" [ngModel]="role === 'cliente' ? email : 'carlos@example.com'" required></label><label>Teléfono<input name="phone" type="tel" [(ngModel)]="phone" required></label><button class="button" type="submit">Guardar cambios</button>@if (role === 'cliente') { <div class="actions"><a [routerLink]="link('contratos')">Contratos</a><a [routerLink]="link('facturas')">Facturas</a></div> }</form>
     }
     @case ('configuracion') {
-      <form class="panel stack" (ngSubmit)="message = 'Configuración simulada. No se guardan cambios al salir.'"><h2>Datos de la empresa</h2><label>Nombre comercial<input name="company" [(ngModel)]="companyName" required></label><label>Moneda<select name="currency" ngModel="DOP"><option value="DOP">Peso dominicano (DOP)</option></select></label><label class="check"><input type="checkbox" name="notifications" [(ngModel)]="notifications"> Mostrar avisos operativos</label><button class="button" type="submit">Simular guardar configuración</button></form>
+      <form class="panel stack" (ngSubmit)="message = 'Configuración actualizada para esta sesión.'"><h2>Datos de la empresa</h2><label>Nombre comercial<input name="company" [(ngModel)]="companyName" required></label><label>Moneda<select name="currency" ngModel="DOP"><option value="DOP">Peso dominicano (DOP)</option></select></label><label class="check"><input type="checkbox" name="notifications" [(ngModel)]="notifications"> Mostrar avisos operativos</label><button class="button" type="submit">Guardar configuración</button></form>
     }
     @case ('plataforma') {
       <section class="panel stack"><h2>Hermes System · Plataforma SaaS</h2><span class="badge">Operativa</span><dl><dt>Empresas activas</dt><dd>2</dd><dt>Planes disponibles</dt><dd>3</dd><dt>Version de maqueta</dt><dd>Etapa 4</dd><dt>Integraciones</dt><dd>Preparadas para etapas posteriores</dd></dl><div class="actions"><a [routerLink]="link('empresas')">Gestionar empresas →</a><a [routerLink]="link('planes')">Consultar planes →</a><button class="button secondary" type="button" (click)="simulateAction('Revision de salud de plataforma')">Revisar salud</button></div></section>
@@ -137,4 +264,3 @@
   }
   <footer class="page-footer"><span>Hermes System · {{ space.label }}</span><span>Quisqueya Rent-a-Car</span></footer>
 </main>
-

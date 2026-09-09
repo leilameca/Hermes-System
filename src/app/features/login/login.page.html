@@ -8,11 +8,17 @@
         <p class="brand">Hermes <span>System</span></p>
         <h1>Movilidad bajo control.</h1>
         <p>Reservas, flota y operaciones desde una sola plataforma.</p>
+        <div class="visual-metrics" aria-label="Resumen visual de Hermes">
+          <span><strong>24</strong> reservas activas</span>
+          <span><strong>18</strong> vehiculos listos</span>
+          <span><strong>4</strong> perfiles activos</span>
+        </div>
       </div>
       <img class="vehicle-photo" src="assets/images/vehicles/tucson.jpg" alt="Hyundai Tucson de la flota Hermes">
     </section>
 
     <section class="access-side" aria-labelledby="login-title">
+      <div class="access-tools"><hermes-theme-toggle /></div>
       <div class="access-copy">
         <h2 id="login-title">Bienvenido a Hermes</h2>
         <p>Accede a tu espacio de trabajo.</p>
@@ -22,36 +28,43 @@
         @if (error) { <p class="error" role="alert">{{ error }}</p> }
 
         <label>Correo electrónico
-          <input name="email" type="email" [(ngModel)]="email" autocomplete="username" required>
+          <span class="input-shell"><ion-icon [icon]="mailIcon" aria-hidden="true" /><input name="email" type="email" [(ngModel)]="email" autocomplete="username" required></span>
         </label>
 
         <label>Contraseña
           <span class="password-row">
-            <input name="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" autocomplete="current-password" required>
-            <button type="button" class="text-button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
-              {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+            <span class="input-shell"><ion-icon [icon]="lockIcon" aria-hidden="true" /><input name="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" autocomplete="current-password" required></span>
+            <button type="button" class="icon-button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              <ion-icon [icon]="showPassword ? eyeOffIcon : eyeIcon" aria-hidden="true" />
             </button>
           </span>
         </label>
 
+        <div class="form-options">
+          <label class="remember"><input type="checkbox" name="remember"> Recordar sesión</label>
+          <button type="button" class="forgot">¿Olvidaste tu contraseña?</button>
+        </div>
+
         <button class="primary" type="submit" [disabled]="loading || !email || !password">
-          <span>{{ loading ? 'Validando...' : 'Iniciar sesión' }}</span>
+          <span>{{ loading ? 'Validando...' : 'Iniciar sesión' }}</span><ion-icon [icon]="arrowIcon" aria-hidden="true" />
         </button>
       </form>
 
       <aside class="demo-access" aria-labelledby="demo-access-title">
-        <h3 id="demo-access-title">Accesos de demostración</h3>
-        <p>Selecciona un perfil para autocompletar las credenciales.</p>
+        <h3 id="demo-access-title">Accesos rápidos</h3>
+        <p>Selecciona un perfil para completar las credenciales.</p>
         <div class="profiles">
           @for (user of demoUsers; track user.email) {
             <button type="button" (click)="fill(user)">
               <span class="profile-role">{{ user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : user.role === 'agente' ? 'Agente' : 'Cliente' }}</span>
               <strong>{{ user.name }}</strong>
-              <span class="profile-arrow" aria-hidden="true">→</span>
+              <ion-icon class="profile-arrow" [icon]="arrowIcon" aria-hidden="true" />
             </button>
           }
         </div>
       </aside>
+
+      <p class="access-footer"><strong>HERMES SYSTEM</strong><span>Rent-a-Car · Control de flota · Acceso autorizado</span></p>
     </section>
   </main>
 </ion-content>

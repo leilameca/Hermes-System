@@ -6,11 +6,11 @@
     </hermes-page-header>
 
     @if (data$ | async; as data) {
-      <section class="metric-grid" aria-label="Resumen de la flota de demostración">
+      <section class="metric-grid" aria-label="Resumen de la flota">
         <hermes-metric label="Vehículos en flota" [value]="data.vehicles.length" description="Todas las empresas" />
         <hermes-metric label="Disponibles" [value]="data.available" description="Listos para un nuevo recorrido" />
         <hermes-metric label="Reservados" [value]="data.reserved" description="Con una reserva de ejemplo" />
-        <hermes-metric label="Reservas" [value]="data.reservations.length" description="Registros de demostración" />
+        <hermes-metric label="Reservas" [value]="data.reservations.length" description="Registros activos" />
       </section>
 
       @if (data.featured; as featured) {
@@ -49,7 +49,7 @@
       <div class="operations-grid">
         <section class="hermes-section" aria-labelledby="reservations-title">
           <div class="section-heading">
-            <div><p class="eyebrow">Agenda de ejemplo</p><h2 id="reservations-title">Próximas reservas</h2></div>
+            <div><p class="eyebrow">Agenda operativa</p><h2 id="reservations-title">Próximas reservas</h2></div>
             <span class="record-count">{{ data.reservations.length }} registros</span>
           </div>
           <ul class="reservation-list">
@@ -77,10 +77,10 @@
               <li><h3>{{ tenant.name }}</h3><p>{{ tenant.city }}</p></li>
             }
           </ul>
-          <p class="network-summary">{{ data.tenants.length }} empresas · {{ data.users.length }} usuarios de demostración</p>
+          <p class="network-summary">{{ data.tenants.length }} empresas · {{ data.users.length }} usuarios activos</p>
         </section>
       </div>
     }
-    <footer class="page-footer"><span>Hermes System / Gestión automotriz</span><span>Datos e imágenes de demostración</span></footer>
+    <footer class="page-footer"><span>Hermes System / Gestión automotriz</span><span>Datos e imágenes operativas</span></footer>
   </main>
 </ion-content>

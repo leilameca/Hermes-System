@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IonIcon } from '@ionic/angular/standalone';
-import { gridOutline, carSportOutline, layersOutline } from 'ionicons/icons';
+import { gridOutline, carSportOutline, layersOutline, wifiOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'hermes-navigation',
@@ -36,5 +36,6 @@ export class NavigationComponent {
     { path: '/inicio', label: 'Resumen', number: '01', icon: gridOutline },
     { path: '/flota', label: 'Flota', number: '02', icon: carSportOutline },
     { path: '/sistema-visual', label: 'Sistema visual', number: '03', icon: layersOutline },
+    { path: '/conectividad', label: 'Conectividad', number: '04', icon: wifiOutline },
   ];
 }

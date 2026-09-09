@@ -1,53 +1,83 @@
-:host { display: block; height: 100%; }
-.shell { height: 100%; display: flex; flex-direction: column; background: var(--hermes-canvas); }
+:host { display: block; height: 100%; min-width: 0; }
+.shell { height: 100%; min-width: 0; display: flex; flex-direction: column; background:
+  radial-gradient(circle at 84% 8%, rgba(208,138,50,.07), transparent 24%),
+  linear-gradient(180deg,#fbfaf7,var(--hermes-canvas));
+}
 .workspace { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .sidebar { display: none; }
 .brand { display: inline-flex; align-items: center; gap: 8px; color: var(--hermes-navy); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; }
 .brand img { width: 32px; height: 32px; object-fit: contain; border-radius: 3px; mix-blend-mode: multiply; }
 .brand small { color: var(--hermes-blue); font-size: 10px; }
-header { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 18px; min-height: 64px; padding: 10px 28px; background: var(--hermes-surface); border-bottom: 1px solid var(--hermes-border); }
+header { display: grid; grid-template-columns: auto auto minmax(0,1fr) auto; align-items: center; gap: 18px; min-height: 64px; padding: 10px 28px; background: rgba(255,255,255,.92); border-bottom: 1px solid var(--hermes-border); }
 button { min-height: 42px; border: 0; background: transparent; color: var(--hermes-blue); cursor: pointer; }
-.back { padding: 0; font-weight: 650; }
+.back { display: inline-flex; align-items: center; gap: 5px; padding: 0; font-weight: 650; }
+.back ion-icon { font-size: 18px; }
 .context { color: var(--hermes-text-secondary); font-size: 14px; }
-.account { display: grid; grid-template-columns: auto auto auto; align-items: center; gap: 12px; font-size: 13px; }
+.account { display: grid; grid-template-columns: auto auto auto auto auto; align-items: center; gap: 10px; min-width: 0; font-size: 13px; }
 .account a { color: var(--hermes-navy); font-weight: 700; text-decoration: none; }
 .account span { color: var(--hermes-text-secondary); }
 .account button, .logout { border: 1px solid var(--hermes-border); padding: 0 12px; background: white; border-radius: 4px; }
-.content { flex: 1; min-height: 0; overflow: auto; }
+.logout { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.logout ion-icon { font-size: 17px; }
+.account .notification { width: 36px; min-height: 36px; padding: 0; border-radius: 50%; color: var(--hermes-navy); }
+.account .notification ion-icon { font-size: 18px; }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--hermes-navy); border-radius: 50%; background: #fff8ee; color: var(--hermes-navy) !important; font-weight: 800; }
+.sidebar-account { margin-top: auto; display: grid; gap: 5px; padding: 14px 12px; border-top: 1px solid rgba(255,255,255,.15); color: white; }
+.sidebar-account strong { font-size: 13px; }
+.sidebar-account span { color: rgba(255,255,255,.62); font-size: 12px; }
+.sidebar-account .logout { justify-self: start; margin-top: 8px; }
+.content { flex: 1; min-width: 0; min-height: 0; overflow: auto; }
 .bottom, .more-menu { display: none; }
 a, button { transition: background var(--hermes-duration), border-color var(--hermes-duration), color var(--hermes-duration); }
 .active { background: var(--hermes-blue-light); color: var(--hermes-blue) !important; font-weight: 700; }
 
 @media(min-width:1024px) {
   .administrative { display: grid; grid-template-columns: 244px minmax(0,1fr); }
-  .administrative .sidebar { display: flex; flex-direction: column; gap: 18px; padding: 28px 16px; border-right: 1px solid #16345f; background: var(--hermes-navy); color: white; overflow: auto; }
+  .administrative .sidebar { display: flex; flex-direction: column; gap: 18px; padding: 24px 14px; border-right: 1px solid #16345f; background:
+    radial-gradient(circle at 20% 0%, rgba(255,255,255,.12), transparent 28%),
+    linear-gradient(180deg,#07162f,var(--hermes-navy) 54%,#07162f);
+    color: white; overflow: auto;
+  }
   .administrative .sidebar .brand { color: white; }
   .administrative .sidebar .brand small { color: rgba(255,255,255,.64); }
-  .administrative .sidebar .brand img { background: white; }
+  .administrative .sidebar .brand img { background: white; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
   .sidebar nav { display: grid; gap: 3px; }
-  .sidebar nav a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 10px 12px; color: rgba(255,255,255,.74); text-decoration: none; border-radius: 4px; font-size: 14px; }
+  .sidebar nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: 43px; padding: 10px 12px; color: rgba(255,255,255,.74); text-decoration: none; border-radius: 5px; font-size: 14px; }
+  .sidebar nav a ion-icon { width: 20px; font-size: 19px; color: rgba(255,255,255,.66); }
   .sidebar nav a:hover { background: rgba(255,255,255,.08); color: white; }
-  .sidebar nav a.active { background: var(--hermes-amber); color: var(--hermes-navy) !important; }
+  .sidebar nav a.active { background: linear-gradient(90deg,rgba(208,138,50,.22),rgba(255,255,255,.08)); color: white !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); }
+  .sidebar nav a.active::before { position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--hermes-amber); content: ''; }
+  .sidebar nav a.active ion-icon { color: var(--hermes-amber); }
   .administrative .logout { border-color: rgba(255,255,255,.2); background: transparent; color: white; }
-  .logout { margin-top: auto; }
   .administrative .compact { display: none; }
 }
 
 @media(max-width:1023px) {
   header { grid-template-columns: auto auto 1fr; padding: 8px 16px; gap: 12px; }
   .context { display: none; }
-  .account { grid-column: 1 / -1; grid-template-columns: 1fr auto auto; padding-top: 4px; border-top: 1px solid var(--hermes-border); }
-  .bottom { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--hermes-surface); border-top: 1px solid var(--hermes-border); padding: 4px 4px max(4px,env(safe-area-inset-bottom)); }
-  .bottom a, .bottom button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 58px; padding: 6px 2px; color: var(--hermes-text-secondary); text-align: center; text-decoration: none; border-radius: 4px; font-size: 11px; }
-  .bottom span { font-size: 21px; line-height: 1; }
-  .bottom .scan-tab span { width: 34px; height: 28px; display: grid; place-items: center; background: var(--hermes-blue); color: white; border-radius: 4px; }
+  .account { grid-column: 1 / -1; grid-template-columns: auto auto 1fr auto auto; padding-top: 4px; border-top: 1px solid var(--hermes-border); }
+  .sidebar-account { display: none; }
+  .bottom { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: rgba(255,255,255,.96); border-top: 1px solid var(--hermes-border); padding: 4px 4px max(4px,env(safe-area-inset-bottom)); box-shadow: 0 -12px 28px rgba(11,23,54,.08); }
+  .bottom a, .bottom button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 58px; padding: 6px 2px; color: var(--hermes-text-secondary); text-align: center; text-decoration: none; border-radius: 4px; font-size: 11px; }
+  .bottom ion-icon { font-size: 21px; line-height: 1; }
+  .bottom .scan-tab ion-icon { width: 34px; height: 28px; padding: 4px; background: var(--hermes-blue); color: white; border-radius: 4px; }
   .more-menu { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 12px; overflow: auto; max-height: 45vh; background: var(--hermes-surface); border-bottom: 1px solid var(--hermes-border); }
   .more-menu a { min-height: 44px; padding: 12px; color: var(--hermes-graphite); text-decoration: none; border: 1px solid var(--hermes-border); border-radius: 4px; }
+  .content { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
 }
 
 @media(max-width:520px) {
   header { grid-template-columns: auto 1fr; }
   .compact { justify-self: end; }
-  .account { grid-template-columns: 1fr auto; }
-  .account span { display: none; }
+  .account { grid-template-columns: auto auto 1fr auto; }
+  .account a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account button:last-child { display: none; }
+  .bottom a, .bottom button { font-size: 10px; }
+}
+
+@media(max-width:380px) {
+  header { padding-inline: 12px; }
+  .brand.compact { max-width: 92px; overflow: hidden; }
+  .bottom ion-icon { font-size: 19px; }
+  .bottom a, .bottom button { min-height: 54px; }
 }

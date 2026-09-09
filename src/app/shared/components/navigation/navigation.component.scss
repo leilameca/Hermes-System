@@ -17,7 +17,7 @@ a:focus-visible { outline-color: white; }
 @media (max-width: 767px) {
   :host { padding: 0 max(var(--hermes-space-3), env(safe-area-inset-right)) env(safe-area-inset-bottom) max(var(--hermes-space-3), env(safe-area-inset-left)); background: var(--hermes-surface); border-top: 1px solid var(--hermes-border); }
   .brand, .nav-label, .nav-footer, .nav-number { display: none; }
-  nav { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--hermes-space-2); }
+  nav { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--hermes-space-2); }
   nav a { flex-direction: column; justify-content: center; gap: 5px; min-height: 68px; padding: var(--hermes-space-2) 0; border-left: 0; border-top: 2px solid transparent; color: var(--hermes-text-secondary); font-size: 10px; }
   nav a.active { color: var(--hermes-blue); border-top-color: var(--hermes-blue); background: transparent; }
   nav a:hover { background: var(--hermes-canvas); color: var(--hermes-blue); }

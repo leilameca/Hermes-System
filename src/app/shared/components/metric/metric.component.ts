@@ -13,7 +13,7 @@ import { Component, Input } from '@angular/core';
   styles: [`
     :host { display: block; padding: var(--hermes-space-6); min-width: 0; }
     dt { color: var(--hermes-text-secondary); font-size: var(--hermes-text-sm); }
-    dd { margin: var(--hermes-space-2) 0; color: var(--hermes-navy); font-size: clamp(2rem, 3vw, 2.75rem); font-weight: 500; line-height: 1.2; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+    dd { margin: var(--hermes-space-2) 0; color: var(--hermes-heading); font-size: clamp(1.85rem, 3vw, 2.75rem); font-weight: 500; line-height: 1.2; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
     p { font-size: var(--hermes-text-xs); color: var(--hermes-text-secondary); }
     @media (max-width: 767px) { :host { padding: var(--hermes-space-5) var(--hermes-space-3); } }
   `],

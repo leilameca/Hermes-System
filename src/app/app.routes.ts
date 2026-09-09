@@ -15,5 +15,8 @@ export const routes: Routes = [
   { path: 'sistema-visual', loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
     { path: '', title: 'Sistema visual · Hermes System', loadComponent: () => import('./features/design-system/design-system.page').then(m => m.DesignSystemPage) },
   ] },
+  { path: 'conectividad', loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
+    { path: '', title: 'Conectividad · Hermes System', loadComponent: () => import('./features/connectivity/connectivity.page').then(m => m.ConnectivityPage) },
+  ] },
   { path: '**', title: 'Pagina no encontrada · Hermes System', loadComponent: () => import('./features/not-found/not-found.page').then(m => m.NotFoundPage) },
 ];

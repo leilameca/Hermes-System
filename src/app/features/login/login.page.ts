@@ -1,13 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { IonContent } from '@ionic/angular/standalone';
+import { IonContent, IonIcon } from '@ionic/angular/standalone';
+import { arrowForwardOutline, eyeOffOutline, eyeOutline, lockClosedOutline, mailOutline } from 'ionicons/icons';
 import { AuthDemoService, DEMO_USERS, DemoUser } from '../../core/services/auth-demo.service';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, IonContent],
+  imports: [FormsModule, IonContent, IonIcon, ThemeToggleComponent],
   templateUrl: './login.page.html',
   styleUrl: './login.page.scss',
 })
@@ -20,6 +22,11 @@ export class LoginPage {
   showPassword = false;
   loading = false;
   error = '';
+  readonly arrowIcon = arrowForwardOutline;
+  readonly eyeIcon = eyeOutline;
+  readonly eyeOffIcon = eyeOffOutline;
+  readonly lockIcon = lockClosedOutline;
+  readonly mailIcon = mailOutline;
 
   fill(user: DemoUser) {
     this.email = user.email;

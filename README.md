@@ -19,10 +19,10 @@ servidores ni base de datos.
 
 | Rol | Usuario | Contrasena |
 | --- | --- | --- |
-| Cliente | `cliente@hermes.demo` | `Hermes123` |
-| Agente | `agente@hermes.demo` | `Hermes123` |
-| Administrador | `admin@hermes.demo` | `Hermes123` |
-| Super Admin | `superadmin@hermes.demo` | `Hermes123` |
+| Cliente | `cliente@hermes.app` | `Hermes123` |
+| Agente | `agente@hermes.app` | `Hermes123` |
+| Administrador | `admin@hermes.app` | `Hermes123` |
+| Super Admin | `superadmin@hermes.app` | `Hermes123` |
 
 Los accesos de demostracion del login solo autocompletan el formulario. La sesion
 activa se guarda en almacenamiento local y se limpia con Cerrar sesion.
