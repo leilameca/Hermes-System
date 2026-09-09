@@ -65,9 +65,13 @@ import { OfflineService } from '../../core/services/offline.service';
   `],
 })
 export class ConnectivityPage {
+  // Lee el estado de Internet del dispositivo
   private readonly network = inject(NetworkService);
+
+  // Controla las operaciones guardadas en la cola local
   private readonly offline = inject(OfflineService);
 
+  // Convierte los cambios de los servicios en valores para la pantalla
   readonly connected = toSignal(this.network.connected$, { initialValue: this.network.connected });
   readonly connectionType = toSignal(this.network.connectionType$, { initialValue: this.network.connectionType });
   readonly pendingCount = toSignal(this.offline.pendingCount$, { initialValue: 0 });
@@ -75,16 +79,19 @@ export class ConnectivityPage {
   readonly message = signal('');
 
   async saveTestInspection() {
+    // Prepara una inspección sencilla para probar la conectividad
     const payload = {
       vehicleId: 'vehicle-001',
       checklist: ['carroceria', 'luces', 'neumaticos', 'documentos'],
       createdAt: new Date().toISOString(),
     };
     if (this.network.connected) {
+      // Procesa la inspección al momento cuando hay conexión
       await this.offline.sendOperation('inspection.saved', payload);
       this.message.set('Inspección guardada correctamente.');
       return;
     }
+    // Guarda la inspección en el dispositivo cuando no hay conexión
     await this.offline.savePendingOperation('inspection.saved', payload);
     this.message.set('Sin conexión. Guardamos tus cambios en este dispositivo y se sincronizarán automáticamente cuando recuperes Internet.');
   }

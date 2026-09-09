@@ -13,6 +13,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     { provide: LOCALE_ID, useValue: 'es-DO' },
     provideIonicAngular({ mode: 'md' }),
+    // Habilita el almacenamiento usado por la cola offline
     importProvidersFrom(IonicStorageModule.forRoot()),
     provideRouter(routes),
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },

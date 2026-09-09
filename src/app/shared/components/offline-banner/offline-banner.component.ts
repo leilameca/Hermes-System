@@ -29,8 +29,13 @@ import { OfflineService } from '../../../core/services/offline.service';
   `],
 })
 export class OfflineBannerComponent implements OnDestroy {
+  // Lee los cambios de conexión
   private readonly network = inject(NetworkService);
+
+  // Lee la cantidad de operaciones pendientes
   private readonly offline = inject(OfflineService);
+
+  // Agrupa las suscripciones para cerrarlas juntas
   private readonly subscription = new Subscription();
   private hideTimer?: number;
   private hasBeenOffline = false;
@@ -40,16 +45,21 @@ export class OfflineBannerComponent implements OnDestroy {
   readonly pendingCount = signal(0);
 
   constructor() {
+    // Actualiza el contador mostrado en el banner
     this.subscription.add(this.offline.pendingCount$.subscribe(count => this.pendingCount.set(count)));
+
+    // Muestra el banner cuando cambia la conexión
     this.subscription.add(this.network.connected$.subscribe(connected => {
       window.clearTimeout(this.hideTimer);
       if (!connected) {
+        // Mantiene el aviso visible mientras no hay Internet
         this.hasBeenOffline = true;
         this.mode.set('offline');
         this.visible.set(true);
         return;
       }
       if (!this.hasBeenOffline) return;
+      // Informa que la conexión regresó y oculta el aviso después
       this.mode.set('recovered');
       this.visible.set(true);
       this.hideTimer = window.setTimeout(() => this.visible.set(false), 3200);
@@ -57,6 +67,7 @@ export class OfflineBannerComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    // Limpia el temporizador y las suscripciones
     window.clearTimeout(this.hideTimer);
     this.subscription.unsubscribe();
   }

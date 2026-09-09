@@ -12,6 +12,10 @@ import { ThemeService } from './core/services/theme.service';
 })
 export class AppComponent {
   private readonly theme = inject(ThemeService);
+
+  // Inicia la lectura global del estado de red
   private readonly network = inject(NetworkService);
+
+  // Prepara la cola local desde el inicio de la aplicación
   private readonly offline = inject(OfflineService);
 }

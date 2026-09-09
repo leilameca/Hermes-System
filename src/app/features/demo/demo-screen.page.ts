@@ -30,7 +30,7 @@ import { AuthDemoService } from '../../core/services/auth-demo.service';
 
 @Injectable({ providedIn: 'root' })
 export class DemoState {
-  // TODO Backend: sustituir persistencia mock por API REST cuando inicie la etapa de integracion.
+  // TODO Backend sustituir persistencia mock por API REST cuando inicie la etapa de integracion
   readonly reservations = signal<readonly Reservation[]>(RESERVATIONS_MOCK.filter(r => r.customerId === 'customer-001'));
   readonly vehicles = signal<readonly Vehicle[]>(VEHICLES_MOCK.map(vehicle => ({ ...vehicle })));
   readonly steps = signal<Record<string, { checks: boolean[]; evidence: boolean; signed: boolean }>>({});
@@ -63,7 +63,10 @@ export class DemoState {
 export class DemoScreenPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  // Lee si el dispositivo tiene conexión
   private readonly network = inject(NetworkService);
+
+  // Guarda temporalmente las operaciones sin conexión
   private readonly offline = inject(OfflineService);
   private readonly auth = inject(AuthDemoService);
   readonly state = inject(DemoState);
@@ -287,10 +290,12 @@ export class DemoScreenPage {
 
   private async handleOfflineAwareOperation(type: string, payload: unknown) {
     if (this.network.connected) {
+      // Procesa la acción al momento cuando existe conexión
       await this.offline.sendOperation(type, payload);
       this.message = type === 'incident.reported' ? 'Incidente registrado correctamente.' : 'Inspeccion guardada correctamente.';
       return;
     }
+    // Guarda la acción para enviarla cuando regrese Internet
     await this.offline.savePendingOperation(type, payload);
     this.message = 'Sin conexión. Guardamos tus cambios en este dispositivo y se sincronizarán automáticamente cuando recuperes Internet.';
   }

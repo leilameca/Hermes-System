@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { IonRouterOutlet } from '@ionic/angular/standalone';
 import { HeaderComponent } from '../../shared/components/header/header.component';
 import { NavigationComponent } from '../../shared/components/navigation/navigation.component';
+// Muestra el estado de conexión dentro del espacio de trabajo
 import { OfflineBannerComponent } from '../../shared/components/offline-banner/offline-banner.component';
 
 @Component({

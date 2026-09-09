@@ -6,7 +6,10 @@ import { OfflineService } from './offline.service';
 
 @Injectable({ providedIn: 'root' })
 export class NetworkService implements OnDestroy {
+  // Permite obtener la cola offline solo cuando hace falta
   private readonly injector = inject(Injector);
+
+  // Guarda el estado de red actual
   private readonly statusSubject = new BehaviorSubject<ConnectionStatus>({
     connected: navigator.onLine,
     connectionType: 'unknown',
@@ -15,11 +18,13 @@ export class NetworkService implements OnDestroy {
   private initialized = false;
   private lastConnected = navigator.onLine;
 
+  // Expone el estado completo y sus valores principales
   readonly status$ = this.statusSubject.asObservable();
   readonly connected$ = this.status$.pipe(map(status => status.connected), distinctUntilChanged());
   readonly connectionType$ = this.status$.pipe(map(status => status.connectionType), distinctUntilChanged());
 
   constructor() {
+    // Inicia la lectura de conectividad al crear el servicio
     void this.init();
   }
 
@@ -36,23 +41,29 @@ export class NetworkService implements OnDestroy {
   }
 
   async init() {
+    // Evita registrar el mismo listener más de una vez
     if (this.initialized) return;
     this.initialized = true;
     const initial = await Network.getStatus();
     this.updateStatus(initial);
+
+    // Escucha los cambios de conexión del dispositivo
     this.listener = await Network.addListener('networkStatusChange', status => this.updateStatus(status));
   }
 
   private updateStatus(status: ConnectionStatus) {
+    // Actualiza el estado disponible para toda la aplicación
     const wasOffline = !this.lastConnected;
     this.lastConnected = status.connected;
     this.statusSubject.next(status);
     if (wasOffline && status.connected) {
+      // Sincroniza la cola cuando regresa Internet
       void this.injector.get(OfflineService).syncPendingOperations();
     }
   }
 
   ngOnDestroy() {
+    // Elimina el listener cuando el servicio deja de usarse
     void this.listener?.remove();
     this.listener = undefined;
     this.initialized = false;

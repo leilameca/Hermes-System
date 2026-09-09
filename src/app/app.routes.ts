@@ -15,6 +15,7 @@ export const routes: Routes = [
   { path: 'sistema-visual', loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
     { path: '', title: 'Sistema visual · Hermes System', loadComponent: () => import('./features/design-system/design-system.page').then(m => m.DesignSystemPage) },
   ] },
+  // Abre la pantalla usada para revisar la conexión y la cola local
   { path: 'conectividad', loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
     { path: '', title: 'Conectividad · Hermes System', loadComponent: () => import('./features/connectivity/connectivity.page').then(m => m.ConnectivityPage) },
   ] },
