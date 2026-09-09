@@ -1,0 +1,14 @@
+ENTREGABLE 2 - MODO OFFLINE
+
+Incluye:
+- persistencia con @ionic/storage
+- cola de operaciones pendientes
+- guardado offline
+- sincronización automática al recuperar conexión
+- simulación temporal de envío al servidor
+- página /conectividad para pruebas
+
+Ubicaciones originales:
+src/app/core/models/offline-operation.model.ts
+src/app/core/services/offline.service.ts
+src/app/features/connectivity/connectivity.page.ts

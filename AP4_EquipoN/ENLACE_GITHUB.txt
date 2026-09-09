@@ -1,0 +1,7 @@
+Proyecto: Hermes System
+Actividad: AP4 - Conectividad y Modo Offline
+Grupo: N
+Rama: AP4
+
+Repositorio:
+https://github.com/leilameca/Hermes-System/tree/AP4
