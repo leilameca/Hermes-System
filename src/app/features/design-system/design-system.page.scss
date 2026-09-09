@@ -10,9 +10,9 @@
 .swatch .hex { font-size: 10px; font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
 .type-list > div { padding-block: var(--hermes-space-4); border-bottom: 1px solid var(--hermes-border); }
 .type-label { display: block; font-size: 10px; color: var(--hermes-text-secondary); margin-bottom: var(--hermes-space-3); }
-.type-h1 { font-size: var(--hermes-title-1); line-height: 1.12; letter-spacing: -0.045em; font-weight: 600; color: var(--hermes-navy); }
-.type-h2 { font-size: var(--hermes-title-2); font-weight: 600; color: var(--hermes-navy); letter-spacing: -0.025em; }
-.type-h3 { font-size: var(--hermes-title-3); font-weight: 600; color: var(--hermes-navy); }
+.type-h1 { font-size: var(--hermes-title-1); line-height: 1.12; letter-spacing: -0.045em; font-weight: 600; color: var(--hermes-text-strong); }
+.type-h2 { font-size: var(--hermes-title-2); font-weight: 600; color: var(--hermes-text-strong); letter-spacing: -0.025em; }
+.type-h3 { font-size: var(--hermes-title-3); font-weight: 600; color: var(--hermes-text-strong); }
 .spacing-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--hermes-space-6); align-content: start; }
 .spacing-list > div { display: grid; gap: var(--hermes-space-2); font-size: 11px; color: var(--hermes-text-secondary); }
 .spacing-bar { display: block; height: 12px; background: var(--hermes-blue); }

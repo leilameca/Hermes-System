@@ -55,6 +55,7 @@ export const AGENT_ROUTES = space('agente', [
 export const ADMIN_ROUTES = space('admin', [
   screen('dashboard', 'Resumen de tu empresa', 'home'),
   screen('flota', 'Flota', 'vehicles'),
+  screen('flota/nuevo', 'Nuevo vehículo', 'new-vehicle'),
   screen('flota/:id', 'Detalle del vehiculo', 'vehicle'),
   ...DEMO_SPACES.admin.areas.slice(2).map(area => screen(area.path, area.label)),
   screen('perfil', 'Mi perfil'),

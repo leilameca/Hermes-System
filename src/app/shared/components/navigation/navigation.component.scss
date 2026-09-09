@@ -19,7 +19,7 @@ a:focus-visible { outline-color: white; }
   .brand, .nav-label, .nav-footer, .nav-number { display: none; }
   nav { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--hermes-space-2); }
   nav a { flex-direction: column; justify-content: center; gap: 5px; min-height: 68px; padding: var(--hermes-space-2) 0; border-left: 0; border-top: 2px solid transparent; color: var(--hermes-text-secondary); font-size: 10px; }
-  nav a.active { color: var(--hermes-blue); border-top-color: var(--hermes-blue); background: transparent; }
-  nav a:hover { background: var(--hermes-canvas); color: var(--hermes-blue); }
-  a:focus-visible { outline-color: var(--hermes-blue); outline-offset: -4px; }
+  nav a.active { color: var(--hermes-link); border-top-color: var(--hermes-link); background: transparent; }
+  nav a:hover { background: var(--hermes-canvas); color: var(--hermes-link); }
+  a:focus-visible { outline-color: var(--hermes-link); outline-offset: -4px; }
 }

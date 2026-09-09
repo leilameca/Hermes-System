@@ -6,7 +6,7 @@ h1, h2, h3 { color: var(--hermes-heading); font-weight: 600; text-wrap: balance;
 h1 { font-size: var(--hermes-title-1); line-height: 1.12; letter-spacing: -0.045em; }
 h2 { font-size: var(--hermes-title-2); line-height: 1.25; letter-spacing: -0.025em; }
 h3 { font-size: var(--hermes-title-3); line-height: 1.35; letter-spacing: -0.02em; }
-a { color: var(--hermes-blue); text-underline-offset: 5px; }
+a { color: var(--hermes-link); text-underline-offset: 5px; }
 button, input, select, textarea { font: inherit; }
 button { max-width: 100%; }
 input, select, textarea { min-width: 0; }
@@ -30,7 +30,7 @@ td, th, p, a, dd, dt, span, strong, small { overflow-wrap: anywhere; }
 }
 .text-secondary { color: var(--hermes-text-secondary); }
 .text-small { font-size: var(--hermes-text-sm); }
-.text-display { font-size: var(--hermes-display); line-height: 1.1; letter-spacing: -0.045em; color: var(--hermes-navy); }
+.text-display { font-size: var(--hermes-display); line-height: 1.1; letter-spacing: -0.045em; color: var(--hermes-text-strong); }
 .numeral { font-variant-numeric: tabular-nums; }
 .stack { display: grid; gap: var(--hermes-space-6); min-width: 0; }
 .stack > * { min-width: 0; }
@@ -69,6 +69,7 @@ td, th, p, a, dd, dt, span, strong, small { overflow-wrap: anywhere; }
   .metric-grid { grid-template-columns: minmax(0, 1fr); }
   .metric-grid > * { border-left: 0 !important; }
   .metric-grid > * + * { border-top: 1px solid var(--hermes-border); }
+  .page-footer { align-items: flex-start; flex-direction: column; }
 }
 @media (max-width: 539px) { .vehicle-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) {

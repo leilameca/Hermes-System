@@ -16,7 +16,7 @@ import { DEMO_SPACES, DemoRole } from './demo-navigation';
     }</div>
     <p class="notice">Selector temporal con datos locales. No requiere cuenta y las acciones no se conservan al recargar.</p>
   </main></ion-content>`,
-  styles: [`.selector { padding-top: 64px; } h1 { margin: 24px 0; } .intro { margin-bottom: 40px; color: var(--hermes-text-secondary); } .roles { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; margin: 24px 0; } .roles a { display: grid; gap: 16px; padding: 28px; background: white; border: 1px solid var(--hermes-border); text-decoration: none; } .roles a:hover { border-color: var(--hermes-blue); background: var(--hermes-blue-light); } .roles p { color: var(--hermes-text-secondary); } @media(max-width:600px) { .roles { grid-template-columns: 1fr; } .selector { padding-top: 32px; } }`],
+  styles: [`.selector { padding-top: 64px; } h1 { margin: 24px 0; } .intro { margin-bottom: 40px; color: var(--hermes-text-secondary); } .roles { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; margin: 24px 0; } .roles a { display: grid; gap: 16px; padding: 28px; background: var(--hermes-surface); border: 1px solid var(--hermes-border); text-decoration: none; } .roles a:hover { border-color: var(--hermes-link); background: var(--hermes-blue-light); } .roles p { color: var(--hermes-text-secondary); } @media(max-width:600px) { .roles { grid-template-columns: 1fr; } .selector { padding-top: 32px; } }`],
 })
 export class DemoSelectorPage {
   readonly spaces = DEMO_SPACES;

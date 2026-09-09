@@ -2,7 +2,7 @@
 .filters > * { min-width: 0; }
 .results-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--hermes-space-3); margin-block: var(--hermes-space-5); }
 .results-heading p { color: var(--hermes-text-secondary); font-size: var(--hermes-text-sm); }
-.results-heading strong { color: var(--hermes-navy); }
+.results-heading strong { color: var(--hermes-text-strong); }
 @media (max-width: 1199px) { .filters { grid-template-columns: 1fr 1fr; } .filters ion-input { grid-column: 1 / -1; } }
 @media (max-width: 539px) {
   .filters { grid-template-columns: 1fr; }

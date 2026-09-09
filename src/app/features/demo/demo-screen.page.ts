@@ -20,7 +20,7 @@ import { VEHICLES_MOCK } from '../../data/mocks/vehicles.mock';
 import { RESERVATIONS_MOCK } from '../../data/mocks/reservations.mock';
 import { TENANTS_MOCK } from '../../data/mocks/tenants.mock';
 import { CUSTOMERS_MOCK } from '../../data/mocks/customers.mock';
-import { Reservation } from '../../core/models';
+import { Reservation, Vehicle } from '../../core/models';
 import { DEMO_SPACES, DemoRole } from './demo-navigation';
 import { DEMO_RECORDS } from './demo-records';
 import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
@@ -32,6 +32,7 @@ import { AuthDemoService } from '../../core/services/auth-demo.service';
 export class DemoState {
   // TODO Backend: sustituir persistencia mock por API REST cuando inicie la etapa de integracion.
   readonly reservations = signal<readonly Reservation[]>(RESERVATIONS_MOCK.filter(r => r.customerId === 'customer-001'));
+  readonly vehicles = signal<readonly Vehicle[]>(VEHICLES_MOCK.map(vehicle => ({ ...vehicle })));
   readonly steps = signal<Record<string, { checks: boolean[]; evidence: boolean; signed: boolean }>>({});
   readonly incidents = signal([
     { title: 'INC-001 · Rayon en puerta derecha', detail: 'Toyota Corolla · puerta derecha · registrado durante entrega.', status: 'En revision' },
@@ -49,6 +50,9 @@ export class DemoState {
   }
   updatePayment(title: string, status: string) {
     this.payments.update(rows => ({ ...rows, [title]: status }));
+  }
+  addVehicle(vehicle: Vehicle) {
+    this.vehicles.update(rows => [vehicle, ...rows]);
   }
 }
 
@@ -71,10 +75,10 @@ export class DemoScreenPage {
   readonly space = DEMO_SPACES[this.role];
   readonly kind = computed(() => this.data()['kind'] as string);
   readonly id = computed(() => this.params().get('id') ?? '');
-  readonly vehicle = computed(() => VEHICLES_MOCK.find(v => v.id === (this.id() || this.query().get('vehiculo') || 'vehicle-002')));
+  readonly vehicle = computed(() => this.state.vehicles().find(v => v.id === (this.id() || this.query().get('vehiculo') || 'vehicle-002')));
   readonly company = computed(() => TENANTS_MOCK.find(t => t.id === this.id()));
   readonly reservation = computed(() => this.state.reservations().find(r => r.id === this.id()));
-  readonly vehicles = VEHICLES_MOCK;
+  readonly vehicles = this.state.vehicles;
   readonly companies = TENANTS_MOCK;
   readonly customers = CUSTOMERS_MOCK.filter(c => c.tenantId === 'tenant-001');
   readonly statuses = VEHICLE_STATUS;
@@ -86,7 +90,7 @@ export class DemoScreenPage {
   readonly filteredVehicles = computed(() => {
     const term = (this.query().get('q') || '').toLowerCase();
     const category = this.query().get('categoria') || '';
-    return this.vehicles.filter(v => (v.brand + ' ' + v.model).toLowerCase().includes(term) && (!category || v.category === category));
+    return this.vehicles().filter(v => (v.brand + ' ' + v.model).toLowerCase().includes(term) && (!category || v.category === category));
   });
   search = this.route.snapshot.queryParamMap.get('q') || '';
   category = this.route.snapshot.queryParamMap.get('categoria') || '';
@@ -102,6 +106,9 @@ export class DemoScreenPage {
   message = '';
   incident = '';
   scanCode = 'A987601';
+  newVehicle: Pick<Vehicle, 'brand' | 'model' | 'year' | 'plate' | 'category' | 'transmission' | 'seats' | 'dailyRate' | 'mileage' | 'status'> = {
+    brand: '', model: '', year: 2026, plate: '', category: 'suv', transmission: 'automatic', seats: 5, dailyRate: 3500, mileage: 0, status: 'available',
+  };
   readonly checks = ['Carrocería y cristales', 'Neumáticos y luces', 'Combustible y kilometraje', 'Documentos, llaves y accesorios'];
   readonly plans = [
     { name: 'Esencial', price: 1900, detail: 'Hasta 10 vehiculos · una sucursal', features: ['Reservas', 'Contratos', 'Soporte por correo'] },
@@ -175,9 +182,9 @@ export class DemoScreenPage {
   ];
   link(path: string) { return '/' + this.role + '/' + path; }
   vehicleLink(id: string) { return this.link((this.role === 'admin' ? 'flota/' : 'vehiculos/') + id); }
-  vehicleName(id: string) { const v = VEHICLES_MOCK.find(v => v.id === id); return v ? v.brand + ' ' + v.model : 'Vehículo'; }
-  vehicleImage(id: string) { return VEHICLES_MOCK.find(v => v.id === id)?.imageUrl ?? 'assets/images/vehicles/tucson.jpg'; }
-  vehiclePlate(id: string) { return VEHICLES_MOCK.find(v => v.id === id)?.plate ?? 'PPA-0000'; }
+  vehicleName(id: string) { const v = this.vehicles().find(v => v.id === id); return v ? v.brand + ' ' + v.model : 'Vehículo'; }
+  vehicleImage(id: string) { return this.vehicles().find(v => v.id === id)?.imageUrl ?? 'assets/images/vehicles/tucson.jpg'; }
+  vehiclePlate(id: string) { return this.vehicles().find(v => v.id === id)?.plate ?? 'PPA-0000'; }
   categoryLabel(category: string) { return category === 'suv' ? 'SUV' : category === 'sedan' ? 'Sedán' : category; }
   companyNameFor(id: string) { return TENANTS_MOCK.find(t => t.id === id)?.name ?? this.companiesSummary.find(t => t.id === id)?.name ?? 'Empresa Hermes'; }
   companyCityFor(id: string) { return TENANTS_MOCK.find(t => t.id === id)?.city ?? this.companiesSummary.find(t => t.id === id)?.city ?? 'República Dominicana'; }
@@ -197,8 +204,27 @@ export class DemoScreenPage {
     this.state.reservations.update(rows => [...rows, reservation]);
     void this.router.navigate([this.link('reservas/' + reservation.id)]);
   }
+  createVehicle() {
+    const plate = this.newVehicle.plate.trim().toUpperCase();
+    if (!this.newVehicle.brand.trim() || !this.newVehicle.model.trim() || !plate) return;
+    const id = 'vehicle-' + String(Date.now());
+    const imageUrl = this.newVehicle.category === 'sedan' ? 'assets/images/vehicles/corolla.jpg' : this.newVehicle.category === 'van' ? 'assets/images/vehicles/sportage.jpg' : 'assets/images/vehicles/tucson.jpg';
+    this.state.addVehicle({
+      ...this.newVehicle,
+      id,
+      tenantId: 'tenant-001',
+      branchId: 'branch-001',
+      currency: 'DOP',
+      brand: this.newVehicle.brand.trim(),
+      model: this.newVehicle.model.trim(),
+      plate,
+      imageUrl,
+      imageAlt: `${this.newVehicle.brand.trim()} ${this.newVehicle.model.trim()} agregado a la flota Hermes.`,
+    });
+    void this.router.navigateByUrl(this.link('flota/' + id));
+  }
   scan() {
-    const found = this.vehicles.find(v => v.plate.toLowerCase() === this.scanCode.trim().toLowerCase() || v.id === this.scanCode.trim());
+    const found = this.vehicles().find(v => v.plate.toLowerCase() === this.scanCode.trim().toLowerCase() || v.id === this.scanCode.trim());
     if (found) void this.router.navigate([this.vehicleLink(found.id)]);
     else this.message = 'No se encontró esa placa. Prueba A987601 o G987602.';
   }

@@ -17,10 +17,10 @@ import { OfflineService } from '../../../core/services/offline.service';
   `,
   styles: [`
     :host { display: block; }
-    .offline-banner { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; min-height: 42px; padding: 9px 28px; border-bottom: 1px solid rgba(208,138,50,.35); background: var(--hermes-amber-light); color: var(--hermes-navy); font-size: 13px; }
+    .offline-banner { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; min-height: 42px; padding: 9px 28px; border-bottom: 1px solid rgba(208,138,50,.35); background: var(--hermes-amber-light); color: var(--hermes-text-strong); font-size: 13px; }
     .offline-banner strong { font-weight: 800; }
     .offline-banner span { color: var(--hermes-graphite); }
-    .offline-banner small { font-weight: 800; color: var(--hermes-blue); }
+    .offline-banner small { font-weight: 800; color: var(--hermes-link); }
     .offline-banner.recovered { border-color: var(--hermes-border); background: var(--hermes-blue-light); }
     @media(max-width:767px) {
       .offline-banner { grid-template-columns: 1fr auto; padding-inline: 16px; }

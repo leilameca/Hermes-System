@@ -20,7 +20,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
     .desktop-heading span { padding-inline: var(--hermes-space-3); color: var(--hermes-muted); }
     .header-actions { display: inline-flex; align-items: center; gap: 12px; }
     .demo-label { color: var(--hermes-text-secondary); font-size: 11px; white-space: nowrap; }
-    .mobile-brand { display: none; color: var(--hermes-navy); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; text-decoration: none; }
+    .mobile-brand { display: none; color: var(--hermes-text-strong); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; text-decoration: none; }
     .mobile-brand span { font-size: 9px; font-weight: 400; letter-spacing: 0.12em; }
     @media (max-width: 1199px) { header { padding-inline: var(--hermes-space-8); } }
     @media (max-width: 767px) {

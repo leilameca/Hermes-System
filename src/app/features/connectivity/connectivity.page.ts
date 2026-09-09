@@ -57,7 +57,7 @@ import { OfflineService } from '../../core/services/offline.service';
     .status-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 14px; }
     .status-grid article { display: grid; gap: 8px; min-height: 100px; padding: 18px; border: 1px solid var(--hermes-border); border-radius: 6px; background: var(--hermes-surface); }
     .status-grid span { color: var(--hermes-text-secondary); font-size: 13px; }
-    .status-grid strong { color: var(--hermes-navy); font-size: 22px; }
+    .status-grid strong { color: var(--hermes-text-strong); font-size: 22px; }
     .panel { padding: 20px; border: 1px solid var(--hermes-border); border-radius: 6px; background: var(--hermes-surface); }
     .button { display: inline-flex; align-items: center; justify-content: center; justify-self: start; min-height: 44px; padding: 10px 16px; border: 1px solid var(--hermes-blue); border-radius: 4px; background: var(--hermes-blue); color: white; cursor: pointer; }
     @media(max-width:960px) { .status-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }

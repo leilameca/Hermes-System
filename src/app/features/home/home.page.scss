@@ -4,7 +4,7 @@
 .featured-copy h2 { margin-top: var(--hermes-space-3); font-size: clamp(2.5rem, 4vw, 3.75rem); line-height: 1; letter-spacing: -0.045em; }
 .featured-description { margin-top: var(--hermes-space-4); color: var(--hermes-text-secondary); font-size: var(--hermes-text-sm); }
 .featured-price { font-size: var(--hermes-text-sm); color: var(--hermes-text-secondary); }
-.featured-price strong { color: var(--hermes-navy); font-size: 22px; font-weight: 500; }
+.featured-price strong { color: var(--hermes-text-strong); font-size: 22px; font-weight: 500; }
 .featured figure { min-width: 0; }
 figcaption { display: flex; justify-content: space-between; gap: var(--hermes-space-3); margin-top: var(--hermes-space-3); font-size: 10px; letter-spacing: 0.04em; color: var(--hermes-text-secondary); }
 .section-heading h2 { margin-top: var(--hermes-space-2); }
@@ -12,7 +12,7 @@ figcaption { display: flex; justify-content: space-between; gap: var(--hermes-sp
 .record-count { color: var(--hermes-text-secondary); font-size: var(--hermes-text-xs); white-space: nowrap; }
 .reservation-list, .company-list { padding: 0; margin: 0; list-style: none; border-top: 1px solid var(--hermes-border); }
 .reservation-list li { display: flex; align-items: center; gap: var(--hermes-space-5); padding-block: var(--hermes-space-6); border-bottom: 1px solid var(--hermes-border); }
-.reservation-date { min-width: 36px; display: grid; text-align: center; color: var(--hermes-navy); }
+.reservation-date { min-width: 36px; display: grid; text-align: center; color: var(--hermes-text-strong); }
 .reservation-date strong { font-size: 28px; font-weight: 400; line-height: 1.1; }
 .reservation-date span { font-size: 10px; text-transform: uppercase; margin-top: var(--hermes-space-1); }
 .reservation-info { flex: 1; min-width: 0; }

@@ -59,7 +59,7 @@ import { VEHICLE_CATEGORY, VEHICLE_STATUS } from '../../shared/presentation/vehi
     .spec-list div { display: flex; justify-content: space-between; gap: var(--hermes-space-4); padding-block: var(--hermes-space-3); border-bottom: 1px solid var(--hermes-border); font-size: var(--hermes-text-sm); }
     dt { color: var(--hermes-text-secondary); }
     dd { margin: 0; text-align: right; }
-    .rate strong { font-size: 30px; font-weight: 500; color: var(--hermes-navy); }
+    .rate strong { font-size: 30px; font-weight: 500; color: var(--hermes-text-strong); }
     .rate > p + p { margin-top: var(--hermes-space-2); }
     figcaption { margin-top: var(--hermes-space-3); color: var(--hermes-text-secondary); font-size: var(--hermes-text-xs); }
     @media (max-width: 1199px) { .detail-grid { grid-template-columns: 1fr; } }

@@ -18,6 +18,11 @@
   --hermes-critical-light: #FBF0F0;
   --hermes-amber-light: #FBF3E8;
   --hermes-heading: var(--hermes-navy);
+  --hermes-text-strong: var(--hermes-navy);
+  --hermes-link: var(--hermes-blue);
+  --hermes-action: var(--hermes-blue);
+  --hermes-field: #FFFFFF;
+  --hermes-hover: #FBFAF7;
   --hermes-space-1: 4px;
   --hermes-space-2: 8px;
   --hermes-space-3: 12px;
@@ -73,6 +78,11 @@ html[data-theme='dark'] {
   --hermes-critical-light: #311B21;
   --hermes-amber-light: #2D2417;
   --hermes-heading: #F8FAFC;
+  --hermes-text-strong: #F8FAFC;
+  --hermes-link: #8CB4FF;
+  --hermes-action: #315FAE;
+  --hermes-field: #0B1324;
+  --hermes-hover: #172238;
 
   --ion-background-color: var(--hermes-canvas);
   --ion-text-color: var(--hermes-graphite);
@@ -84,6 +94,7 @@ html[data-theme='dark'] {
   body,
   ion-content {
     background: var(--hermes-canvas);
+    color: var(--hermes-graphite);
   }
 
   h1,
@@ -119,7 +130,7 @@ html[data-theme='dark'] {
   .input-shell,
   .icon-button,
   .date-control {
-    background: #0B1324;
+    background: var(--hermes-field);
     color: var(--hermes-graphite);
     border-color: var(--hermes-control-border);
   }

@@ -4,7 +4,7 @@ ion-button {
   --box-shadow: none;
   --padding-start: var(--hermes-space-5);
   --padding-end: var(--hermes-space-5);
-  --background: var(--hermes-blue);
+  --background: var(--hermes-action);
   --background-hover: var(--hermes-navy);
   --background-activated: var(--hermes-navy);
   --color: var(--hermes-surface);
@@ -21,10 +21,10 @@ ion-button[fill='outline'], ion-button[fill='clear'] {
   --background: transparent;
   --background-hover: var(--hermes-blue-light);
   --background-activated: var(--hermes-blue-light);
-  --color: var(--hermes-blue);
+  --color: var(--hermes-link);
   --color-hover: var(--hermes-navy);
   --color-activated: var(--hermes-navy);
-  --border-color: var(--hermes-blue);
+  --border-color: var(--hermes-link);
   --border-width: 1px;
 }
 ion-button::part(native):focus-visible { outline: 2px solid var(--hermes-blue); outline-offset: 3px; }
@@ -55,4 +55,4 @@ ion-checkbox { --border-radius: 2px; --checkbox-background-checked: var(--hermes
 ion-toggle { --track-background-checked: var(--hermes-blue); }
 ion-alert { --background: var(--hermes-surface); }
 ion-content { --background: var(--hermes-canvas); }
-ion-spinner { color: var(--hermes-blue); }
+ion-spinner { color: var(--hermes-link); }
