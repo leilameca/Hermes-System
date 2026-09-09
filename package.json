@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "ng serve",
+    "start:mobile": "ng serve --host 0.0.0.0",
     "ionic:serve": "ng serve",
     "build": "ng build",
     "ionic:build": "ng build",

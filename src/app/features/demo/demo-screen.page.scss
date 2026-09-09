@@ -122,6 +122,14 @@ input, select, textarea { width: 100%; min-height: 48px; padding: 10px 12px; bor
 form { max-width: 720px; width: 100%; }
 .vehicle-form { max-width: 900px; }
 .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.vehicle-photo-upload { display: grid; grid-template-columns: minmax(0,1fr) minmax(220px,320px); gap: 18px; align-items: center; padding: 16px; border: 1px dashed var(--hermes-control-border); border-radius: 6px; background: var(--hermes-canvas); }
+.vehicle-photo-copy { display: grid; gap: 8px; }
+.vehicle-photo-copy p, .vehicle-photo-preview figcaption { color: var(--hermes-text-secondary); font-size: 12px; }
+.file-input { position: absolute; width: 1px; height: 1px; min-height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.file-input:focus-visible + label { outline: 2px solid var(--hermes-link); outline-offset: 3px; }
+.vehicle-photo-preview { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px 10px; align-items: center; margin: 0; }
+.vehicle-photo-preview img { grid-column: 1 / -1; width: 100%; height: 150px; object-fit: cover; border-radius: 4px; }
+.vehicle-photo-preview button { border: 0; background: transparent; color: var(--hermes-critical); cursor: pointer; font-weight: 700; }
 .check { display: flex; align-items: center; gap: 12px; min-height: 44px; }
 .check input { width: 22px; height: 22px; min-height: 22px; flex-shrink: 0; }
 .badge { align-self: center; width: fit-content; display: inline-block; padding: 5px 9px; background: var(--hermes-blue-light); color: var(--hermes-link); font-size: 12px; font-weight: 700; border-radius: 3px; white-space: nowrap; }
@@ -201,6 +209,7 @@ details p { margin-top: 12px; }
   .fleet-toolbar { grid-template-columns: minmax(0,1fr) auto; }
   .fleet-toolbar .button { grid-column: 1 / -1; }
   .form-grid { grid-template-columns: 1fr; }
+  .vehicle-photo-upload { grid-template-columns: 1fr; }
   .mini-grid { grid-template-columns: 1fr; }
   .timeline-row { grid-template-columns: 52px 1fr; }
   .kpi-grid { grid-template-columns: 1fr; }

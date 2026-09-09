@@ -165,6 +165,11 @@
     @case ('new-vehicle') {
       <form class="panel stack vehicle-form" (ngSubmit)="createVehicle()">
         <div><p class="eyebrow">Registro de flota</p><h2>Datos del vehículo</h2><p class="text-secondary">El vehículo se guardará temporalmente en esta sesión.</p></div>
+        <section class="vehicle-photo-upload" aria-labelledby="vehicle-photo-title">
+          <div class="vehicle-photo-copy"><h3 id="vehicle-photo-title">Fotografía del vehículo</h3><p>JPG, PNG o WEBP · máximo 5 MB.</p><input #vehiclePhoto id="vehicle-photo" class="file-input" name="vehiclePhoto" type="file" accept="image/jpeg,image/png,image/webp" (change)="selectVehicleImage($event)"><label class="button secondary" for="vehicle-photo">Seleccionar fotografía</label></div>
+          @if (vehicleImagePreview) { <figure class="vehicle-photo-preview"><img [src]="vehicleImagePreview" alt="Vista previa del nuevo vehículo"><figcaption>{{ vehicleImageName }}</figcaption><button type="button" (click)="clearVehicleImage(vehiclePhoto)">Quitar fotografía</button></figure> }
+        </section>
+        @if (vehicleImageError) { <p class="notice notice--critical" role="alert">{{ vehicleImageError }}</p> }
         <div class="form-grid">
           <label>Marca<input name="brand" [(ngModel)]="newVehicle.brand" placeholder="Ej. Toyota" required></label>
           <label>Modelo<input name="model" [(ngModel)]="newVehicle.model" placeholder="Ej. RAV4" required></label>

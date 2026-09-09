@@ -109,6 +109,9 @@ export class DemoScreenPage {
   newVehicle: Pick<Vehicle, 'brand' | 'model' | 'year' | 'plate' | 'category' | 'transmission' | 'seats' | 'dailyRate' | 'mileage' | 'status'> = {
     brand: '', model: '', year: 2026, plate: '', category: 'suv', transmission: 'automatic', seats: 5, dailyRate: 3500, mileage: 0, status: 'available',
   };
+  vehicleImagePreview = '';
+  vehicleImageName = '';
+  vehicleImageError = '';
   readonly checks = ['Carrocería y cristales', 'Neumáticos y luces', 'Combustible y kilometraje', 'Documentos, llaves y accesorios'];
   readonly plans = [
     { name: 'Esencial', price: 1900, detail: 'Hasta 10 vehiculos · una sucursal', features: ['Reservas', 'Contratos', 'Soporte por correo'] },
@@ -208,7 +211,7 @@ export class DemoScreenPage {
     const plate = this.newVehicle.plate.trim().toUpperCase();
     if (!this.newVehicle.brand.trim() || !this.newVehicle.model.trim() || !plate) return;
     const id = 'vehicle-' + String(Date.now());
-    const imageUrl = this.newVehicle.category === 'sedan' ? 'assets/images/vehicles/corolla.jpg' : this.newVehicle.category === 'van' ? 'assets/images/vehicles/sportage.jpg' : 'assets/images/vehicles/tucson.jpg';
+    const fallbackImage = this.newVehicle.category === 'sedan' ? 'assets/images/vehicles/corolla.jpg' : this.newVehicle.category === 'van' ? 'assets/images/vehicles/sportage.jpg' : 'assets/images/vehicles/tucson.jpg';
     this.state.addVehicle({
       ...this.newVehicle,
       id,
@@ -218,10 +221,39 @@ export class DemoScreenPage {
       brand: this.newVehicle.brand.trim(),
       model: this.newVehicle.model.trim(),
       plate,
-      imageUrl,
+      imageUrl: this.vehicleImagePreview || fallbackImage,
       imageAlt: `${this.newVehicle.brand.trim()} ${this.newVehicle.model.trim()} agregado a la flota Hermes.`,
     });
     void this.router.navigateByUrl(this.link('flota/' + id));
+  }
+  selectVehicleImage(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.vehicleImageError = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.vehicleImageError = 'Selecciona un archivo de imagen válido.';
+      input.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.vehicleImageError = 'La imagen no puede superar 5 MB.';
+      input.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.vehicleImagePreview = typeof reader.result === 'string' ? reader.result : '';
+      this.vehicleImageName = file.name;
+    };
+    reader.onerror = () => { this.vehicleImageError = 'No pudimos leer esta imagen.'; };
+    reader.readAsDataURL(file);
+  }
+  clearVehicleImage(input: HTMLInputElement) {
+    this.vehicleImagePreview = '';
+    this.vehicleImageName = '';
+    this.vehicleImageError = '';
+    input.value = '';
   }
   scan() {
     const found = this.vehicles().find(v => v.plate.toLowerCase() === this.scanCode.trim().toLowerCase() || v.id === this.scanCode.trim());

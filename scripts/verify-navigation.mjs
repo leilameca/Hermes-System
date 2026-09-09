@@ -137,8 +137,10 @@ try {
 
   await evaluate("localStorage.setItem('hermes.mock.session', 'admin@hermes.app')");
   await open('/admin/flota/nuevo');
+  await evaluate("(() => { const input=document.querySelector('input[type=file]'); const file=new File(['<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"24\"><rect width=\"40\" height=\"24\" fill=\"navy\"/></svg>'],'nissan-kicks.svg',{type:'image/svg+xml'}); Object.defineProperty(input,'files',{value:[file],configurable:true}); input.dispatchEvent(new Event('change',{bubbles:true})); })()");
+  await until("document.querySelector('.vehicle-photo-preview img')?.src.startsWith('data:image/svg+xml')");
   await evaluate("(() => { const form=document.querySelector('.vehicle-form'); const set=(name,value)=>{const el=form.querySelector('[name='+name+']'); el.value=value; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));}; set('brand','Nissan'); set('model','Kicks'); set('plate','G456789'); form.querySelector('button[type=submit]').click(); })()");
-  await until("location.pathname.startsWith('/admin/flota/vehicle-') && document.body.innerText.includes('Nissan Kicks')");
+  await until("location.pathname.startsWith('/admin/flota/vehicle-') && document.body.innerText.includes('Nissan Kicks') && document.querySelector('.detail > img')?.src.startsWith('data:image/svg+xml')");
 
   await evaluate("document.documentElement.dataset.theme='dark'");
   assert.ok(await evaluate("(() => { const el=document.querySelector('.panel h2'); const bg=getComputedStyle(el.closest('.panel')).backgroundColor; const fg=getComputedStyle(el).color; const rgb=s=>s.match(/\\d+/g).slice(0,3).map(Number); const lum=c=>{const v=rgb(c).map(x=>x/255).map(x=>x<=.03928?x/12.92:((x+.055)/1.055)**2.4); return .2126*v[0]+.7152*v[1]+.0722*v[2]}; const a=lum(bg),b=lum(fg); return (Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5; })()"), 'Contraste de texto insuficiente en modo oscuro');
@@ -178,7 +180,7 @@ try {
   }
 
   assert.deepEqual(errors, []);
-  console.log(`OK: login, alta mock de vehículo, contraste oscuro/claro, 4 usuarios, ${count} rutas y responsive sin colisiones.`);
+  console.log(`OK: login, carga y vista previa de fotografía, alta mock de vehículo, contraste oscuro/claro, 4 usuarios, ${count} rutas y responsive sin colisiones.`);
 } finally {
   chrome.kill('SIGKILL');
   chrome.stdio[3]?.destroy();
