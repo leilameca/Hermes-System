@@ -40,19 +40,14 @@
           </span>
         </label>
 
-        <div class="form-options">
-          <label class="remember"><input type="checkbox" name="remember"> Recordar sesión</label>
-          <button type="button" class="forgot">¿Olvidaste tu contraseña?</button>
-        </div>
-
         <button class="primary" type="submit" [disabled]="loading || !email || !password">
           <span>{{ loading ? 'Validando...' : 'Iniciar sesión' }}</span><ion-icon [icon]="arrowIcon" aria-hidden="true" />
         </button>
       </form>
 
       <aside class="demo-access" aria-labelledby="demo-access-title">
-        <h3 id="demo-access-title">Accesos rápidos</h3>
-        <p>Selecciona un perfil para completar las credenciales.</p>
+        <h3 id="demo-access-title">Cuentas iniciales de prueba</h3>
+        <p>Selecciona un perfil para completar el correo durante el desarrollo.</p>
         <div class="profiles">
           @for (user of demoUsers; track user.email) {
             <button type="button" (click)="fill(user)">

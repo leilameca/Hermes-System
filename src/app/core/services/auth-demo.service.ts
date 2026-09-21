@@ -1,44 +1,13 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { DemoRole } from '../../features/demo/demo-navigation';
+import { Injectable, inject } from '@angular/core';
+import { AuthService } from './auth.service';
 
-export interface DemoUser {
-  email: string;
-  password: string;
-  name: string;
-  role: DemoRole;
-  home: string;
-}
-
-const STORAGE_KEY = 'hermes.mock.session';
-
-export const DEMO_USERS: readonly DemoUser[] = [
-  { email: 'cliente@hermes.app', password: 'Hermes123', name: 'Laura Méndez', role: 'cliente', home: '/cliente/inicio' },
-  { email: 'agente@hermes.app', password: 'Hermes123', name: 'Carlos Reyes', role: 'agente', home: '/agente/inicio' },
-  { email: 'admin@hermes.app', password: 'Hermes123', name: 'Mariana Soto', role: 'admin', home: '/admin/dashboard' },
-  { email: 'superadmin@hermes.app', password: 'Hermes123', name: 'Valeria Núñez', role: 'super-admin', home: '/super-admin/dashboard' },
-];
-
+// Adaptador temporal para las pantallas existentes mientras se completa la migracion.
 @Injectable({ providedIn: 'root' })
 export class AuthDemoService {
-  private readonly activeUser = signal<DemoUser | null>(this.restore());
-  readonly user = this.activeUser.asReadonly();
-  readonly isLoggedIn = computed(() => this.activeUser() !== null);
+  private readonly auth = inject(AuthService);
+  readonly user = this.auth.user;
 
-  login(email: string, password: string): DemoUser | null {
-    const normalized = email.trim().toLowerCase();
-    const user = DEMO_USERS.find(row => row.email === normalized && row.password === password) ?? null;
-    this.activeUser.set(user);
-    if (user) localStorage.setItem(STORAGE_KEY, user.email);
-    return user;
-  }
-
-  logout() {
-    this.activeUser.set(null);
-    localStorage.removeItem(STORAGE_KEY);
-  }
-
-  private restore(): DemoUser | null {
-    const email = localStorage.getItem(STORAGE_KEY);
-    return DEMO_USERS.find(user => user.email === email) ?? null;
+  logout(): Promise<void> {
+    return this.auth.logout();
   }
 }

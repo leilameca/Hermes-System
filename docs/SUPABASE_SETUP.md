@@ -47,8 +47,19 @@ El GPS del telefono registra el lugar de una operacion. El seguimiento permanent
 
 ## Siguiente etapa
 
-1. Crear el registro inicial de la empresa y su administrador.
-2. Sustituir el inicio de sesion de demostracion por Supabase Auth.
-3. Migrar vehiculos sin cambiar la interfaz actual.
-4. Guardar las asociaciones NFC en `nfc_tags`.
-5. Conectar reservas, contratos, entregas y devoluciones.
+1. Ejecutar `202609210002_auth_roles_and_customers.sql`.
+2. Crear las cuatro cuentas iniciales desde **Authentication / Users**.
+3. Ejecutar `select * from public.configure_demo_accounts();` en SQL Editor.
+4. Verificar el acceso de cada perfil.
+5. Migrar vehiculos sin cambiar la interfaz actual.
+6. Guardar las asociaciones NFC en `nfc_tags`.
+7. Conectar reservas, contratos, entregas y devoluciones.
+
+## Desarrollo y despliegue web
+
+HERMES puede utilizarse como aplicacion web mientras se desarrollan los modulos. El archivo `vercel.json` prepara el proyecto para Vercel y conserva las rutas de Angular al actualizar el navegador.
+
+- Comando de construccion: `npm run build`
+- Carpeta publicada: `www`
+- NFC: disponible en la aplicacion nativa; la web mostrara su alternativa operativa.
+- GPS del telefono: requiere permiso del navegador y se usara solamente en operaciones autorizadas.
