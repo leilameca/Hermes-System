@@ -1,0 +1,87 @@
+<ion-content>
+  <main class="nfc-page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Operaciones / Identificación NFC</p>
+        <h1>Identifica un vehículo con un toque.</h1>
+        <p>Acerca una etiqueta NFC para abrir la ficha correcta y registrar una inspección, incluso sin Internet.</p>
+      </div>
+      <div class="adapter" [class.adapter--ready]="status() === 'ready'">
+        <ion-icon [icon]="radioIcon" aria-hidden="true" />
+        <span>Estado del dispositivo</span>
+        <strong>{{ statusLabel() }}</strong>
+      </div>
+    </header>
+
+    @if (status() === 'web') {
+      <p class="notice notice--warning" role="status">La interfaz puede revisarse en el navegador, pero la lectura y escritura se habilitan al instalar HERMES en un teléfono Android con NFC.</p>
+    }
+    @if (status() === 'disabled') {
+      <div class="notice notice--warning actions"><span>El NFC está apagado en este teléfono.</span><ion-button size="small" (click)="openSettings()">Abrir ajustes</ion-button></div>
+    }
+    @if (error()) { <p class="notice notice--critical" role="alert">{{ error() }}</p> }
+
+    <section class="action-grid" aria-label="Acciones NFC">
+      <article>
+        <p class="eyebrow">Lectura</p>
+        <h2>Escanear un vehículo</h2>
+        <p>Lee el identificador guardado en una etiqueta y valida que exista en la flota.</p>
+        @if (!scanning()) {
+          <ion-button (click)="startReading()"><ion-icon slot="start" [icon]="scanIcon" />Iniciar lectura</ion-button>
+        } @else {
+          <div class="scanning" aria-live="polite"><span class="scan-wave" aria-hidden="true"></span><strong>Acerca la etiqueta al teléfono…</strong></div>
+          <ion-button fill="outline" color="danger" (click)="stopScanning()"><ion-icon slot="start" [icon]="stopIcon" />Cancelar</ion-button>
+        }
+      </article>
+
+      <article>
+        <p class="eyebrow">Configuración</p>
+        <h2>Asignar una etiqueta</h2>
+        <p>Selecciona un vehículo y graba su identificador en una etiqueta NFC regrabable.</p>
+        <ion-select label="Vehículo" labelPlacement="stacked" fill="outline" [ngModel]="selectedVehicleId()" (ngModelChange)="selectedVehicleId.set($event)">
+          @for (vehicle of vehicles(); track vehicle.id) {
+            <ion-select-option [value]="vehicle.id">{{ vehicle.brand }} {{ vehicle.model }} · {{ vehicle.plate }}</ion-select-option>
+          }
+        </ion-select>
+        <ion-button fill="outline" [disabled]="scanning()" (click)="writeTag()">Preparar etiqueta</ion-button>
+      </article>
+    </section>
+
+    @if (writeResult(); as result) {
+      <section class="result result--success" aria-live="polite">
+        <p class="eyebrow">Escritura completada</p>
+        <h2>Etiqueta asignada correctamente.</h2>
+        <dl><div><dt>Identificador</dt><dd>{{ result.value }}</dd></div><div><dt>Fecha</dt><dd>{{ result.writtenAt | date:'dd/MM/yyyy, HH:mm:ss' }}</dd></div></dl>
+      </section>
+    }
+
+    @if (scan(); as result) {
+      @if (result.vehicle; as vehicle) {
+        <section class="result vehicle-result" aria-live="polite">
+          <div class="vehicle-photo"><hermes-vehicle-image [src]="vehicle.imageUrl" [alt]="vehicle.imageAlt || vehicle.model" /></div>
+          <div class="vehicle-info">
+            <p class="eyebrow">Vehículo identificado</p>
+            <h2>{{ vehicle.brand }} {{ vehicle.model }}</h2>
+            <dl>
+              <div><dt>Placa</dt><dd>{{ vehicle.plate }}</dd></div>
+              <div><dt>Año</dt><dd>{{ vehicle.year }}</dd></div>
+              <div><dt>ID de etiqueta</dt><dd>{{ result.tagId }}</dd></div>
+              <div><dt>Lectura</dt><dd>{{ result.scannedAt | date:'dd/MM/yyyy, HH:mm:ss' }}</dd></div>
+            </dl>
+            <div class="actions">
+              <ion-button (click)="saveInspection()">Registrar inspección</ion-button>
+              <ion-button fill="outline" [routerLink]="['/agente/vehiculos', vehicle.id]">Ver ficha</ion-button>
+            </div>
+          </div>
+        </section>
+      }
+    }
+
+    @if (operationMessage()) { <p class="notice" role="status">{{ operationMessage() }}</p> }
+
+    <footer class="evidence-note">
+      <strong>Formato de etiqueta:</strong><code>HERMES_VEHICLE:vehicle-001</code>
+      <span>Los datos de demostración son ficticios y se almacenan localmente.</span>
+    </footer>
+  </main>
+</ion-content>

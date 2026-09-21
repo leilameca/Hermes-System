@@ -1,0 +1,12 @@
+ENTREGABLE 1 - DETECTOR DE ESTADO DE RED
+
+Incluye:
+- detección inicial con Network.getStatus()
+- listener en tiempo real con networkStatusChange
+- estado connected
+- connectionType
+- indicador visual offline/reconexión
+
+Ubicaciones originales:
+src/app/core/services/network.service.ts
+src/app/shared/components/offline-banner/offline-banner.component.ts

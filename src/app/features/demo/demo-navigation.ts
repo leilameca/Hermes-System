@@ -10,7 +10,9 @@ import {
   documentTextOutline,
   gridOutline,
   homeOutline,
+  locationOutline,
   peopleOutline,
+  personAddOutline,
   personCircleOutline,
   receiptOutline,
   scanOutline,
@@ -45,6 +47,8 @@ export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
   admin: { label: 'Administrador', description: 'Una vision completa de tu empresa de alquiler.', home: 'dashboard', areas: [
     { path: 'dashboard', label: 'Resumen', icon: gridOutline },
     { path: 'flota', label: 'Flota', icon: carSportOutline },
+    { path: 'sucursales', label: 'Sucursales', icon: businessOutline },
+    { path: 'usuarios', label: 'Usuarios y permisos', icon: personAddOutline },
     { path: 'reservas', label: 'Reservas', icon: calendarClearOutline },
     { path: 'operaciones', label: 'Operaciones', icon: swapHorizontalOutline },
     { path: 'clientes', label: 'Clientes', icon: peopleOutline },
@@ -52,6 +56,7 @@ export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
     { path: 'contratos', label: 'Contratos', icon: documentTextOutline },
     { path: 'facturacion', label: 'Facturacion', icon: cardOutline },
     { path: 'mantenimiento', label: 'Mantenimiento', icon: constructOutline },
+    { path: 'gps', label: 'Ubicaciones GPS', icon: locationOutline },
     { path: 'configuracion', label: 'Configuracion', icon: settingsOutline },
   ] },
   'super-admin': { label: 'Super Admin', description: 'Supervisa las empresas y la plataforma Hermes.', home: 'dashboard', areas: [

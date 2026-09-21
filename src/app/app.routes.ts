@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { guestOnlyGuard, roleGuard } from './core/services/auth-demo.guard';
+import { authenticatedGuard, guestOnlyGuard, roleGuard, rolesGuard } from './core/services/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -12,12 +12,16 @@ export const routes: Routes = [
   { path: 'inicio', redirectTo: 'login', pathMatch: 'full' },
   { path: 'flota', redirectTo: 'admin/flota', pathMatch: 'full' },
   { path: 'flota/:id', redirectTo: 'admin/flota/:id' },
-  { path: 'sistema-visual', loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
+  { path: 'sistema-visual', canMatch: [authenticatedGuard], loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
     { path: '', title: 'Sistema visual · Hermes System', loadComponent: () => import('./features/design-system/design-system.page').then(m => m.DesignSystemPage) },
   ] },
   // Abre la pantalla usada para revisar la conexión y la cola local
-  { path: 'conectividad', loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
+  { path: 'conectividad', canMatch: [authenticatedGuard], loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
     { path: '', title: 'Conectividad · Hermes System', loadComponent: () => import('./features/connectivity/connectivity.page').then(m => m.ConnectivityPage) },
+  ] },
+  // Acceso directo para las pruebas y evidencias de la actividad NFC.
+  { path: 'nfc', canMatch: [rolesGuard(['agente', 'admin'])], loadComponent: () => import('./layouts/workspace-layout/workspace-layout.component').then(m => m.WorkspaceLayoutComponent), children: [
+    { path: '', title: 'NFC · Hermes System', loadComponent: () => import('./features/nfc/nfc.page').then(m => m.NfcPage) },
   ] },
   { path: '**', title: 'Pagina no encontrada · Hermes System', loadComponent: () => import('./features/not-found/not-found.page').then(m => m.NotFoundPage) },
 ];

@@ -140,7 +140,7 @@ export class DemoLayoutComponent {
   }
 
   private morePaths() {
-    if (this.role === 'admin') return ['clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'configuracion'];
+    if (this.role === 'admin') return ['sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'configuracion'];
     return [];
   }
 

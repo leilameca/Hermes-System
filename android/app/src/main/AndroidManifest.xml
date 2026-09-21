@@ -38,4 +38,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permite leer y escribir etiquetas NFC desde el complemento nativo de Capacitor. -->
+    <uses-permission android:name="android.permission.NFC" />
+    <!-- Se declara como opcional para que HERMES también pueda instalarse en equipos sin NFC. -->
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
 </manifest>

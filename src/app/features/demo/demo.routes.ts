@@ -38,7 +38,8 @@ export const CLIENT_ROUTES = space('cliente', [
 export const AGENT_ROUTES = space('agente', [
   screen('inicio', 'Tu jornada de operaciones', 'home'),
   screen('operaciones', 'Operaciones'),
-  screen('escanear', 'Escanear vehiculo', 'scan'),
+  // Esta ruta usa el lector NFC real en lugar de la pantalla demostrativa genérica.
+  { path: 'escanear', title: 'Escanear vehículo · Hermes System', loadComponent: () => import('../nfc/nfc.page').then(m => m.NfcPage) },
   screen('vehiculos/:id', 'Detalle del vehiculo', 'vehicle'),
   screen('entrega/:id', 'Entrega del vehiculo', 'handover'),
   screen('entrega/:id/checklist', 'Checklist de entrega', 'checklist', { flow: 'entrega' }),
