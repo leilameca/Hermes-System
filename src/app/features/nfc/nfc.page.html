@@ -43,6 +43,9 @@
             <ion-select-option [value]="vehicle.id">{{ vehicle.brand }} {{ vehicle.model }} · {{ vehicle.plate }}</ion-select-option>
           }
         </ion-select>
+        <ion-input label="Nombre visible de la etiqueta" labelPlacement="stacked" fill="outline"
+          placeholder="Ej.: Llave Toyota Corolla A987601" [ngModel]="tagLabel()" (ngModelChange)="tagLabel.set($event)" />
+        <p class="field-help">El nombre se guarda en HERMES. La tarjeta recibe un token seguro, no los datos privados del vehículo.</p>
         <ion-button fill="outline" [disabled]="scanning()" (click)="writeTag()">Preparar etiqueta</ion-button>
       </article>
     </section>
@@ -51,7 +54,12 @@
       <section class="result result--success" aria-live="polite">
         <p class="eyebrow">Escritura completada</p>
         <h2>Etiqueta asignada correctamente.</h2>
-        <dl><div><dt>Identificador</dt><dd>{{ result.value }}</dd></div><div><dt>Fecha</dt><dd>{{ result.writtenAt | date:'dd/MM/yyyy, HH:mm:ss' }}</dd></div></dl>
+        <dl>
+          <div><dt>Nombre</dt><dd>{{ result.label }}</dd></div>
+          <div><dt>ID físico</dt><dd>{{ result.tagId }}</dd></div>
+          <div><dt>Fecha</dt><dd>{{ result.writtenAt | date:'dd/MM/yyyy, HH:mm:ss' }}</dd></div>
+        </dl>
+        <p class="field-help">Retira la tarjeta, pulsa “Iniciar lectura” y vuelve a acercarla para verificarla.</p>
       </section>
     }
 
@@ -63,6 +71,7 @@
             <p class="eyebrow">Vehículo identificado</p>
             <h2>{{ vehicle.brand }} {{ vehicle.model }}</h2>
             <dl>
+              @if (result.label) { <div><dt>Etiqueta</dt><dd>{{ result.label }}</dd></div> }
               <div><dt>Placa</dt><dd>{{ vehicle.plate }}</dd></div>
               <div><dt>Año</dt><dd>{{ vehicle.year }}</dd></div>
               <div><dt>ID de etiqueta</dt><dd>{{ result.tagId }}</dd></div>
@@ -80,8 +89,8 @@
     @if (operationMessage()) { <p class="notice" role="status">{{ operationMessage() }}</p> }
 
     <footer class="evidence-note">
-      <strong>Formato de etiqueta:</strong><code>HERMES_VEHICLE:vehicle-001</code>
-      <span>Los datos de demostración son ficticios y se almacenan localmente.</span>
+      <strong>Formato seguro:</strong><code>HERMES:V1:&lt;token aleatorio&gt;</code>
+      <span>La asociación se conserva localmente hasta conectar la base de datos SaaS.</span>
     </footer>
   </main>
 </ion-content>
