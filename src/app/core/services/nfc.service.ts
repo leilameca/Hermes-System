@@ -9,6 +9,12 @@ import { VehicleService } from './vehicle.service';
 const HERMES_TOKEN_PREFIX = 'HERMES:V1:';
 const LEGACY_VEHICLE_PREFIX = 'HERMES_VEHICLE:';
 
+// Android reader-mode flags: NFC-A, NFC-B, NFC-F, NFC-V y sonido del sistema
+// desactivado. Es importante no incluir FLAG_READER_SKIP_NDEF_CHECK (0x80):
+// la versión 7 del plugin lo activa por defecto y entonces Android detecta la
+// NTAG, pero no expone Ndef/NdefFormatable para poder escribirla.
+const ANDROID_NDEF_READER_FLAGS = 0x10f;
+
 @Injectable({ providedIn: 'root' })
 export class NfcService implements OnDestroy {
   private readonly registry = inject(NfcRegistryService);
@@ -58,6 +64,7 @@ export class NfcService implements OnDestroy {
     });
     await CapacitorNfc.startScanning({
       invalidateAfterFirstRead: false,
+      androidReaderModeFlags: ANDROID_NDEF_READER_FLAGS,
       alertMessage: 'Acerca la etiqueta del vehículo al teléfono.',
     });
     this.scanningSubject.next(true);
@@ -105,6 +112,7 @@ export class NfcService implements OnDestroy {
 
     await CapacitorNfc.startScanning({
       invalidateAfterFirstRead: false,
+      androidReaderModeFlags: ANDROID_NDEF_READER_FLAGS,
       alertMessage: 'Mantén la etiqueta sobre el teléfono hasta confirmar la escritura.',
     });
     this.scanningSubject.next(true);
