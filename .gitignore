@@ -5,3 +5,4 @@ out-tsc/
 coverage/
 *.log
 .DS_Store
+.idea/
