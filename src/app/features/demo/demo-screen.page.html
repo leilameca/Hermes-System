@@ -253,9 +253,24 @@
       <p>Planes y precios de referencia para la plataforma.</p><section class="cards">@for (plan of plans; track plan.name) { <article class="card"><h2>{{ plan.name }}</h2><strong>{{ plan.price | currency:'DOP':'RD$ ':'1.0-0' }} / mes</strong><p>{{ plan.detail }}</p><ul class="plain-list">@for (feature of plan.features; track feature) { <li>{{ feature }}</li> }</ul><button class="button secondary" type="button" (click)="simulateAction('Cambio al plan ' + plan.name)">Seleccionar plan</button><a [routerLink]="link('suscripciones')">Ver suscripciones →</a></article> }</section>
     }
     @case ('clientes') {
-      <section class="filters"><input aria-label="Buscar cliente" placeholder="Buscar por nombre, correo o ciudad"><button class="button secondary" type="button" (click)="simulateAction('Filtro de clientes')">Filtrar</button></section>
-      @for (customer of customers(); track customer.id) { <article class="panel stack"><div class="row"><h2>{{ customer.name }}</h2><span class="badge">Activo</span></div><p>{{ customer.email }} · {{ customer.phone }}</p><p>{{ customer.city }} · {{ reservationCount(customer.id) }} reservas registradas</p><div class="actions"><a [routerLink]="link('reservas')">Ver reservas</a><button class="button secondary" type="button" (click)="simulateAction('Nota de cliente')">Agregar nota</button></div></article> }
-      @empty { <p class="notice">No hay clientes registrados.</p> }
+      <section class="fleet-toolbar"><input name="customerSearch" [(ngModel)]="customerSearch" aria-label="Buscar cliente" placeholder="Buscar por nombre, correo, teléfono o ciudad"><button class="button" type="button" (click)="customerFormOpen = !customerFormOpen">{{ customerFormOpen ? 'Cerrar formulario' : 'Nuevo cliente' }}</button></section>
+      @if (customerFormOpen) {
+        <form class="panel stack customer-form" (ngSubmit)="createCustomer()">
+          <div><p class="eyebrow">Registro de cliente</p><h2>Información personal y de conducción</h2><p class="text-secondary">Los datos quedarán disponibles para reservas, contratos, entregas y devoluciones.</p></div>
+          <div class="form-grid">
+            <label>Nombre completo<input name="customerName" [(ngModel)]="newCustomer.name" required></label>
+            <label>Correo electrónico<input name="customerEmail" type="email" [(ngModel)]="newCustomer.email" required></label>
+            <label>Teléfono<input name="customerPhone" type="tel" [(ngModel)]="newCustomer.phone" placeholder="809-000-0000"></label>
+            <label>Ciudad<input name="customerCity" [(ngModel)]="newCustomer.city"></label>
+            <label>Tipo de documento<select name="customerDocumentType" [(ngModel)]="newCustomer.documentType"><option value="cedula">Cédula</option><option value="passport">Pasaporte</option></select></label>
+            <label>Número de documento<input name="customerDocument" [(ngModel)]="newCustomer.documentNumber"></label>
+            <label>Licencia de conducir<input name="customerLicense" [(ngModel)]="newCustomer.driverLicense"></label>
+          </div>
+          <div class="actions"><button class="button" type="submit">Guardar cliente</button><button class="button secondary" type="button" (click)="customerFormOpen = false">Cancelar</button></div>
+        </form>
+      }
+      @for (customer of visibleCustomers(); track customer.id) { <article class="panel stack"><div class="row"><h2>{{ customer.name }}</h2><span class="badge">Activo</span></div><p>{{ customer.email }} · {{ customer.phone || 'Sin teléfono' }}</p><p>{{ customer.city || 'Ciudad no indicada' }} · {{ reservationCount(customer.id) }} reservas registradas</p><div class="actions"><a [routerLink]="link('reservas')">Ver reservas</a></div></article> }
+      @empty { <p class="notice">No hay clientes que coincidan con la búsqueda.</p> }
     }
     @case ('sucursales') {
       @for (branch of branches(); track branch.id) { <article class="panel stack"><div class="row"><h2>{{ branch.name }}</h2><span class="badge">Activa</span></div><p>{{ branch.address }}</p><p>{{ branch.city }} · {{ branchVehicleCount(branch.id) }} vehículos asignados</p></article> }

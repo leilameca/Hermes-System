@@ -23,7 +23,7 @@ import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
 import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
 import { AuthDemoService } from '../../core/services/auth-demo.service';
-import { HermesDataService } from '../../core/services/hermes-data.service';
+import { HermesDataService, NewCustomerInput } from '../../core/services/hermes-data.service';
 
 @Injectable({ providedIn: 'root' })
 export class DemoState {
@@ -56,6 +56,7 @@ export class DemoState {
   refresh() { return this.data.refresh(); }
   createVehicle(vehicle: Omit<Vehicle, 'id' | 'tenantId'>) { return this.data.createVehicle(vehicle); }
   createReservation(vehicle: Vehicle, startsAt: string, endsAt: string, total: number) { return this.data.createReservation(vehicle, startsAt, endsAt, total); }
+  createCustomer(customer: NewCustomerInput) { return this.data.createCustomer(customer); }
   completeOperation(input: { vehicleId: string; type: 'delivery' | 'return'; checks: boolean[]; evidenceUrls: string[]; signatureName: string }) { return this.data.completeOperation(input); }
 }
 
@@ -120,6 +121,11 @@ export class DemoScreenPage {
   message = '';
   incident = '';
   scanCode = 'A987601';
+  customerSearch = '';
+  customerFormOpen = false;
+  newCustomer: NewCustomerInput = {
+    name: '', email: '', phone: '', documentType: 'cedula', documentNumber: '', driverLicense: '', city: 'Santo Domingo',
+  };
   newVehicle: Pick<Vehicle, 'brand' | 'model' | 'year' | 'plate' | 'category' | 'transmission' | 'seats' | 'dailyRate' | 'mileage' | 'status'> = {
     brand: '', model: '', year: 2026, plate: '', category: 'suv', transmission: 'automatic', seats: 5, dailyRate: 3500, mileage: 0, status: 'available',
   };
@@ -204,6 +210,11 @@ export class DemoScreenPage {
   vehiclePlate(id: string) { return this.vehicles().find(v => v.id === id)?.plate ?? 'PPA-0000'; }
   customerName(id: string) { return this.customers().find(customer => customer.id === id)?.name ?? 'Cliente'; }
   reservationCount(customerId: string) { return this.state.reservations().filter(reservation => reservation.customerId === customerId).length; }
+  visibleCustomers() {
+    const term = this.customerSearch.trim().toLowerCase();
+    if (!term) return this.customers();
+    return this.customers().filter(customer => [customer.name, customer.email, customer.phone, customer.city].some(value => value.toLowerCase().includes(term)));
+  }
   branchVehicleCount(branchId: string) { return this.vehicles().filter(vehicle => vehicle.branchId === branchId).length; }
   organizationVehicleCount(organizationId: string) { return this.vehicles().filter(vehicle => vehicle.tenantId === organizationId).length; }
   categoryLabel(category: string) { return category === 'suv' ? 'SUV' : category === 'sedan' ? 'Sedán' : category; }
@@ -248,6 +259,20 @@ export class DemoScreenPage {
       await this.router.navigateByUrl(this.link('flota/' + vehicle.id));
     } catch (error) {
       this.message = error instanceof Error ? error.message : 'No fue posible guardar el vehículo.';
+    }
+  }
+  async createCustomer() {
+    if (!this.newCustomer.name.trim() || !this.newCustomer.email.trim()) {
+      this.message = 'Completa el nombre y el correo del cliente.';
+      return;
+    }
+    try {
+      await this.state.createCustomer(this.newCustomer);
+      this.newCustomer = { name: '', email: '', phone: '', documentType: 'cedula', documentNumber: '', driverLicense: '', city: 'Santo Domingo' };
+      this.customerFormOpen = false;
+      this.message = 'Cliente registrado correctamente en Supabase.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible registrar el cliente.';
     }
   }
   selectVehicleImage(event: Event) {

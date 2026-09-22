@@ -37,6 +37,16 @@ export interface HermesIncident {
   status: string;
 }
 
+export interface NewCustomerInput {
+  name: string;
+  email: string;
+  phone: string;
+  documentType: 'cedula' | 'passport';
+  documentNumber: string;
+  driverLicense: string;
+  city: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HermesDataService {
   private readonly supabase = inject(SupabaseService).client;
@@ -159,6 +169,27 @@ export class HermesDataService {
     const reservation = this.mapReservation(data);
     this.reservations.update(rows => [reservation, ...rows]);
     return reservation;
+  }
+
+  async createCustomer(input: NewCustomerInput): Promise<Customer> {
+    const organizationId = this.requireOrganization();
+    const { data, error } = await this.supabase.from('customers').insert({
+      organization_id: organizationId,
+      full_name: input.name.trim(),
+      email: input.email.trim().toLowerCase(),
+      phone: input.phone.trim() || null,
+      document_type: input.documentType,
+      document_number: input.documentNumber.trim() || null,
+      driver_license: input.driverLicense.trim() || null,
+      city: input.city.trim() || null,
+    }).select('*').single();
+    if (error) {
+      if (error.code === '23505') throw new Error('Ya existe un cliente con ese correo o documento.');
+      throw new Error(error.message);
+    }
+    const customer = this.mapCustomer(data);
+    this.customers.update(rows => [...rows, customer].sort((a, b) => a.name.localeCompare(b.name)));
+    return customer;
   }
 
   async completeOperation(input: {
