@@ -10,6 +10,11 @@ import { SupabaseService } from './supabase.service';
 // Prefijo propio de HERMES. Evita confundir una etiqueta cualquiera con una etiqueta de vehículo.
 const HERMES_VEHICLE_PREFIX = 'HERMES_VEHICLE:';
 
+// Lee todas las tecnologías NFC sin FLAG_READER_SKIP_NDEF_CHECK. El valor por
+// defecto del plugin omite esa comprobación y algunos Android detectan la
+// etiqueta, pero no exponen su mensaje NDEF.
+const ANDROID_NDEF_READER_FLAGS = 0x0f;
+
 interface WebNdefRecord { recordType: string; data?: DataView; }
 interface WebNdefEvent extends Event { serialNumber?: string; message: { records: WebNdefRecord[] }; }
 interface WebNdefReader {
@@ -71,12 +76,18 @@ export class NfcService implements OnDestroy {
       await this.startWebReading();
       return;
     }
-    this.listener = await CapacitorNfc.addListener('nfcEvent', event => void this.handleRead(event));
-    await CapacitorNfc.startScanning({
-      invalidateAfterFirstRead: false,
-      alertMessage: 'Acerca la etiqueta del vehículo al teléfono.',
-    });
-    this.scanningSubject.next(true);
+    try {
+      this.listener = await CapacitorNfc.addListener('nfcEvent', event => void this.handleRead(event));
+      await CapacitorNfc.startScanning({
+        invalidateAfterFirstRead: false,
+        alertMessage: 'Acerca la etiqueta del vehículo al teléfono.',
+        androidReaderModeFlags: ANDROID_NDEF_READER_FLAGS,
+      });
+      this.scanningSubject.next(true);
+    } catch (error) {
+      await this.stopScanning();
+      this.setError('Android no pudo iniciar el lector NFC. Confirma que NFC esté encendido y vuelve a intentarlo.', error);
+    }
   }
 
   // Prepara una etiqueta vacía o regrabable con el identificador del vehículo seleccionado.
@@ -104,27 +115,33 @@ export class NfcService implements OnDestroy {
     }
 
     let writing = false;
-    this.listener = await CapacitorNfc.addListener('nfcEvent', async event => {
-      // Algunos teléfonos emiten más de un evento por acercamiento; esta bandera evita escrituras duplicadas.
-      if (writing) return;
-      writing = true;
-      try {
-        await CapacitorNfc.write({ records: [this.createTextRecord(value)], allowFormat: true });
-        await this.persistAssignment(vehicleId, value, this.bytesToHex(event.tag.id ?? []));
-        this.writeSubject.next({ vehicleId, value, writtenAt: new Date().toISOString() });
-        this.errorSubject.next('');
-        await this.stopScanning();
-      } catch (error) {
-        writing = false;
-        this.setError('No se pudo escribir la etiqueta. Comprueba que sea regrabable y vuelve a acercarla.', error);
-      }
-    });
+    try {
+      this.listener = await CapacitorNfc.addListener('nfcEvent', async event => {
+        // Algunos teléfonos emiten más de un evento por acercamiento; esta bandera evita escrituras duplicadas.
+        if (writing) return;
+        writing = true;
+        try {
+          await CapacitorNfc.write({ records: [this.createTextRecord(value)], allowFormat: true });
+          await this.persistAssignment(vehicleId, value, this.bytesToHex(event.tag.id ?? []));
+          this.writeSubject.next({ vehicleId, value, writtenAt: new Date().toISOString() });
+          this.errorSubject.next('');
+          await this.stopScanning();
+        } catch (error) {
+          writing = false;
+          this.setError('No se pudo escribir la etiqueta. Comprueba que sea regrabable y vuelve a acercarla.', error);
+        }
+      });
 
-    await CapacitorNfc.startScanning({
-      invalidateAfterFirstRead: false,
-      alertMessage: 'Acerca la etiqueta que deseas asignar al vehículo.',
-    });
-    this.scanningSubject.next(true);
+      await CapacitorNfc.startScanning({
+        invalidateAfterFirstRead: false,
+        alertMessage: 'Acerca la etiqueta que deseas asignar al vehículo.',
+        androidReaderModeFlags: ANDROID_NDEF_READER_FLAGS,
+      });
+      this.scanningSubject.next(true);
+    } catch (error) {
+      await this.stopScanning();
+      this.setError('Android no pudo preparar la escritura NFC. Activa NFC y vuelve a intentarlo.', error);
+    }
   }
 
   async stopScanning(): Promise<void> {
@@ -175,19 +192,16 @@ export class NfcService implements OnDestroy {
     const vehicleId = rawValue.startsWith(HERMES_VEHICLE_PREFIX)
       ? rawValue.slice(HERMES_VEHICLE_PREFIX.length).trim()
       : undefined;
-    await this.data.refresh();
-    const vehicle = vehicleId ? this.data.vehicles().find(item => item.id === vehicleId) : undefined;
-
-    this.scanSubject.next({
+    const baseScan: HermesNfcScan = {
       tagId: this.bytesToHex(event.tag.id ?? []),
       rawValue,
       vehicleId,
-      vehicle: vehicle ? { ...vehicle } : undefined,
       scannedAt: new Date().toISOString(),
-      valid: Boolean(vehicleId && vehicle),
-    });
-    this.errorSubject.next(vehicle ? '' : 'La etiqueta fue leída, pero no corresponde a un vehículo registrado en HERMES.');
-    if (vehicle) await this.persistScan(vehicle.id, rawValue, this.bytesToHex(event.tag.id ?? []));
+      valid: false,
+    };
+    // Confirma inmediatamente la lectura física; Supabase se consulta después.
+    this.scanSubject.next(baseScan);
+    await this.resolveVehicle(baseScan);
     await this.stopScanning();
   }
 
@@ -209,15 +223,44 @@ export class NfcService implements OnDestroy {
 
   private async handleWebRead(event: WebNdefEvent): Promise<void> {
     const record = event.message.records[0];
-    const rawValue = record?.data ? new TextDecoder().decode(record.data) : '';
+    const rawValue = record?.data ? this.decodeWebRecord(record.data) : '';
     const vehicleId = rawValue.startsWith(HERMES_VEHICLE_PREFIX) ? rawValue.slice(HERMES_VEHICLE_PREFIX.length).trim() : undefined;
-    await this.data.refresh();
-    const vehicle = vehicleId ? this.data.vehicles().find(item => item.id === vehicleId) : undefined;
     const tagId = event.serialNumber || 'No disponible en Web NFC';
-    this.scanSubject.next({ tagId, rawValue, vehicleId, vehicle: vehicle ? { ...vehicle } : undefined, scannedAt: new Date().toISOString(), valid: Boolean(vehicle) });
-    this.errorSubject.next(vehicle ? '' : 'La etiqueta fue leída, pero no corresponde a un vehículo registrado en HERMES.');
-    if (vehicle) await this.persistScan(vehicle.id, rawValue, tagId);
+    const baseScan: HermesNfcScan = { tagId, rawValue, vehicleId, scannedAt: new Date().toISOString(), valid: false };
+    this.scanSubject.next(baseScan);
+    await this.resolveVehicle(baseScan);
     await this.stopScanning();
+  }
+
+  private decodeWebRecord(data: DataView): string {
+    return new TextDecoder().decode(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+  }
+
+  private async resolveVehicle(scan: HermesNfcScan): Promise<void> {
+    if (!scan.rawValue) {
+      this.errorSubject.next('La etiqueta fue detectada, pero no contiene un texto NDEF de HERMES. Puedes asignarla desde esta pantalla.');
+      return;
+    }
+    if (!scan.vehicleId) {
+      this.errorSubject.next('La etiqueta fue leída, pero no tiene el formato HERMES esperado.');
+      return;
+    }
+
+    await this.data.refresh();
+    if (this.data.error()) {
+      this.errorSubject.next('La etiqueta NFC se leyó correctamente, pero no fue posible consultar los vehículos en Supabase. Revisa la conexión del proyecto.');
+      return;
+    }
+
+    const vehicle = this.data.vehicles().find(item => item.id === scan.vehicleId);
+    this.scanSubject.next({ ...scan, vehicle: vehicle ? { ...vehicle } : undefined, valid: Boolean(vehicle) });
+    if (!vehicle) {
+      this.errorSubject.next('La etiqueta se leyó, pero apunta a un vehículo que no existe en el Supabase conectado. Vuelve a asignar la etiqueta.');
+      return;
+    }
+
+    this.errorSubject.next('');
+    await this.persistScan(vehicle.id, scan.rawValue, scan.tagId);
   }
 
   private webNfcConstructor(): WebNdefReaderConstructor | null {
