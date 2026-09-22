@@ -1,4 +1,4 @@
-export type VehicleStatus = 'available' | 'reserved' | 'rented' | 'maintenance';
+export type VehicleStatus = 'available' | 'reserved' | 'rented' | 'maintenance' | 'inactive';
 
 export interface Vehicle {
   id: string;
@@ -8,14 +8,15 @@ export interface Vehicle {
   model: string;
   year: number;
   plate: string;
-  category: 'sedan' | 'suv' | 'van';
+  category: 'sedan' | 'suv' | 'van' | 'pickup' | 'other';
   transmission: 'automatic' | 'manual';
   seats: number;
   dailyRate: number;
-  currency: 'DOP';
+  currency: 'DOP' | 'USD';
   mileage: number;
   status: VehicleStatus;
   // La imagen es opcional para que una ficha funcione también sin fotografía.
   imageUrl?: string;
+  imagePath?: string;
   imageAlt?: string;
 }
