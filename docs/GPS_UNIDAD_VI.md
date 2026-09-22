@@ -27,11 +27,16 @@ El modulo permite obtener y compartir la ubicacion del usuario, observar cambios
 3. El GPS devuelve latitud, longitud, precision y fecha de lectura.
 4. Leaflet centra el mapa y dibuja un marcador con un circulo de precision.
 5. El seguimiento actualiza el mismo marcador cuando el dispositivo cambia de posicion.
-6. Nominatim convierte el texto buscado en coordenadas.
-7. Overpass recibe las coordenadas actuales y devuelve puntos de interes cercanos.
-8. HERMES calcula la distancia aproximada con la formula de Haversine y ordena los resultados.
+6. Si el usuario es cliente, guarda como maximo una lectura cada diez segundos en Supabase.
+7. El administrador consulta la ultima posicion y el recorrido de cada cliente de su empresa.
+8. Nominatim convierte el texto buscado en coordenadas.
+9. Overpass recibe las coordenadas actuales y devuelve puntos de interes cercanos.
+10. HERMES calcula la distancia aproximada con la formula de Haversine y ordena los resultados.
 
-La aplicacion no activa ubicacion en segundo plano y no guarda recorridos automaticamente. Esto reduce consumo de bateria y protege la privacidad del usuario.
+La aplicacion no activa ubicacion en segundo plano. El recorrido se guarda solamente
+cuando el cliente pulsa **Seguir en tiempo real** y mientras mantiene abierta la
+pantalla GPS. Al salir de la pantalla el seguimiento se detiene. Esto reduce consumo
+de bateria y permite que el cliente controle cuando comparte su posicion.
 
 ## Permisos
 
