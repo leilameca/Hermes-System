@@ -311,9 +311,9 @@ export class DemoScreenPage {
   simulateAction(label: string) {
     this.message = label + ' actualizado en esta sesion.';
   }
-  logout() {
-    this.auth.logout();
-    void this.router.navigateByUrl('/login');
+  async logout() {
+    await this.auth.logout();
+    await this.router.navigateByUrl('/login', { replaceUrl: true });
   }
   async saveProfile() {
     try {
