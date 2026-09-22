@@ -7,10 +7,13 @@ export const VEHICLE_STATUS: Record<VehicleStatus, { label: string; tone: Status
   reserved: { label: 'Reservado', tone: 'warning' },
   rented: { label: 'En alquiler', tone: 'neutral' },
   maintenance: { label: 'En mantenimiento', tone: 'critical' },
+  inactive: { label: 'Inactivo', tone: 'neutral' },
 };
 
 export const VEHICLE_CATEGORY: Record<Vehicle['category'], string> = {
   sedan: 'Sedán',
   suv: 'SUV',
   van: 'Van',
+  pickup: 'Pickup',
+  other: 'Otro',
 };
