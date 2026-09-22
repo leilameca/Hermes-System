@@ -97,7 +97,7 @@ export class DemoLayoutComponent {
   readonly mobileAreas = computed(() => this.pickAreas(this.mobilePaths()));
   readonly moreAreas = computed(() => this.pickAreas(this.morePaths()));
   // En computadora todos los perfiles usan la misma estructura lateral.
-  readonly desktopAreas = computed(() => this.space.areas);
+  readonly desktopAreas = computed(() => this.space.areas.filter(area => area.path !== 'perfil'));
 
   constructor() {
     this.router.events.pipe(takeUntilDestroyed()).subscribe(event => {

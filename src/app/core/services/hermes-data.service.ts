@@ -47,6 +47,10 @@ export interface NewCustomerInput {
   city: string;
 }
 
+export interface NewCustomerAccountInput extends NewCustomerInput {
+  temporaryPassword: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HermesDataService {
   private readonly supabase = inject(SupabaseService).client;
@@ -106,7 +110,7 @@ export class HermesDataService {
       })));
       this.incidents.set((incidents.data ?? []).map(row => ({ id: row['id'], title: row['title'], detail: row['description'], status: row['status'] })));
       this.organizations.set((organizations.data ?? []).map(row => ({
-        id: row['id'], name: row['name'], city: row['city'] ?? '', phone: row['phone'] ?? '', email: row['email'] ?? '', active: row['active'],
+        id: row['id'], name: row['name'], city: row['city'] ?? '', phone: row['phone'] ?? '', email: row['email'] ?? '', active: row['active'], slug: row['slug'] ?? undefined,
       })));
       await this.loadMembers();
     } catch (error) {
@@ -190,6 +194,25 @@ export class HermesDataService {
     const customer = this.mapCustomer(data);
     this.customers.update(rows => [...rows, customer].sort((a, b) => a.name.localeCompare(b.name)));
     return customer;
+  }
+
+  async createCustomerAccount(input: NewCustomerAccountInput): Promise<void> {
+    const organizationId = this.requireOrganization();
+    const { error } = await this.supabase.functions.invoke('create-customer-account', {
+      body: {
+        organizationId,
+        fullName: input.name.trim(),
+        email: input.email.trim().toLowerCase(),
+        phone: input.phone.trim(),
+        city: input.city.trim(),
+        documentType: input.documentType,
+        documentNumber: input.documentNumber.trim(),
+        driverLicense: input.driverLicense.trim(),
+        temporaryPassword: input.temporaryPassword,
+      },
+    });
+    if (error) throw new Error('No fue posible crear el acceso. Comprueba que la función segura esté publicada.');
+    await this.refresh();
   }
 
   async completeOperation(input: {

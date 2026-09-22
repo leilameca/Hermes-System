@@ -17,12 +17,22 @@ export const authenticatedGuard: CanMatchFn = async () => {
   return auth.user() ? true : router.parseUrl('/login');
 };
 
+export const passwordChangeGuard: CanMatchFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await auth.ready();
+  const user = auth.user();
+  if (!user) return router.parseUrl('/login');
+  return user.mustChangePassword ? true : router.parseUrl(user.home);
+};
+
 export const roleGuard = (role: DemoRole): CanMatchFn => async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   await auth.ready();
   const user = auth.user();
   if (!user) return router.parseUrl('/login');
+  if (user.mustChangePassword) return router.parseUrl('/cambiar-clave');
   return user.role === role ? true : router.parseUrl(user.home);
 };
 
@@ -32,5 +42,6 @@ export const rolesGuard = (roles: DemoRole[]): CanMatchFn => async () => {
   await auth.ready();
   const user = auth.user();
   if (!user) return router.parseUrl('/login');
+  if (user.mustChangePassword) return router.parseUrl('/cambiar-clave');
   return roles.includes(user.role) ? true : router.parseUrl(user.home);
 };

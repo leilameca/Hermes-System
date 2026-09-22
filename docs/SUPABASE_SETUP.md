@@ -55,6 +55,22 @@ El GPS del telefono registra el lugar de una operacion. El seguimiento permanent
 6. Guardar las asociaciones NFC en `nfc_tags`.
 7. Conectar reservas, contratos, entregas y devoluciones.
 
+## Registro de clientes por empresa
+
+La migracion `202609220004_customer_registration.sql` agrega un enlace publico distinto para cada empresa. Por ejemplo, la empresa de prueba utiliza:
+
+`https://hermes-system.vercel.app/login?empresa=quisqueya-rent-a-car`
+
+Desde ese inicio de sesion aparece la opcion **Crear mi cuenta**. El cliente queda enlazado solamente con la empresa indicada en el enlace.
+
+Para permitir que un administrador cree una cuenta con contrasena temporal:
+
+1. Ejecutar `202609220004_customer_registration.sql` en **SQL Editor**.
+2. Publicar la funcion `supabase/functions/create-customer-account` como **create-customer-account**.
+3. Mantener `SUPABASE_SERVICE_ROLE_KEY` exclusivamente en los secretos de Supabase. Nunca copiar su valor a Angular ni a Vercel.
+
+Las cuentas creadas por administracion deben cambiar la contrasena temporal antes de entrar al resto de la plataforma.
+
 ## Desarrollo y despliegue web
 
 HERMES puede utilizarse como aplicacion web mientras se desarrollan los modulos. El archivo `vercel.json` prepara el proyecto para Vercel y conserva las rutas de Angular al actualizar el navegador.

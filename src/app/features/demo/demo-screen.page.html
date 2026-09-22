@@ -266,6 +266,10 @@
             <label>Número de documento<input name="customerDocument" [(ngModel)]="newCustomer.documentNumber"></label>
             <label>Licencia de conducir<input name="customerLicense" [(ngModel)]="newCustomer.driverLicense"></label>
           </div>
+          <label class="check"><input type="checkbox" name="createCustomerAccess" [(ngModel)]="createCustomerAccess"> Crear también su acceso a la plataforma</label>
+          @if (createCustomerAccess) {
+            <label>Contraseña temporal<input name="temporaryPassword" type="password" [(ngModel)]="temporaryPassword" minlength="8" autocomplete="new-password" required><small>Puede usar una contraseña provisional acordada con el cliente. Hermes le exigirá cambiarla al entrar.</small></label>
+          }
           <div class="actions"><button class="button" type="submit">Guardar cliente</button><button class="button secondary" type="button" (click)="customerFormOpen = false">Cancelar</button></div>
         </form>
       }

@@ -23,7 +23,7 @@ import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
 import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
 import { AuthDemoService } from '../../core/services/auth-demo.service';
-import { HermesDataService, NewCustomerInput } from '../../core/services/hermes-data.service';
+import { HermesDataService, NewCustomerAccountInput, NewCustomerInput } from '../../core/services/hermes-data.service';
 
 @Injectable({ providedIn: 'root' })
 export class DemoState {
@@ -57,6 +57,7 @@ export class DemoState {
   createVehicle(vehicle: Omit<Vehicle, 'id' | 'tenantId'>) { return this.data.createVehicle(vehicle); }
   createReservation(vehicle: Vehicle, startsAt: string, endsAt: string, total: number) { return this.data.createReservation(vehicle, startsAt, endsAt, total); }
   createCustomer(customer: NewCustomerInput) { return this.data.createCustomer(customer); }
+  createCustomerAccount(customer: NewCustomerAccountInput) { return this.data.createCustomerAccount(customer); }
   completeOperation(input: { vehicleId: string; type: 'delivery' | 'return'; checks: boolean[]; evidenceUrls: string[]; signatureName: string }) { return this.data.completeOperation(input); }
 }
 
@@ -123,6 +124,8 @@ export class DemoScreenPage {
   scanCode = 'A987601';
   customerSearch = '';
   customerFormOpen = false;
+  createCustomerAccess = false;
+  temporaryPassword = '';
   newCustomer: NewCustomerInput = {
     name: '', email: '', phone: '', documentType: 'cedula', documentNumber: '', driverLicense: '', city: 'Santo Domingo',
   };
@@ -266,11 +269,24 @@ export class DemoScreenPage {
       this.message = 'Completa el nombre y el correo del cliente.';
       return;
     }
+    if (this.createCustomerAccess && this.temporaryPassword.length < 8) {
+      this.message = 'La contraseña temporal debe tener al menos 8 caracteres.';
+      return;
+    }
     try {
-      await this.state.createCustomer(this.newCustomer);
+      const createdAccess = this.createCustomerAccess;
+      if (this.createCustomerAccess) {
+        await this.state.createCustomerAccount({ ...this.newCustomer, temporaryPassword: this.temporaryPassword });
+      } else {
+        await this.state.createCustomer(this.newCustomer);
+      }
       this.newCustomer = { name: '', email: '', phone: '', documentType: 'cedula', documentNumber: '', driverLicense: '', city: 'Santo Domingo' };
+      this.createCustomerAccess = false;
+      this.temporaryPassword = '';
       this.customerFormOpen = false;
-      this.message = 'Cliente registrado correctamente en Supabase.';
+      this.message = createdAccess
+        ? 'Cliente y acceso creados. Debe cambiar la contraseña temporal al iniciar sesión.'
+        : 'Cliente registrado correctamente en Supabase.';
     } catch (error) {
       this.message = error instanceof Error ? error.message : 'No fue posible registrar el cliente.';
     }

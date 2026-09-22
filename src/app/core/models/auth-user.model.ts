@@ -10,6 +10,7 @@ export interface AuthUserContext {
   home: string;
   organizationId: string | null;
   organizationName: string | null;
+  mustChangePassword: boolean;
 }
 
 export interface InitialAccount {

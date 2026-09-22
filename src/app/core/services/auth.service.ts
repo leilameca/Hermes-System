@@ -47,6 +47,47 @@ export class AuthService {
     return context;
   }
 
+  async companyForRegistration(slug: string): Promise<{ id: string; name: string; city: string } | null> {
+    const { data, error } = await this.supabase.rpc('get_registration_organization', {
+      organization_slug: slug.trim().toLowerCase(),
+    });
+    if (error) throw new Error('No fue posible validar el enlace de la empresa.');
+    return data?.[0] ?? null;
+  }
+
+  async registerCustomer(input: { companySlug: string; name: string; phone: string; email: string; password: string }): Promise<boolean> {
+    const { data, error } = await this.supabase.auth.signUp({
+      email: input.email.trim().toLowerCase(),
+      password: input.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login?empresa=${encodeURIComponent(input.companySlug)}`,
+        data: {
+          full_name: input.name.trim(),
+          phone: input.phone.trim(),
+          organization_slug: input.companySlug.trim().toLowerCase(),
+          registration_type: 'customer',
+        },
+      },
+    });
+    if (error) {
+      if (error.message.toLowerCase().includes('already registered')) throw new Error('Ya existe una cuenta con ese correo.');
+      throw new Error(error.message);
+    }
+    return !data.session;
+  }
+
+  async changePassword(password: string): Promise<AuthUserContext> {
+    const user = this.activeUser();
+    if (!user) throw new Error('No hay una sesión activa.');
+    const { error } = await this.supabase.auth.updateUser({ password });
+    if (error) throw new Error(error.message);
+    const { error: profileError } = await this.supabase.from('profiles').update({ must_change_password: false }).eq('id', user.id);
+    if (profileError) throw new Error(profileError.message);
+    const context = { ...user, mustChangePassword: false, home: this.homeFor(user.role) };
+    this.activeUser.set(context);
+    return context;
+  }
+
   async logout(): Promise<void> {
     await this.supabase.auth.signOut();
     this.activeUser.set(null);
@@ -88,7 +129,7 @@ export class AuthService {
   private async loadContext(user: SupabaseUser): Promise<AuthUserContext> {
     const { data: profile, error: profileError } = await this.supabase
       .from('profiles')
-      .select('full_name, platform_role, active')
+      .select('full_name, platform_role, active, must_change_password')
       .eq('id', user.id)
       .single();
 
@@ -104,6 +145,14 @@ export class AuthService {
       .limit(1)
       .maybeSingle();
 
+    const { data: customerAccount } = await this.supabase
+      .from('customer_accounts')
+      .select('organization_id, organizations(name)')
+      .eq('user_id', user.id)
+      .eq('active', true)
+      .limit(1)
+      .maybeSingle();
+
     const role = profile.platform_role === 'super_admin'
       ? 'super-admin'
       : membership?.role === 'admin'
@@ -111,16 +160,19 @@ export class AuthService {
         : membership?.role === 'agent'
           ? 'agente'
           : 'cliente';
-    const organization = membership?.organizations as { name?: string } | null;
+    const linkedOrganization = membership?.organizations ?? customerAccount?.organizations;
+    const organization = linkedOrganization as { name?: string } | null;
+    const mustChangePassword = Boolean(profile.must_change_password);
 
     return {
       id: user.id,
       email: user.email ?? '',
       name: profile.full_name || user.email?.split('@')[0] || 'Usuario',
       role,
-      home: this.homeFor(role),
-      organizationId: membership?.organization_id ?? null,
+      home: mustChangePassword ? '/cambiar-clave' : this.homeFor(role),
+      organizationId: membership?.organization_id ?? customerAccount?.organization_id ?? null,
       organizationName: organization?.name ?? null,
+      mustChangePassword,
     };
   }
 
