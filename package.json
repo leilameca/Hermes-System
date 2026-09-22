@@ -5,10 +5,12 @@
   "scripts": {
     "start": "ng serve",
     "start:mobile": "ng serve --host 0.0.0.0",
-    "ionic:serve": "ng serve",
     "build": "ng build",
-    "ionic:build": "ng build",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.capacitor.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.capacitor.json",
+    "verify": "node scripts/verify-project.mjs",
+    "check": "npm run typecheck && npm run verify && npm run build",
+    "sync:android": "npm run build && cap sync android",
+    "open:android": "cap open android"
   },
   "dependencies": {
     "@angular/common": "^20.3.0",

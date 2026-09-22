@@ -51,6 +51,56 @@ export interface NewCustomerAccountInput extends NewCustomerInput {
   temporaryPassword: string;
 }
 
+// Formas basicas de las filas que llegan de Supabase.
+interface VehicleRow {
+  id: string;
+  organization_id: string;
+  branch_id: string;
+  brand: string;
+  model: string;
+  model_year: number;
+  plate: string;
+  category: Vehicle['category'];
+  transmission: Vehicle['transmission'];
+  seats: number;
+  daily_rate: number | string;
+  currency: Vehicle['currency'];
+  mileage: number;
+  status: Vehicle['status'];
+  image_url: string | null;
+}
+
+interface ReservationRow {
+  id: string;
+  organization_id: string;
+  customer_id: string;
+  vehicle_id: string;
+  pickup_branch_id: string;
+  return_branch_id: string;
+  starts_at: string;
+  ends_at: string;
+  status: Reservation['status'];
+  total: number | string;
+  currency: Reservation['currency'];
+}
+
+interface CustomerRow {
+  id: string;
+  organization_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  city: string | null;
+}
+
+interface BranchRow {
+  id: string;
+  organization_id: string;
+  name: string;
+  city: string | null;
+  address: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class HermesDataService {
   private readonly supabase = inject(SupabaseService).client;
@@ -278,31 +328,31 @@ export class HermesDataService {
     return id;
   }
 
-  private mapVehicle(row: Record<string, any>): Vehicle {
+  private mapVehicle(row: VehicleRow): Vehicle {
     return {
-      id: row['id'], tenantId: row['organization_id'], branchId: row['branch_id'], brand: row['brand'], model: row['model'],
-      year: row['model_year'], plate: row['plate'], category: row['category'], transmission: row['transmission'], seats: row['seats'],
-      dailyRate: Number(row['daily_rate']), currency: row['currency'], mileage: row['mileage'], status: row['status'],
-      imageUrl: row['image_url'] ?? undefined, imageAlt: `${row['brand']} ${row['model']} · ${row['plate']}`,
+      id: row.id, tenantId: row.organization_id, branchId: row.branch_id, brand: row.brand, model: row.model,
+      year: row.model_year, plate: row.plate, category: row.category, transmission: row.transmission, seats: row.seats,
+      dailyRate: Number(row.daily_rate), currency: row.currency, mileage: row.mileage, status: row.status,
+      imageUrl: row.image_url ?? undefined, imageAlt: `${row.brand} ${row.model} · ${row.plate}`,
     };
   }
 
-  private mapReservation(row: Record<string, any>): Reservation {
+  private mapReservation(row: ReservationRow): Reservation {
     return {
-      id: row['id'], tenantId: row['organization_id'], customerId: row['customer_id'], vehicleId: row['vehicle_id'],
-      pickupBranchId: row['pickup_branch_id'], returnBranchId: row['return_branch_id'], startsAt: row['starts_at'], endsAt: row['ends_at'],
-      status: row['status'], total: Number(row['total']), currency: row['currency'],
+      id: row.id, tenantId: row.organization_id, customerId: row.customer_id, vehicleId: row.vehicle_id,
+      pickupBranchId: row.pickup_branch_id, returnBranchId: row.return_branch_id, startsAt: row.starts_at, endsAt: row.ends_at,
+      status: row.status, total: Number(row.total), currency: row.currency,
     };
   }
 
-  private mapCustomer(row: Record<string, any>): Customer {
+  private mapCustomer(row: CustomerRow): Customer {
     return {
-      id: row['id'], tenantId: row['organization_id'], name: row['full_name'], email: row['email'],
-      phone: row['phone'] ?? '', city: row['city'] ?? '',
+      id: row.id, tenantId: row.organization_id, name: row.full_name, email: row.email,
+      phone: row.phone ?? '', city: row.city ?? '',
     };
   }
 
-  private mapBranch(row: Record<string, any>): Branch {
-    return { id: row['id'], tenantId: row['organization_id'], name: row['name'], city: row['city'] ?? '', address: row['address'] ?? '' };
+  private mapBranch(row: BranchRow): Branch {
+    return { id: row.id, tenantId: row.organization_id, name: row.name, city: row.city ?? '', address: row.address ?? '' };
   }
 }

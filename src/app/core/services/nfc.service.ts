@@ -7,12 +7,10 @@ import { AuthService } from './auth.service';
 import { HermesDataService } from './hermes-data.service';
 import { SupabaseService } from './supabase.service';
 
-// Prefijo propio de HERMES. Evita confundir una etiqueta cualquiera con una etiqueta de vehículo.
+// Texto que identifica las etiquetas de Hermes.
 const HERMES_VEHICLE_PREFIX = 'HERMES_VEHICLE:';
 
-// Lee todas las tecnologías NFC sin FLAG_READER_SKIP_NDEF_CHECK. El valor por
-// defecto del plugin omite esa comprobación y algunos Android detectan la
-// etiqueta, pero no exponen su mensaje NDEF.
+// Activa los tipos de NFC usados por Android y permite leer NDEF.
 const ANDROID_NDEF_READER_FLAGS = 0x0f;
 
 interface WebNdefRecord { recordType: string; data?: DataView; }
@@ -50,7 +48,7 @@ export class NfcService implements OnDestroy {
     void this.initialize();
   }
 
-  // Comprueba si el teléfono tiene NFC y escucha cuando el usuario lo activa o desactiva.
+  // Revisa si el telefono tiene NFC disponible.
   async initialize(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
       this.statusSubject.next(this.webNfcConstructor() ? 'web-ready' : 'web');
@@ -69,7 +67,7 @@ export class NfcService implements OnDestroy {
     }
   }
 
-  // Inicia una sesión real de lectura y espera una etiqueta NDEF cercana.
+  // Inicia la lectura de una etiqueta.
   async startReading(): Promise<void> {
     if (!(await this.prepareSession())) return;
     if (!Capacitor.isNativePlatform()) {
@@ -90,7 +88,7 @@ export class NfcService implements OnDestroy {
     }
   }
 
-  // Prepara una etiqueta vacía o regrabable con el identificador del vehículo seleccionado.
+  // Guarda el identificador del vehiculo en la etiqueta.
   async startWriting(vehicleId: string): Promise<void> {
     await this.data.refresh();
     const vehicle = this.data.vehicles().find(item => item.id === vehicleId);
@@ -117,7 +115,7 @@ export class NfcService implements OnDestroy {
     let writing = false;
     try {
       this.listener = await CapacitorNfc.addListener('nfcEvent', async event => {
-        // Algunos teléfonos emiten más de un evento por acercamiento; esta bandera evita escrituras duplicadas.
+        // Evita guardar dos veces cuando el telefono repite el evento.
         if (writing) return;
         writing = true;
         try {
@@ -199,7 +197,7 @@ export class NfcService implements OnDestroy {
       scannedAt: new Date().toISOString(),
       valid: false,
     };
-    // Confirma inmediatamente la lectura física; Supabase se consulta después.
+    // Primero muestra la lectura y despues consulta Supabase.
     this.scanSubject.next(baseScan);
     await this.resolveVehicle(baseScan);
     await this.stopScanning();
@@ -307,7 +305,7 @@ export class NfcService implements OnDestroy {
   }
 
   private readTextRecord(record: NdefRecord): string {
-    // Un registro de texto NDEF empieza con un byte de estado y el código del idioma.
+    // Quita el idioma del registro NDEF y devuelve el texto.
     if (record.tnf !== 0x01 || record.type[0] !== 0x54 || !record.payload.length) return '';
     const languageLength = record.payload[0] & 0x3f;
     return new TextDecoder().decode(new Uint8Array(record.payload.slice(1 + languageLength)));

@@ -22,7 +22,7 @@ import { DEMO_RECORDS } from './demo-records';
 import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
 import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
-import { AuthDemoService } from '../../core/services/auth-demo.service';
+import { AuthService } from '../../core/services/auth.service';
 import { HermesDataService, NewCustomerAccountInput, NewCustomerInput } from '../../core/services/hermes-data.service';
 
 @Injectable({ providedIn: 'root' })
@@ -73,7 +73,7 @@ export class DemoScreenPage {
 
   // Guarda temporalmente las operaciones sin conexión
   private readonly offline = inject(OfflineService);
-  private readonly auth = inject(AuthDemoService);
+  private readonly auth = inject(AuthService);
   readonly state = inject(DemoState);
   readonly currentUser = this.auth.user;
   readonly data = toSignal(this.route.data, { initialValue: this.route.snapshot.data });

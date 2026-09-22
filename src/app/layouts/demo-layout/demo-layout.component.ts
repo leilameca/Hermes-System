@@ -3,7 +3,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, Ro
 import { IonIcon } from '@ionic/angular/standalone';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { chevronBackOutline, chevronDownOutline, logOutOutline, menuOutline, notificationsOutline } from 'ionicons/icons';
-import { AuthDemoService } from '../../core/services/auth-demo.service';
+import { AuthService } from '../../core/services/auth.service';
 import { DEMO_SPACES, DemoArea, DemoRole } from '../../features/demo/demo-navigation';
 // Muestra avisos cuando el dispositivo pierde o recupera conexión
 import { OfflineBannerComponent } from '../../shared/components/offline-banner/offline-banner.component';
@@ -80,7 +80,7 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
 })
 export class DemoLayoutComponent {
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthDemoService);
+  private readonly auth = inject(AuthService);
   readonly role = inject(ActivatedRoute).snapshot.data['role'] as DemoRole;
   readonly space = DEMO_SPACES[this.role];
   readonly user = this.auth.user;

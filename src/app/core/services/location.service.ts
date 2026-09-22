@@ -26,11 +26,20 @@ export interface LocationSearchResult {
   longitude: number;
 }
 
+interface OverpassElement {
+  id: number;
+  type: string;
+  lat?: number;
+  lon?: number;
+  center?: { lat?: number; lon?: number };
+  tags?: { name?: string; amenity?: string; shop?: string; tourism?: string };
+}
+
 @Injectable({ providedIn: 'root' })
 export class LocationService {
-  // Solicita el permiso antes de leer el GPS del dispositivo.
+  // Pide permiso y obtiene la ubicacion actual.
   async current(): Promise<HermesLocation> {
-    // En navegador, getCurrentPosition muestra directamente el permiso del sitio.
+    // En la web el navegador pide su propio permiso.
     if (Capacitor.isNativePlatform()) {
       const permission = await Geolocation.checkPermissions();
       if (permission.location !== 'granted') {
@@ -71,7 +80,7 @@ export class LocationService {
     });
   }
 
-  // OpenStreetMap Nominatim permite buscar una dirección sin utilizar una clave privada.
+  // Busca una direccion con OpenStreetMap.
   async search(query: string): Promise<LocationSearchResult[]> {
     const url = new URL('https://nominatim.openstreetmap.org/search');
     url.searchParams.set('format', 'jsonv2');
@@ -89,7 +98,7 @@ export class LocationService {
     }));
   }
 
-  // Overpass consulta restaurantes, tiendas y lugares turísticos en un radio de 1.5 km.
+  // Busca lugares que esten a menos de 1.5 km.
   async nearby(location: HermesLocation): Promise<NearbyPlace[]> {
     const query = `[out:json][timeout:20];(nwr(around:1500,${location.latitude},${location.longitude})[amenity~"restaurant|cafe|fast_food"];nwr(around:1500,${location.latitude},${location.longitude})[shop];nwr(around:1500,${location.latitude},${location.longitude})[tourism]);out center 30;`;
     const response = await fetch('https://overpass-api.de/api/interpreter', {
@@ -98,7 +107,7 @@ export class LocationService {
       body: new URLSearchParams({ data: query }),
     });
     if (!response.ok) throw new Error('No fue posible consultar los lugares cercanos.');
-    const data = await response.json() as { elements: Array<any> };
+    const data = await response.json() as { elements: OverpassElement[] };
     return data.elements
       .map(element => {
         const latitude = Number(element.lat ?? element.center?.lat);

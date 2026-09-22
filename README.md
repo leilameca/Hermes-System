@@ -1,62 +1,76 @@
 # HERMES SYSTEM
 
-Aplicacion web y movil para la gestion de rent-a-car en Republica Dominicana.
-Esta desarrollada con Angular 20, Ionic 8, Capacitor 7 y Supabase.
+Aplicacion web y movil para administrar una empresa rent a car. El proyecto usa
+Angular, Ionic, Capacitor y Supabase.
 
-## Ejecutar
+## Funciones principales
+
+- Inicio de sesion y acceso por roles.
+- Administracion de clientes, vehiculos y reservas.
+- Lectura y escritura de etiquetas NFC.
+- GPS, mapa y lugares cercanos.
+- Trabajo sin conexion para algunas operaciones.
+- Registro de clientes por medio del enlace de una empresa.
+
+## Ejecutar el proyecto
 
 ```sh
 npm install
 npm start
 ```
 
-Abrir `/` o `/login`. El acceso utiliza Supabase Auth y dirige cada cuenta al
-espacio correspondiente segun su rol y empresa.
+La aplicacion abre en `http://localhost:4200`.
 
-## Usuarios
-
-| Rol | Usuario |
-| --- | --- |
-| Cliente | `cliente@hermes.app` |
-| Agente | `agente@hermes.app` |
-| Administrador | `admin@hermes.app` |
-| Super Admin | `superadmin@hermes.app` |
-
-Los accesos rapidos solo completan el correo. Las contrasenas se administran en
-Supabase y no se guardan en el codigo fuente.
-
-## Navegacion
-
-| Espacio | Rutas relativas |
-| --- | --- |
-| `/cliente` | `inicio`, `explorar`, `resultados`, `vehiculos/:id`, `reservas/nueva`, `reservas`, `reservas/:id`, `contratos`, `facturas`, `incidentes`, `perfil` |
-| `/agente` | `inicio`, `operaciones`, `escanear`, `vehiculos/:id`, `entrega/:id`, `entrega/:id/checklist`, `entrega/:id/evidencias`, `entrega/:id/firma`, `devolucion/:id`, `devolucion/:id/checklist`, `devolucion/:id/evidencias`, `devolucion/:id/firma`, `incidentes`, `perfil` |
-| `/admin` | `dashboard`, `flota`, `flota/:id`, `reservas`, `operaciones`, `clientes`, `inspecciones`, `contratos`, `facturacion`, `mantenimiento`, `configuracion` |
-| `/super-admin` | `dashboard`, `empresas`, `empresas/:id`, `planes`, `suscripciones`, `plataforma` |
-
-Cliente usa navegacion principal reducida: Inicio, Explorar, Reservas y Perfil.
-Contratos, facturas e incidentes siguen accesibles desde reservas y perfil.
-Agente usa Inicio, Operaciones, Escanear, Incidentes y Perfil. Admin usa Resumen,
-Flota, Reservas, Operaciones y Mas en movil; en escritorio usa sidebar. Super Admin
-mantiene un enfoque administrativo con sidebar en escritorio.
-
-## Archivos clave
-
-- `src/app/app.routes.ts`: login, guards por rol, rutas heredadas y 404.
-- `src/app/core/services/auth.service.ts`: autenticacion y sesion.
-- `src/app/core/services/hermes-data.service.ts`: acceso central a los datos.
-- `src/app/core/services/tenant.service.ts`: empresa activa del usuario.
-- `src/app/core/services/nfc.service.ts`: lectura y escritura NFC.
-- `src/app/features/login/`: pantalla profesional de login.
-- `src/app/layouts/demo-layout/`: header, sidebar, tabs moviles y logout.
-- `supabase/migrations/`: estructura, seguridad y operaciones de la base de datos.
-
-## Verificacion
+## Revisar antes de publicar
 
 ```sh
-npm run typecheck
-npm run build
+npm run check
 ```
 
-Las credenciales del proyecto usan una clave publica de Supabase. Nunca se debe
-incluir una clave `service_role` en la aplicacion web o movil.
+Este comando revisa TypeScript, rutas, permisos, plugins y el build de Angular.
+
+## Abrir en Android Studio
+
+```sh
+npm run sync:android
+npm run open:android
+```
+
+Luego se conecta el telefono y se pulsa **Run** en Android Studio.
+
+## Carpetas importantes
+
+| Carpeta | Contenido |
+| --- | --- |
+| `src/app/core` | Modelos y servicios generales |
+| `src/app/features` | Pantallas de la aplicacion |
+| `src/app/layouts` | Menu lateral, encabezado y navegacion movil |
+| `src/app/shared` | Componentes que se usan en varias pantallas |
+| `supabase/migrations` | Tablas, politicas y datos de prueba |
+| `supabase/functions` | Funcion segura para crear cuentas de clientes |
+| `android` | Proyecto nativo que abre Android Studio |
+| `AP4_EquipoN` | Copia de la evidencia de la actividad AP4 |
+
+## Base de datos
+
+Las migraciones se ejecutan en orden:
+
+1. `202609210001_initial_saas.sql`
+2. `202609210002_auth_roles_and_customers.sql`
+3. `202609210003_operational_core.sql`
+4. `202609220004_customer_registration.sql`
+
+La aplicacion solo contiene la clave publica de Supabase. La clave
+`service_role` se guarda en Supabase y nunca se copia al codigo Angular.
+
+## Publicacion
+
+Vercel toma la rama `develop`. Los cambios deben probarse antes de actualizar
+esa rama.
+
+## Notas de NFC
+
+- En Android instalado se usa el plugin nativo.
+- En la web se necesita Chrome en un telefono Android.
+- Un navegador de computadora no puede leer etiquetas NFC.
+- Las etiquetas guardan el identificador del vehiculo conectado a Supabase.
