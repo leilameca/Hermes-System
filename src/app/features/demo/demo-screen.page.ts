@@ -16,7 +16,7 @@ import {
   searchOutline,
   swapHorizontalOutline,
 } from 'ionicons/icons';
-import { Vehicle } from '../../core/models';
+import { Branch, Customer, Reservation, Vehicle } from '../../core/models';
 import { DEMO_SPACES, DemoRole } from './demo-navigation';
 import { DEMO_RECORDS } from './demo-records';
 import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
@@ -36,6 +36,7 @@ export class DemoState {
   readonly operations = this.data.operations;
   readonly contracts = this.data.contracts;
   readonly organizations = this.data.organizations;
+  readonly customerLocations = this.data.customerLocations;
   readonly loading = this.data.loading;
   readonly error = this.data.error;
   readonly steps = signal<Record<string, { checks: boolean[]; evidence: boolean; signed: boolean }>>({});
@@ -45,7 +46,7 @@ export class DemoState {
   step(key: string) { return this.steps()[key] ?? { checks: [false, false, false, false], evidence: false, signed: false }; }
   update(key: string, patch: Partial<ReturnType<DemoState['step']>>) { this.steps.update(all => ({ ...all, [key]: { ...this.step(key), ...patch } })); }
   addIncident(detail: string) {
-    this.incidents.update(rows => [{ id: crypto.randomUUID(), title: 'Incidente reportado desde HERMES', detail, status: 'open' }, ...rows]);
+    this.incidents.update(rows => [{ id: crypto.randomUUID(), title: 'Incidente reportado desde HERMES', detail, status: 'open', createdAt: new Date().toISOString() }, ...rows]);
   }
   saveInspection(key: string) {
     this.inspectionSaved.update(rows => ({ ...rows, [key]: true }));
@@ -58,6 +59,20 @@ export class DemoState {
   createReservation(vehicle: Vehicle, startsAt: string, endsAt: string, total: number) { return this.data.createReservation(vehicle, startsAt, endsAt, total); }
   createCustomer(customer: NewCustomerInput) { return this.data.createCustomer(customer); }
   createCustomerAccount(customer: NewCustomerAccountInput) { return this.data.createCustomerAccount(customer); }
+  updateCustomer(id: string, customer: NewCustomerInput & { active: boolean }) { return this.data.updateCustomer(id, customer); }
+  deleteCustomer(id: string) { return this.data.deleteCustomer(id); }
+  customerHistory(id: string) { return this.data.customerHistory(id); }
+  uploadCustomerDocument(id: string, file: File, type: 'license' | 'identity' | 'contract' | 'other') { return this.data.uploadCustomerDocument(id, file, type); }
+  updateVehicle(id: string, vehicle: Partial<Omit<Vehicle, 'id' | 'tenantId'>>) { return this.data.updateVehicle(id, vehicle); }
+  deleteVehicle(id: string) { return this.data.deleteVehicle(id); }
+  uploadVehicleImage(file: File) { return this.data.uploadVehicleImage(file); }
+  uploadOperationEvidence(vehicleId: string, file: File) { return this.data.uploadOperationEvidence(vehicleId, file); }
+  updateReservation(id: string, reservation: { startsAt: string; endsAt: string; status: Reservation['status']; total: number; notes?: string }) { return this.data.updateReservation(id, reservation); }
+  cancelOwnReservation(id: string) { return this.data.cancelOwnReservation(id); }
+  createBranch(branch: { name: string; city: string; address: string }) { return this.data.createBranch(branch); }
+  updateBranch(id: string, branch: { name: string; city: string; address: string; active: boolean }) { return this.data.updateBranch(id, branch); }
+  deleteBranch(id: string) { return this.data.deleteBranch(id); }
+  updateMember(id: string, role: 'admin' | 'agent', active: boolean) { return this.data.updateMember(id, role, active); }
   completeOperation(input: { vehicleId: string; type: 'delivery' | 'return'; checks: boolean[]; evidenceUrls: string[]; signatureName: string }) { return this.data.completeOperation(input); }
 }
 
@@ -135,6 +150,21 @@ export class DemoScreenPage {
   vehicleImagePreview = '';
   vehicleImageName = '';
   vehicleImageError = '';
+  vehicleImageFile?: File;
+  editingVehicle = false;
+  editVehicle: Pick<Vehicle, 'brand' | 'model' | 'year' | 'plate' | 'category' | 'transmission' | 'seats' | 'dailyRate' | 'mileage' | 'status' | 'branchId'> = {
+    brand: '', model: '', year: 2026, plate: '', category: 'suv', transmission: 'automatic', seats: 5, dailyRate: 0, mileage: 0, status: 'available', branchId: '',
+  };
+  editingCustomerId = '';
+  customerActive = true;
+  expandedCustomerId = '';
+  editingReservationId = '';
+  reservationEdit = { startsAt: '', endsAt: '', status: 'pending' as Reservation['status'], total: 0, notes: '' };
+  branchFormOpen = false;
+  editingBranchId = '';
+  branchForm: Pick<Branch, 'name' | 'city' | 'address' | 'active'> = { name: '', city: '', address: '', active: true };
+  operationEvidenceFile?: File;
+  operationEvidencePreview = '';
   readonly checks = ['Carrocería y cristales', 'Neumáticos y luces', 'Combustible y kilometraje', 'Documentos, llaves y accesorios'];
   readonly plans = [
     { name: 'Esencial', price: 1900, detail: 'Hasta 10 vehiculos · una sucursal', features: ['Reservas', 'Contratos', 'Soporte por correo'] },
@@ -249,6 +279,7 @@ export class DemoScreenPage {
     const branchId = this.branches()[0]?.id;
     if (!branchId) { this.message = 'Primero debes registrar una sucursal activa.'; return; }
     try {
+      const imagePath = this.vehicleImageFile ? await this.state.uploadVehicleImage(this.vehicleImageFile) : undefined;
       const vehicle = await this.state.createVehicle({
         ...this.newVehicle,
         branchId,
@@ -256,7 +287,8 @@ export class DemoScreenPage {
         brand: this.newVehicle.brand.trim(),
         model: this.newVehicle.model.trim(),
         plate,
-        imageUrl: this.vehicleImagePreview || fallbackImage,
+        imageUrl: imagePath ? undefined : fallbackImage,
+        imagePath,
         imageAlt: `${this.newVehicle.brand.trim()} ${this.newVehicle.model.trim()} agregado a la flota Hermes.`,
       });
       await this.router.navigateByUrl(this.link('flota/' + vehicle.id));
@@ -291,6 +323,58 @@ export class DemoScreenPage {
       this.message = error instanceof Error ? error.message : 'No fue posible registrar el cliente.';
     }
   }
+  startEditCustomer(customer: Customer) {
+    this.editingCustomerId = customer.id;
+    this.customerActive = customer.active;
+    this.newCustomer = {
+      name: customer.name, email: customer.email, phone: customer.phone,
+      documentType: customer.documentType ?? 'cedula', documentNumber: customer.documentNumber ?? '',
+      driverLicense: customer.driverLicense ?? '', city: customer.city,
+    };
+    this.customerFormOpen = true;
+    this.createCustomerAccess = false;
+  }
+  cancelCustomerForm() {
+    this.editingCustomerId = '';
+    this.customerFormOpen = false;
+    this.customerActive = true;
+    this.newCustomer = { name: '', email: '', phone: '', documentType: 'cedula', documentNumber: '', driverLicense: '', city: 'Santo Domingo' };
+  }
+  async saveCustomer() {
+    if (!this.editingCustomerId) return this.createCustomer();
+    try {
+      await this.state.updateCustomer(this.editingCustomerId, { ...this.newCustomer, active: this.customerActive });
+      this.cancelCustomerForm();
+      this.message = 'Cliente actualizado correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible actualizar el cliente.';
+    }
+  }
+  async deleteCustomer(customer: Customer) {
+    if (!window.confirm(`¿Eliminar a ${customer.name}? Esta acción solo será posible si no tiene historial relacionado.`)) return;
+    try {
+      await this.state.deleteCustomer(customer.id);
+      this.message = 'Cliente eliminado correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible eliminar el cliente.';
+    }
+  }
+  async uploadCustomerDocument(customerId: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { this.message = 'El documento no puede superar 10 MB.'; return; }
+    try {
+      await this.state.uploadCustomerDocument(customerId, file, 'other');
+      this.message = 'Documento guardado en Storage privado.';
+      input.value = '';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible guardar el documento.';
+    }
+  }
+  toggleCustomerHistory(customerId: string) {
+    this.expandedCustomerId = this.expandedCustomerId === customerId ? '' : customerId;
+  }
   selectVehicleImage(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -306,6 +390,7 @@ export class DemoScreenPage {
       input.value = '';
       return;
     }
+    this.vehicleImageFile = file;
     const reader = new FileReader();
     reader.onload = () => {
       this.vehicleImagePreview = typeof reader.result === 'string' ? reader.result : '';
@@ -318,7 +403,107 @@ export class DemoScreenPage {
     this.vehicleImagePreview = '';
     this.vehicleImageName = '';
     this.vehicleImageError = '';
+    this.vehicleImageFile = undefined;
     input.value = '';
+  }
+  startEditVehicle(vehicle: Vehicle) {
+    this.editingVehicle = true;
+    this.editVehicle = {
+      brand: vehicle.brand, model: vehicle.model, year: vehicle.year, plate: vehicle.plate,
+      category: vehicle.category, transmission: vehicle.transmission, seats: vehicle.seats,
+      dailyRate: vehicle.dailyRate, mileage: vehicle.mileage, status: vehicle.status, branchId: vehicle.branchId,
+    };
+  }
+  async saveVehicleEdit() {
+    const vehicle = this.vehicle();
+    if (!vehicle) return;
+    try {
+      const imagePath = this.vehicleImageFile ? await this.state.uploadVehicleImage(this.vehicleImageFile) : undefined;
+      await this.state.updateVehicle(vehicle.id, { ...this.editVehicle, ...(imagePath ? { imagePath } : {}) });
+      this.editingVehicle = false;
+      this.vehicleImageFile = undefined;
+      this.message = 'Vehículo actualizado correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible actualizar el vehículo.';
+    }
+  }
+  async deleteVehicle(vehicle: Vehicle) {
+    if (!window.confirm(`¿Eliminar ${vehicle.brand} ${vehicle.model}?`)) return;
+    try {
+      await this.state.deleteVehicle(vehicle.id);
+      this.message = 'Vehículo eliminado correctamente.';
+      await this.router.navigateByUrl(this.link('flota'));
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible eliminar el vehículo.';
+    }
+  }
+  startEditReservation(reservation: Reservation) {
+    this.editingReservationId = reservation.id;
+    this.reservationEdit = {
+      startsAt: reservation.startsAt.slice(0, 10), endsAt: reservation.endsAt.slice(0, 10),
+      status: reservation.status, total: reservation.total, notes: reservation.notes ?? '',
+    };
+  }
+  async saveReservationEdit() {
+    if (!this.editingReservationId) return;
+    try {
+      await this.state.updateReservation(this.editingReservationId, {
+        ...this.reservationEdit,
+        startsAt: `${this.reservationEdit.startsAt}T09:00:00-04:00`,
+        endsAt: `${this.reservationEdit.endsAt}T09:00:00-04:00`,
+      });
+      this.editingReservationId = '';
+      this.message = 'Reserva actualizada y disponibilidad validada.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible actualizar la reserva.';
+    }
+  }
+  async cancelReservation(reservation: Reservation) {
+    try {
+      if (this.role === 'cliente') await this.state.cancelOwnReservation(reservation.id);
+      else await this.state.updateReservation(reservation.id, {
+        startsAt: reservation.startsAt, endsAt: reservation.endsAt, status: 'cancelled', total: reservation.total, notes: reservation.notes,
+      });
+      this.message = 'Reserva cancelada correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible cancelar la reserva.';
+    }
+  }
+  startBranchForm(branch?: Branch) {
+    this.branchFormOpen = true;
+    this.editingBranchId = branch?.id ?? '';
+    this.branchForm = branch
+      ? { name: branch.name, city: branch.city, address: branch.address, active: branch.active }
+      : { name: '', city: '', address: '', active: true };
+  }
+  async saveBranch() {
+    if (!this.branchForm.name.trim()) return;
+    try {
+      if (this.editingBranchId) await this.state.updateBranch(this.editingBranchId, this.branchForm);
+      else await this.state.createBranch(this.branchForm);
+      this.branchFormOpen = false;
+      this.editingBranchId = '';
+      this.message = 'Sucursal guardada correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible guardar la sucursal.';
+    }
+  }
+  async deleteBranch(branch: Branch) {
+    if (!window.confirm(`¿Eliminar la sucursal ${branch.name}?`)) return;
+    try { await this.state.deleteBranch(branch.id); this.message = 'Sucursal eliminada.'; }
+    catch (error) { this.message = error instanceof Error ? error.message : 'No fue posible eliminar la sucursal.'; }
+  }
+  async changeMember(id: string, role: 'admin' | 'agent', active: boolean) {
+    try { await this.state.updateMember(id, role, active); this.message = 'Permisos actualizados.'; }
+    catch (error) { this.message = error instanceof Error ? error.message : 'No fue posible actualizar los permisos.'; }
+  }
+  selectOperationEvidence(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { this.message = 'La evidencia no puede superar 10 MB.'; return; }
+    this.operationEvidenceFile = file;
+    this.operationEvidencePreview = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+    this.state.update(this.stepKey(), { evidence: true });
   }
   scan() {
     const found = this.vehicles().find(v => v.plate.toLowerCase() === this.scanCode.trim().toLowerCase() || v.id === this.scanCode.trim());
@@ -329,11 +514,14 @@ export class DemoScreenPage {
   async sign() {
     if (!this.signatureName.trim() || !this.consent) return;
     try {
+      const evidenceUrls = this.operationEvidenceFile
+        ? [await this.state.uploadOperationEvidence(this.id(), this.operationEvidenceFile)]
+        : [];
       await this.state.completeOperation({
         vehicleId: this.id(),
         type: this.flow() === 'devolucion' ? 'return' : 'delivery',
         checks: this.step().checks,
-        evidenceUrls: this.step().evidence ? [this.vehicle()?.imageUrl ?? 'evidencia-local'] : [],
+        evidenceUrls,
         signatureName: this.signatureName.trim(),
       });
       this.state.update(this.stepKey(), { signed: true });
