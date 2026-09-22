@@ -253,3 +253,8 @@ details p { margin-top: 12px; }
   .mobile-hero:not(.compact-hero) img { grid-column: 1; grid-row: 2; height: 100px; }
   .mobile-hero:not(.compact-hero) input { grid-row: 3; }
 }
+
+.history-list { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--hermes-border); }
+.history-row { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 12px; padding: 12px; border: 1px solid var(--hermes-border); border-radius: 6px; background: var(--hermes-canvas); }
+.history-row div { display: grid; gap: 4px; }
+.history-row p, .history-row small { color: var(--hermes-text-secondary); }
