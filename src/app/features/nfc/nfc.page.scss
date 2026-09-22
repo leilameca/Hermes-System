@@ -10,6 +10,7 @@
 .action-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--hermes-space-5); }
 .action-grid article, .result { display: grid; gap: var(--hermes-space-4); padding: var(--hermes-space-6); border: 1px solid var(--hermes-border); background: var(--hermes-surface); }
 .action-grid article > p:not(.eyebrow) { min-height: 48px; color: var(--hermes-text-secondary); }
+.field-help { min-height: auto !important; margin-top: calc(var(--hermes-space-2) * -1); font-size: var(--hermes-text-xs); color: var(--hermes-text-secondary); }
 .action-grid ion-button { justify-self: start; }
 .scanning { display: flex; align-items: center; gap: var(--hermes-space-4); min-height: 48px; color: var(--hermes-blue); }
 .scan-wave { width: 34px; height: 34px; border: 2px solid currentColor; border-radius: 50%; box-shadow: 0 0 0 7px var(--hermes-blue-light); animation: pulse 1.3s ease-in-out infinite; }
