@@ -1,0 +1,36 @@
+:host { display: block; min-height: 100%; }
+.location-page { display: grid; gap: 22px; max-width: 1180px; margin: 0 auto; padding: clamp(22px,4vw,48px); color: var(--hermes-graphite); }
+.page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.page-heading > div { display: grid; gap: 8px; }
+.page-heading h1 { font-size: clamp(34px,5vw,52px); line-height: 1.04; }
+.page-heading p:not(.eyebrow), .coordinates p { color: var(--hermes-text-secondary); }
+.eyebrow { color: var(--hermes-link); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.privacy { max-width: 280px; padding: 11px 13px; border-left: 3px solid var(--hermes-amber); background: var(--hermes-surface); color: var(--hermes-text-secondary); font-size: 12px; }
+.location-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.location-actions button, form button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 46px; padding: 0 15px; border: 1px solid var(--hermes-border); border-radius: 5px; background: var(--hermes-surface); color: var(--hermes-navy); font-weight: 720; cursor: pointer; }
+.location-actions .primary { border-color: var(--hermes-navy); background: var(--hermes-navy); color: white; }
+button:disabled { opacity: .55; cursor: wait; }
+.status { padding: 12px 14px; border-left: 3px solid var(--hermes-blue); background: var(--hermes-blue-light); color: var(--hermes-text-strong); font-size: 14px; }
+.map-layout { display: grid; grid-template-columns: minmax(0,2.1fr) minmax(250px,.9fr); gap: 16px; }
+.map-card, .coordinates, .search-card, .places-card { border: 1px solid var(--hermes-border); border-radius: 8px; background: var(--hermes-surface); overflow: hidden; }
+.map { width: 100%; height: min(54vh,520px); min-height: 380px; }
+.coordinates { display: grid; align-content: start; gap: 16px; padding: 22px; }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin: 0; }
+dt { color: var(--hermes-text-secondary); }
+dd { margin: 0; color: var(--hermes-text-strong); font-weight: 750; }
+.search-card, .places-card { display: grid; gap: 14px; padding: 22px; }
+.search-card > div, .places-card > div:first-child { display: grid; gap: 5px; }
+form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; max-width: none; }
+input { width: 100%; min-height: 48px; padding: 0 12px; border: 1px solid var(--hermes-control-border); border-radius: 5px; background: var(--hermes-field); color: var(--hermes-graphite); }
+form button { border-color: var(--hermes-navy); background: var(--hermes-navy); color: white; }
+.result { display: grid; gap: 4px; padding: 13px; border: 1px solid var(--hermes-border); border-radius: 5px; background: var(--hermes-canvas); color: var(--hermes-graphite); text-align: left; cursor: pointer; }
+.result span { color: var(--hermes-text-secondary); font-size: 12px; }
+.places-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.place { display: grid; gap: 7px; min-height: 120px; padding: 14px; border: 1px solid var(--hermes-border); border-radius: 6px; background: var(--hermes-canvas); color: var(--hermes-graphite); text-align: left; cursor: pointer; }
+.place-category { width: fit-content; padding: 3px 7px; border-radius: 999px; background: var(--hermes-blue-light); color: var(--hermes-blue); font-size: 11px; font-weight: 750; }
+.place small, .empty { color: var(--hermes-text-secondary); }
+.empty { grid-column: 1 / -1; }
+:host ::ng-deep .hermes-map-marker span { display: block; width: 24px; height: 24px; border: 5px solid white; border-radius: 50%; background: #17448f; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+:host ::ng-deep .hermes-place-marker span { display: block; width: 18px; height: 18px; border: 3px solid white; border-radius: 50% 50% 50% 0; background: #d08a32; box-shadow: 0 2px 7px rgba(0,0,0,.3); transform: rotate(-45deg); }
+@media(max-width:800px) { .page-heading { align-items: flex-start; flex-direction: column; } .privacy { max-width: none; } .map-layout { grid-template-columns: 1fr; } .map { min-height: 330px; } .places-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:520px) { .location-page { padding: 18px 14px 104px; } .location-actions button { flex: 1 1 46%; } form { grid-template-columns: 1fr; } .places-grid { grid-template-columns: 1fr; } .map { min-height: 300px; } }

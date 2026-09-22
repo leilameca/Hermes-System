@@ -142,6 +142,7 @@ export class DemoLayoutComponent {
 
   private morePaths() {
     if (this.role === 'admin') return ['reservas', 'sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'configuracion'];
+    if (this.role === 'agente' || this.role === 'cliente') return ['gps'];
     return [];
   }
 
