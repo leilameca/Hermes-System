@@ -47,6 +47,7 @@ export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
   admin: { label: 'Administrador', description: 'Una vision completa de tu empresa de alquiler.', home: 'dashboard', areas: [
     { path: 'dashboard', label: 'Resumen', icon: gridOutline },
     { path: 'flota', label: 'Flota', icon: carSportOutline },
+    { path: 'escanear', label: 'NFC', icon: scanOutline },
     { path: 'sucursales', label: 'Sucursales', icon: businessOutline },
     { path: 'usuarios', label: 'Usuarios y permisos', icon: personAddOutline },
     { path: 'reservas', label: 'Reservas', icon: calendarClearOutline },

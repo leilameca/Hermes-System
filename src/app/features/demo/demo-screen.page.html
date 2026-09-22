@@ -3,13 +3,15 @@
     <div>
       <p class="eyebrow">{{ space.label }} / Hermes System</p>
       <h1>{{ data()['label'] }}</h1>
-      @if (role === 'admin' && kind() === 'home') { <p>Bienvenida, Mariana. Aqui tienes un resumen de la operacion.</p> }
+      @if (role === 'admin' && kind() === 'home') { <p>Bienvenida, {{ currentUser()?.name }}. Aquí tienes un resumen de la operación real.</p> }
     </div>
     @if (role === 'admin' && kind() === 'home') {
-      <button class="date-control" type="button">1 sept. 2026 - 8 sept. 2026</button>
+      <button class="date-control" type="button">Datos sincronizados con Supabase</button>
     }
   </div>
   @if (message) { <p class="notice" role="status">{{ message }}</p> }
+  @if (state.loading()) { <p class="notice" role="status">Cargando datos reales…</p> }
+  @if (state.error()) { <p class="notice notice--critical" role="alert">{{ state.error() }}</p> }
   @switch (kind()) {
     @case ('home') {
       @if (role === 'admin') {
@@ -21,12 +23,12 @@
           </div>
           <img src="assets/images/vehicles/sportage.jpg" alt="Vehiculo de la flota Hermes">
           <dl>
-            <dt>Proxima entrega</dt><dd>09:00 · Toyota Corolla</dd>
-            <dt>Sucursal</dt><dd>Santo Domingo</dd>
+            <dt>Próxima operación</dt><dd>{{ nextOperation() ? (nextOperation()!.scheduledAt | date:'dd MMM, HH:mm') + ' · ' + vehicleName(nextOperation()!.vehicleId) : 'Sin operaciones pendientes' }}</dd>
+            <dt>Sucursal</dt><dd>{{ branches()[0]?.name || 'Sin sucursal' }}</dd>
           </dl>
         </section>
         <section class="kpi-grid" aria-label="Resumen administrativo">
-          @for (metric of adminMetrics; track metric.label) {
+          @for (metric of adminMetrics(); track metric.label) {
             <article class="kpi-card"><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong><small>{{ metric.trend }}</small></article>
           }
         </section>
@@ -34,23 +36,23 @@
           <article class="panel chart-panel">
             <div class="panel-title"><h2>Reservas por dia</h2><span>Ultimos 7 dias</span></div>
             <div class="bar-chart" aria-label="Grafico de reservas por dia">
-              @for (day of bookingDays; track day.label) {
+              @for (day of bookingDays(); track day.label) {
                 <span [style.height.%]="day.value * 2.2"><em>{{ day.label }}</em></span>
               }
             </div>
           </article>
           <article class="panel fleet-panel">
-            <div class="panel-title"><h2>Estado de la flota</h2><span>32 vehiculos</span></div>
-            <div class="fleet-ring"><strong>32</strong><span>Vehiculos</span></div>
+            <div class="panel-title"><h2>Estado de la flota</h2><span>{{ vehicles().length }} vehículos</span></div>
+            <div class="fleet-ring"><strong>{{ vehicles().length }}</strong><span>Vehículos</span></div>
             <div class="fleet-list">
-              @for (item of fleetState; track item.label) {
+              @for (item of fleetState(); track item.label) {
                 <p><span class="state-dot" [class]="item.tone"></span>{{ item.label }}<strong>{{ item.value }}</strong></p>
               }
             </div>
           </article>
           <aside class="panel attention-panel">
             <div class="panel-title"><h2>Atencion requerida</h2><a [routerLink]="link('operaciones')">Ver todas</a></div>
-            @for (item of attentionItems; track item.title) {
+            @for (item of attentionItems(); track item.title) {
               <a class="attention-row" [class]="item.tone" [routerLink]="link('operaciones')"><strong>{{ item.title }}</strong><span>{{ item.detail }}</span></a>
             }
           </aside>
@@ -61,7 +63,7 @@
             <table>
               <thead><tr><th>Cliente</th><th>Vehiculo</th><th>Inicio</th><th>Fin</th><th>Estado</th></tr></thead>
               <tbody>
-                @for (row of recentReservations; track row.client) {
+                @for (row of recentReservations(); track row.vehicleId + row.start) {
                   <tr><td>{{ row.client }}</td><td>{{ vehicleName(row.vehicleId) }}</td><td>{{ row.start }}</td><td>{{ row.end }}</td><td><span class="table-status">{{ row.status }}</span></td></tr>
                 }
               </tbody>
@@ -69,7 +71,7 @@
           </article>
           <article class="panel quick-panel">
             <div class="panel-title"><h2>Informacion rapida</h2></div>
-            @for (item of quickOps; track item.label) {
+            @for (item of quickOps(); track item.label) {
               <p><strong>{{ item.value }}</strong><span>{{ item.label }}</span></p>
             }
           </article>
@@ -107,13 +109,13 @@
             <span>09:00</span>
           </div>
           <section class="action-grid">
-            @for (action of agentActions; track action.label) {
+            @for (action of agentActions(); track action.label) {
               <a [routerLink]="link(action.path)"><ion-icon [icon]="action.icon" aria-hidden="true" /><strong>{{ action.label }}</strong><span>{{ action.value }}</span></a>
             }
           </section>
           <div class="section-row"><h2>Proximas operaciones</h2><a [routerLink]="link('operaciones')">Ver todas</a></div>
           <section class="timeline" aria-label="Agenda del dia">
-            @for (task of todayTasks; track task.time) {
+            @for (task of todayTasks(); track task.path) {
               <a class="timeline-row" [routerLink]="link(task.path)"><span>{{ task.time }}</span><div><strong>{{ task.title }}</strong><p>{{ task.detail }}</p></div></a>
             }
           </section>
@@ -124,7 +126,7 @@
             <article class="work-item"><strong>{{ item.value }}</strong><span>{{ item.label }}</span></article>
           }
         </section>
-        <section class="cards corporate-cards">@for (company of companiesSummary; track company.id) {
+        <section class="cards corporate-cards">@for (company of companiesSummary(); track company.id) {
           <a class="card company-card" [routerLink]="link('empresas/' + company.id)"><span class="building-icon"><ion-icon [icon]="businessIcon" aria-hidden="true" /></span><div><h2>{{ companyNameFor(company.id) }}</h2><p>{{ company.vehicles }} vehiculos · {{ company.status }}</p><small>{{ companyCityFor(company.id) }}</small></div><span>›</span></a>
         }</section>
       }
@@ -164,7 +166,7 @@
     }
     @case ('new-vehicle') {
       <form class="panel stack vehicle-form" (ngSubmit)="createVehicle()">
-        <div><p class="eyebrow">Registro de flota</p><h2>Datos del vehículo</h2><p class="text-secondary">El vehículo se guardará temporalmente en esta sesión.</p></div>
+        <div><p class="eyebrow">Registro de flota</p><h2>Datos del vehículo</h2><p class="text-secondary">El vehículo se guardará en Supabase para toda la empresa.</p></div>
         <section class="vehicle-photo-upload" aria-labelledby="vehicle-photo-title">
           <div class="vehicle-photo-copy"><h3 id="vehicle-photo-title">Fotografía del vehículo</h3><p>JPG, PNG o WEBP · máximo 5 MB.</p><input #vehiclePhoto id="vehicle-photo" class="file-input" name="vehiclePhoto" type="file" accept="image/jpeg,image/png,image/webp" (change)="selectVehicleImage($event)"><label class="button secondary" for="vehicle-photo">Seleccionar fotografía</label></div>
           @if (vehicleImagePreview) { <figure class="vehicle-photo-preview"><img [src]="vehicleImagePreview" alt="Vista previa del nuevo vehículo"><figcaption>{{ vehicleImageName }}</figcaption><button type="button" (click)="clearVehicleImage(vehiclePhoto)">Quitar fotografía</button></figure> }
@@ -223,15 +225,15 @@
       @else { <p class="notice">La reserva no existe o ya no está disponible.</p><a [routerLink]="link('reservas')">Volver a mis reservas</a> }
     }
     @case ('operaciones') {
-      <p>Agenda de operaciones · Sucursal Santo Domingo</p>
+      <p>Agenda de operaciones sincronizada con Supabase</p>
       <section class="list-panel">
-        @for (operation of ['entrega', 'devolucion']; track operation) {
+        @for (operation of operations(); track operation.id) {
           <article class="operation-row">
-            <img src="assets/images/vehicles/corolla.jpg" alt="Toyota Corolla">
-            <div><span class="badge">Programada</span><h2>{{ operation === 'entrega' ? 'Entrega · 12 octubre, 09:00' : 'Devolución · 15 octubre, 09:00' }}</h2><p>Laura Méndez · Toyota Corolla · A987601</p></div>
-            @if (role === 'agente') { <a class="button" [routerLink]="link(operation + '/vehicle-001')">Abrir</a> } @else { <a [routerLink]="vehicleLink('vehicle-001')">Ver vehículo</a> }
+            <img [src]="vehicleImage(operation.vehicleId)" [alt]="vehicleName(operation.vehicleId)">
+            <div><span class="badge">{{ operation.status === 'completed' ? 'Completada' : 'Programada' }}</span><h2>{{ operation.type === 'delivery' ? 'Entrega' : 'Devolución' }} · {{ operation.scheduledAt | date:'dd MMM, HH:mm' }}</h2><p>{{ customerName(operation.customerId) }} · {{ vehicleName(operation.vehicleId) }} · {{ vehiclePlate(operation.vehicleId) }}</p></div>
+            @if (role === 'agente') { <a class="button" [routerLink]="link((operation.type === 'delivery' ? 'entrega/' : 'devolucion/') + operation.vehicleId)">Abrir</a> } @else { <a [routerLink]="vehicleLink(operation.vehicleId)">Ver vehículo</a> }
           </article>
-        }
+        } @empty { <p class="notice">No hay entregas ni devoluciones programadas.</p> }
       </section>
     }
     @case ('scan') {
@@ -243,23 +245,36 @@
     @case ('evidence') {  }
     @case ('signature') {  }
     @case ('empresas') {
-      <section class="list-panel corporate-list">@for (company of companiesSummary; track company.id) {
+      <section class="list-panel corporate-list">@for (company of companiesSummary(); track company.id) {
         <a class="company-row" [routerLink]="link('empresas/' + company.id)"><span class="building-icon"><ion-icon [icon]="businessIcon" aria-hidden="true" /></span><div><h2>{{ companyNameFor(company.id) }}</h2><p>{{ company.vehicles }} vehiculos · {{ company.status }}</p></div><strong>›</strong></a>
       }</section>
     }
     @case ('company') {
-      @if (company(); as t) { <section class="panel stack"><span class="badge">Activa</span><h2>{{ t.name }}</h2><dl><dt>Ciudad</dt><dd>{{ t.city }}</dd><dt>Correo</dt><dd>{{ t.email }}</dd><dt>Teléfono</dt><dd>{{ t.phone }}</dd><dt>Plan</dt><dd>{{ t.id === 'tenant-001' ? 'Profesional' : 'Esencial' }}</dd></dl><a [routerLink]="link('suscripciones')">Ver suscripciones →</a><a [routerLink]="link('planes')">Ver planes →</a></section> } @else { <p class="notice">Empresa no encontrada.</p><a [routerLink]="link('empresas')">Ver empresas</a> }
+      @if (company(); as t) { <section class="panel stack"><span class="badge">{{ t.active ? 'Activa' : 'Inactiva' }}</span><h2>{{ t.name }}</h2><dl><dt>Ciudad</dt><dd>{{ t.city }}</dd><dt>Correo</dt><dd>{{ t.email }}</dd><dt>Teléfono</dt><dd>{{ t.phone }}</dd><dt>Vehículos</dt><dd>{{ organizationVehicleCount(t.id) }}</dd></dl><a [routerLink]="link('suscripciones')">Ver suscripciones →</a><a [routerLink]="link('planes')">Ver planes →</a></section> } @else { <p class="notice">Empresa no encontrada.</p><a [routerLink]="link('empresas')">Ver empresas</a> }
     }
     @case ('planes') {
       <p>Planes y precios de referencia para la plataforma.</p><section class="cards">@for (plan of plans; track plan.name) { <article class="card"><h2>{{ plan.name }}</h2><strong>{{ plan.price | currency:'DOP':'RD$ ':'1.0-0' }} / mes</strong><p>{{ plan.detail }}</p><ul class="plain-list">@for (feature of plan.features; track feature) { <li>{{ feature }}</li> }</ul><button class="button secondary" type="button" (click)="simulateAction('Cambio al plan ' + plan.name)">Seleccionar plan</button><a [routerLink]="link('suscripciones')">Ver suscripciones →</a></article> }</section>
     }
     @case ('clientes') {
       <section class="filters"><input aria-label="Buscar cliente" placeholder="Buscar por nombre, correo o ciudad"><button class="button secondary" type="button" (click)="simulateAction('Filtro de clientes')">Filtrar</button></section>
-      @for (customer of customers; track customer.id) { <article class="panel stack"><div class="row"><h2>{{ customer.name }}</h2><span class="badge">Activo</span></div><p>{{ customer.email }} · {{ customer.phone }}</p><p>{{ customer.city }} · 2 reservas historicas · sin balance vencido</p><div class="actions"><a [routerLink]="link('reservas')">Ver reservas</a><button class="button secondary" type="button" (click)="simulateAction('Nota de cliente')">Agregar nota</button></div></article> }
+      @for (customer of customers(); track customer.id) { <article class="panel stack"><div class="row"><h2>{{ customer.name }}</h2><span class="badge">Activo</span></div><p>{{ customer.email }} · {{ customer.phone }}</p><p>{{ customer.city }} · {{ reservationCount(customer.id) }} reservas registradas</p><div class="actions"><a [routerLink]="link('reservas')">Ver reservas</a><button class="button secondary" type="button" (click)="simulateAction('Nota de cliente')">Agregar nota</button></div></article> }
+      @empty { <p class="notice">No hay clientes registrados.</p> }
+    }
+    @case ('sucursales') {
+      @for (branch of branches(); track branch.id) { <article class="panel stack"><div class="row"><h2>{{ branch.name }}</h2><span class="badge">Activa</span></div><p>{{ branch.address }}</p><p>{{ branch.city }} · {{ branchVehicleCount(branch.id) }} vehículos asignados</p></article> }
+      @empty { <p class="notice">No hay sucursales registradas.</p> }
+    }
+    @case ('usuarios') {
+      @for (member of members(); track member.id) { <article class="panel stack"><div class="row"><h2>{{ member.name }}</h2><span class="badge">{{ member.active ? 'Activo' : 'Inactivo' }}</span></div><p>{{ member.role === 'admin' ? 'Administrador' : 'Agente' }} · acceso mediante Supabase Auth</p></article> }
+      @empty { <p class="notice">No hay usuarios operativos visibles para esta empresa.</p> }
+    }
+    @case ('contratos') {
+      @for (contract of contracts(); track contract.id) { <article class="panel stack"><div class="row"><h2>{{ contract.number }}</h2><span class="badge">{{ contract.status === 'signed' ? 'Firmado' : 'Pendiente de firma' }}</span></div><p>{{ customerName(contract.customerId) }} · reserva {{ contract.reservationId }}</p><p>{{ contract.terms }}</p></article> }
+      @empty { <p class="notice">No hay contratos disponibles.</p> }
     }
     @case ('perfil') {
       <section class="profile-layout">
-        <form class="panel stack" (ngSubmit)="message = 'Cambios guardados temporalmente.'"><h2>{{ currentUser()?.name }}</h2><p>Perfil · {{ space.label }}</p><label>Nombre<input name="name" [ngModel]="currentUser()?.name" required></label><label>Correo<input name="email" type="email" [ngModel]="currentUser()?.email" required></label><label>Teléfono<input name="phone" type="tel" [(ngModel)]="phone" required></label><button class="button" type="submit">Guardar cambios</button>@if (role === 'cliente') { <div class="actions"><a [routerLink]="link('contratos')">Contratos</a><a [routerLink]="link('facturas')">Facturas</a></div> }</form>
+        <form class="panel stack" (ngSubmit)="saveProfile()"><h2>{{ currentUser()?.name }}</h2><p>Perfil · {{ space.label }}</p><label>Nombre<input name="name" [(ngModel)]="profileName" required></label><label>Correo<input name="email" type="email" [ngModel]="currentUser()?.email" readonly></label><label>Teléfono<input name="phone" type="tel" [(ngModel)]="phone" required></label><button class="button" type="submit">Guardar cambios</button>@if (role === 'cliente') { <div class="actions"><a [routerLink]="link('contratos')">Contratos</a><a [routerLink]="link('facturas')">Facturas</a></div> }</form>
         <aside class="panel stack session-panel"><p class="eyebrow">Sesión actual</p><h2>Cuenta de Hermes</h2><p>Accediste como {{ currentUser()?.name }}.</p><button class="button secondary danger-button" type="button" (click)="logout()">Cerrar sesión</button></aside>
       </section>
     }

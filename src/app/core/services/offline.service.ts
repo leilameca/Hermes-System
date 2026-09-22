@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { Storage } from '@ionic/storage-angular';
 import { BehaviorSubject } from 'rxjs';
 import { OfflineOperation } from '../models/offline-operation.model';
+import { SupabaseService } from './supabase.service';
+import { AuthService } from './auth.service';
 
 // Claves usadas para guardar la cola y la última sincronización
 const QUEUE_KEY = 'hermes.offline.queue';
@@ -12,6 +14,8 @@ const LAST_SYNC_KEY = 'hermes.offline.lastSync';
 export class OfflineService {
   // Abre el almacenamiento local de Ionic
   private readonly storage = inject(Storage);
+  private readonly supabase = inject(SupabaseService).client;
+  private readonly auth = inject(AuthService);
   private readonly ready = this.storage.create();
 
   // Mantiene el contador y la fecha disponibles para la interfaz
@@ -91,9 +95,56 @@ export class OfflineService {
   }
 
   async syncOperation(operation: OfflineOperation) {
-    // TODO Backend reemplazar esta simulación por POST real a la API REST
-    await new Promise(resolve => setTimeout(resolve, 450));
-    console.log('[Hermes] Operacion sincronizada', operation.type, operation.payload);
+    if (operation.type === 'inspection.nfc.saved') {
+      const payload = operation.payload as { vehicleId: string; checklist?: string[]; createdAt?: string; tagId?: string };
+      const { data: vehicle, error: vehicleError } = await this.supabase
+        .from('vehicles').select('organization_id, mileage').eq('id', payload.vehicleId).single();
+      if (vehicleError) throw new Error(vehicleError.message);
+      const { error } = await this.supabase.from('inspections').insert({
+        organization_id: vehicle.organization_id,
+        vehicle_id: payload.vehicleId,
+        agent_id: this.auth.user()?.id ?? null,
+        inspection_type: 'general',
+        status: 'completed',
+        mileage: vehicle.mileage,
+        fuel_level: 'three_quarters',
+        checklist: (payload.checklist ?? []).map(name => ({ name, checked: true })),
+        notes: `Inspección iniciada por NFC. Etiqueta: ${payload.tagId ?? 'no disponible'}`,
+        inspected_at: payload.createdAt ?? operation.createdAt,
+      });
+      if (error) throw new Error(error.message);
+      return;
+    }
+
+    if (operation.type === 'incident.reported') {
+      const payload = operation.payload as { detail: string };
+      const user = this.auth.user();
+      if (!user) throw new Error('La sesión terminó antes de sincronizar el incidente.');
+      let organizationId = user.organizationId;
+      let customerId: string | null = null;
+      if (!organizationId) {
+        const { data: account, error: accountError } = await this.supabase.from('customer_accounts')
+          .select('organization_id, customer_id').eq('user_id', user.id).eq('active', true).single();
+        if (accountError) throw new Error(accountError.message);
+        organizationId = account.organization_id;
+        customerId = account.customer_id;
+      }
+      const { error } = await this.supabase.from('incidents').insert({
+        organization_id: organizationId,
+        customer_id: customerId,
+        reported_by: user.id,
+        title: 'Incidente reportado desde HERMES',
+        description: payload.detail,
+      });
+      if (error) throw new Error(error.message);
+      return;
+    }
+
+    // Esta acción antigua no contiene un vehículo; se conserva como fallida para no perderla.
+    if (operation.type === 'inspection.saved') {
+      throw new Error(`El módulo para ${operation.type} aún no está disponible en Supabase.`);
+    }
+    throw new Error(`Tipo de operación no reconocido: ${operation.type}`);
   }
 
   private async updateOperation(updated: OfflineOperation) {

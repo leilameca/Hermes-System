@@ -1,20 +1,33 @@
-import { Injectable } from '@angular/core';
-import { defer, Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { User } from '../models';
-import { USERS_MOCK } from '../../data/mocks/users.mock';
+import { HermesDataService } from './hermes-data.service';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  // Se entrega una copia para no modificar los datos originales desde una página.
-  // TODO: sustituir los mocks cuando se autorice una etapa de integración.
+  private readonly data = inject(HermesDataService);
+  private readonly auth = inject(AuthService);
+
   getAll(tenantId?: string): Observable<User[]> {
-    return defer(() => of(USERS_MOCK.filter(item => tenantId === undefined || item.tenantId === tenantId).map(item => ({ ...item }))));
+    return new Observable(subscriber => {
+      void this.data.refresh().then(() => {
+        const current = this.auth.user();
+        const users = this.data.members().map(member => ({
+          id: member.id,
+          tenantId: current?.organizationId ?? null,
+          name: member.name,
+          email: member.id === current?.id ? current.email : '',
+          role: member.role,
+          active: member.active,
+        } as User)).filter(item => tenantId === undefined || item.tenantId === tenantId);
+        subscriber.next(users);
+        subscriber.complete();
+      }).catch(error => subscriber.error(error));
+    });
   }
 
   getById(id: string, tenantId?: string): Observable<User | undefined> {
-    return defer(() => {
-      const item = USERS_MOCK.find(item => item.id === id && (tenantId === undefined || item.tenantId === tenantId));
-      return of(item ? { ...item } : undefined);
-    });
+    return this.getAll(tenantId).pipe(map(items => items.find(item => item.id === id)));
   }
 }

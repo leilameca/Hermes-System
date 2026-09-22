@@ -10,4 +10,8 @@ export class AuthDemoService {
   logout(): Promise<void> {
     return this.auth.logout();
   }
+
+  updateProfile(fullName: string, phone: string): Promise<void> {
+    return this.auth.updateProfile(fullName, phone);
+  }
 }

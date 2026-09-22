@@ -135,12 +135,12 @@ export class DemoLayoutComponent {
   private mobilePaths() {
     if (this.role === 'cliente') return ['inicio', 'explorar', 'reservas'];
     if (this.role === 'agente') return ['inicio', 'operaciones', 'escanear', 'incidentes'];
-    if (this.role === 'admin') return ['dashboard', 'flota', 'reservas', 'operaciones'];
+    if (this.role === 'admin') return ['dashboard', 'flota', 'escanear', 'operaciones'];
     return ['dashboard', 'empresas', 'planes', 'suscripciones', 'plataforma'];
   }
 
   private morePaths() {
-    if (this.role === 'admin') return ['sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'configuracion'];
+    if (this.role === 'admin') return ['reservas', 'sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'configuracion'];
     return [];
   }
 

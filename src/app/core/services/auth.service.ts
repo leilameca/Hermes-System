@@ -53,6 +53,17 @@ export class AuthService {
     this.activeState.set('guest');
   }
 
+  async updateProfile(fullName: string, phone: string): Promise<void> {
+    const user = this.activeUser();
+    if (!user) throw new Error('No hay una sesión activa.');
+    const { error } = await this.supabase.from('profiles').update({
+      full_name: fullName.trim(),
+      phone: phone.trim() || null,
+    }).eq('id', user.id);
+    if (error) throw new Error(error.message);
+    this.activeUser.update(current => current ? { ...current, name: fullName.trim() } : current);
+  }
+
   private async restoreSession(): Promise<void> {
     const { data } = await this.supabase.auth.getSession();
     await this.applySession(data.session);

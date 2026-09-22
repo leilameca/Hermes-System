@@ -1,8 +1,7 @@
-# Hermes System - Acceso y navegacion
+# HERMES SYSTEM
 
-Frontend academico de Rent-a-Car en Republica Dominicana. Angular 20 standalone,
-Ionic 8 y Capacitor 7. La aplicacion inicia con login mock y conserva navegacion
-por roles con datos locales.
+Aplicacion web y movil para la gestion de rent-a-car en Republica Dominicana.
+Esta desarrollada con Angular 20, Ionic 8, Capacitor 7 y Supabase.
 
 ## Ejecutar
 
@@ -11,21 +10,20 @@ npm install
 npm start
 ```
 
-Abrir `/` o `/login`. El acceso valida usuarios locales desde
-`AuthDemoService`; no hay autenticacion real, JWT, Firebase, APIs, pagos,
-servidores ni base de datos.
+Abrir `/` o `/login`. El acceso utiliza Supabase Auth y dirige cada cuenta al
+espacio correspondiente segun su rol y empresa.
 
 ## Usuarios
 
-| Rol | Usuario | Contrasena |
-| --- | --- | --- |
-| Cliente | `cliente@hermes.app` | `Hermes123` |
-| Agente | `agente@hermes.app` | `Hermes123` |
-| Administrador | `admin@hermes.app` | `Hermes123` |
-| Super Admin | `superadmin@hermes.app` | `Hermes123` |
+| Rol | Usuario |
+| --- | --- |
+| Cliente | `cliente@hermes.app` |
+| Agente | `agente@hermes.app` |
+| Administrador | `admin@hermes.app` |
+| Super Admin | `superadmin@hermes.app` |
 
-Los accesos de demostracion del login solo autocompletan el formulario. La sesion
-activa se guarda en almacenamiento local y se limpia con Cerrar sesion.
+Los accesos rapidos solo completan el correo. Las contrasenas se administran en
+Supabase y no se guardan en el codigo fuente.
 
 ## Navegacion
 
@@ -45,20 +43,20 @@ mantiene un enfoque administrativo con sidebar en escritorio.
 ## Archivos clave
 
 - `src/app/app.routes.ts`: login, guards por rol, rutas heredadas y 404.
-- `src/app/core/services/auth-demo.service.ts`: usuarios y sesion mock.
-- `src/app/core/services/auth-demo.guard.ts`: acceso por rol.
+- `src/app/core/services/auth.service.ts`: autenticacion y sesion.
+- `src/app/core/services/hermes-data.service.ts`: acceso central a los datos.
+- `src/app/core/services/tenant.service.ts`: empresa activa del usuario.
+- `src/app/core/services/nfc.service.ts`: lectura y escritura NFC.
 - `src/app/features/login/`: pantalla profesional de login.
 - `src/app/layouts/demo-layout/`: header, sidebar, tabs moviles y logout.
-- `src/app/features/demo/`: pantallas navegables con datos locales.
+- `supabase/migrations/`: estructura, seguridad y operaciones de la base de datos.
 
 ## Verificacion
 
 ```sh
 npm run typecheck
 npm run build
-node scripts/verify-navigation.mjs
 ```
 
-La prueba comprueba que la app inicia en `/login`, que los cuatro usuarios entran
-al layout correcto, que logout vuelve al login, que las 42 rutas siguen vivas y que
-la navegacion movil por rol no muestra el selector como flujo principal.
+Las credenciales del proyecto usan una clave publica de Supabase. Nunca se debe
+incluir una clave `service_role` en la aplicacion web o movil.

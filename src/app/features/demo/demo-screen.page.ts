@@ -16,34 +16,36 @@ import {
   searchOutline,
   swapHorizontalOutline,
 } from 'ionicons/icons';
-import { VEHICLES_MOCK } from '../../data/mocks/vehicles.mock';
-import { RESERVATIONS_MOCK } from '../../data/mocks/reservations.mock';
-import { TENANTS_MOCK } from '../../data/mocks/tenants.mock';
-import { CUSTOMERS_MOCK } from '../../data/mocks/customers.mock';
-import { Reservation, Vehicle } from '../../core/models';
+import { Vehicle } from '../../core/models';
 import { DEMO_SPACES, DemoRole } from './demo-navigation';
 import { DEMO_RECORDS } from './demo-records';
 import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
 import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
 import { AuthDemoService } from '../../core/services/auth-demo.service';
+import { HermesDataService } from '../../core/services/hermes-data.service';
 
 @Injectable({ providedIn: 'root' })
 export class DemoState {
-  // TODO Backend sustituir persistencia mock por API REST cuando inicie la etapa de integracion
-  readonly reservations = signal<readonly Reservation[]>(RESERVATIONS_MOCK.filter(r => r.customerId === 'customer-001'));
-  readonly vehicles = signal<readonly Vehicle[]>(VEHICLES_MOCK.map(vehicle => ({ ...vehicle })));
+  private readonly data = inject(HermesDataService);
+  readonly reservations = this.data.reservations;
+  readonly vehicles = this.data.vehicles;
+  readonly customers = this.data.customers;
+  readonly branches = this.data.branches;
+  readonly members = this.data.members;
+  readonly operations = this.data.operations;
+  readonly contracts = this.data.contracts;
+  readonly organizations = this.data.organizations;
+  readonly loading = this.data.loading;
+  readonly error = this.data.error;
   readonly steps = signal<Record<string, { checks: boolean[]; evidence: boolean; signed: boolean }>>({});
-  readonly incidents = signal([
-    { title: 'INC-001 · Rayon en puerta derecha', detail: 'Toyota Corolla · puerta derecha · registrado durante entrega.', status: 'En revision' },
-    { title: 'INC-002 · Objeto olvidado', detail: 'Bolso pequeno resguardado en mostrador de Santo Domingo.', status: 'Resuelto' },
-  ]);
+  readonly incidents = this.data.incidents;
   readonly inspectionSaved = signal<Record<string, boolean>>({});
   readonly payments = signal<Record<string, string>>({});
   step(key: string) { return this.steps()[key] ?? { checks: [false, false, false, false], evidence: false, signed: false }; }
   update(key: string, patch: Partial<ReturnType<DemoState['step']>>) { this.steps.update(all => ({ ...all, [key]: { ...this.step(key), ...patch } })); }
   addIncident(detail: string) {
-    this.incidents.update(rows => [{ title: 'INC-2026-' + String(rows.length + 1).padStart(3, '0'), detail, status: 'Nuevo' }, ...rows]);
+    this.incidents.update(rows => [{ id: crypto.randomUUID(), title: 'Incidente reportado desde HERMES', detail, status: 'open' }, ...rows]);
   }
   saveInspection(key: string) {
     this.inspectionSaved.update(rows => ({ ...rows, [key]: true }));
@@ -51,9 +53,10 @@ export class DemoState {
   updatePayment(title: string, status: string) {
     this.payments.update(rows => ({ ...rows, [title]: status }));
   }
-  addVehicle(vehicle: Vehicle) {
-    this.vehicles.update(rows => [vehicle, ...rows]);
-  }
+  refresh() { return this.data.refresh(); }
+  createVehicle(vehicle: Omit<Vehicle, 'id' | 'tenantId'>) { return this.data.createVehicle(vehicle); }
+  createReservation(vehicle: Vehicle, startsAt: string, endsAt: string, total: number) { return this.data.createReservation(vehicle, startsAt, endsAt, total); }
+  completeOperation(input: { vehicleId: string; type: 'delivery' | 'return'; checks: boolean[]; evidenceUrls: string[]; signatureName: string }) { return this.data.completeOperation(input); }
 }
 
 @Component({
@@ -78,12 +81,19 @@ export class DemoScreenPage {
   readonly space = DEMO_SPACES[this.role];
   readonly kind = computed(() => this.data()['kind'] as string);
   readonly id = computed(() => this.params().get('id') ?? '');
-  readonly vehicle = computed(() => this.state.vehicles().find(v => v.id === (this.id() || this.query().get('vehiculo') || 'vehicle-002')));
-  readonly company = computed(() => TENANTS_MOCK.find(t => t.id === this.id()));
+  readonly vehicle = computed(() => {
+    const requestedId = this.id() || this.query().get('vehiculo') || this.state.vehicles()[0]?.id;
+    return this.state.vehicles().find(v => v.id === requestedId);
+  });
+  readonly company = computed(() => this.state.organizations().find(t => t.id === this.id()));
   readonly reservation = computed(() => this.state.reservations().find(r => r.id === this.id()));
   readonly vehicles = this.state.vehicles;
-  readonly companies = TENANTS_MOCK;
-  readonly customers = CUSTOMERS_MOCK.filter(c => c.tenantId === 'tenant-001');
+  readonly companies = this.state.organizations;
+  readonly customers = this.state.customers;
+  readonly branches = this.state.branches;
+  readonly members = this.state.members;
+  readonly operations = this.state.operations;
+  readonly contracts = this.state.contracts;
   readonly statuses = VEHICLE_STATUS;
   readonly records = computed(() => DEMO_RECORDS[this.kind()] ?? []);
   readonly flow = computed(() => (this.data()['flow'] || (this.kind() === 'return' ? 'devolucion' : 'entrega')) as string);
@@ -102,6 +112,7 @@ export class DemoScreenPage {
   driver = 'Laura Méndez';
   email = 'laura@example.com';
   phone = '809-555-0103';
+  profileName = this.currentUser()?.name ?? '';
   companyName = 'Quisqueya Rent-a-Car';
   notifications = true;
   signatureName = '';
@@ -121,11 +132,13 @@ export class DemoScreenPage {
     { name: 'Profesional', price: 4900, detail: 'Hasta 50 vehiculos · tres sucursales', features: ['Operaciones', 'Facturacion', 'Alertas de mantenimiento'] },
     { name: 'Empresarial', price: 9900, detail: 'Hasta 150 vehiculos · diez sucursales', features: ['Multiempresa', 'Roles avanzados', 'Reportes SaaS'] },
   ];
-  readonly todayTasks = [
-    { time: '09:00', title: 'Entrega Toyota Corolla', detail: 'Laura Méndez · reservation-001', path: 'entrega/vehicle-001' },
-    { time: '11:30', title: 'Revision Hyundai Tucson', detail: 'Checklist preventivo · patio norte', path: 'devolucion/vehicle-002' },
-    { time: '15:00', title: 'Seguimiento incidente', detail: 'Rayon puerta derecha · pendiente de fotos', path: 'incidentes' },
-  ];
+  readonly nextOperation = computed(() => this.operations().find(operation => operation.status === 'scheduled'));
+  readonly todayTasks = computed(() => this.operations().filter(operation => operation.status !== 'cancelled').map(operation => ({
+    time: new Date(operation.scheduledAt).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
+    title: `${operation.type === 'delivery' ? 'Entrega' : 'Devolución'} ${this.vehicleName(operation.vehicleId)}`,
+    detail: `${this.customerName(operation.customerId)} · ${this.vehiclePlate(operation.vehicleId)}`,
+    path: `${operation.type === 'delivery' ? 'entrega' : 'devolucion'}/${operation.vehicleId}`,
+  })));
   readonly adminQueue = [
     { label: 'Reservas por confirmar', value: '3', path: 'reservas' },
     { label: 'Inspecciones pendientes', value: '4', path: 'inspecciones' },
@@ -137,63 +150,65 @@ export class DemoScreenPage {
     { label: 'Empresas activas', value: '2' },
     { label: 'Vehiculos monitoreados', value: '3' },
   ];
-  readonly adminMetrics = [
-    { label: 'Reservas activas', value: '24', trend: '+12%' },
-    { label: 'Vehiculos disponibles', value: '18', trend: '78%' },
-    { label: 'Clientes registrados', value: '156', trend: '+9%' },
-    { label: 'Ingresos del mes', value: 'RD$ 385,240', trend: '+15%' },
-  ];
-  readonly bookingDays = [
-    { label: 'Lun', value: 8 },
-    { label: 'Mar', value: 14 },
-    { label: 'Mie', value: 23 },
-    { label: 'Jue', value: 19 },
-    { label: 'Vie', value: 34 },
-    { label: 'Sab', value: 36 },
-    { label: 'Dom', value: 26 },
-  ];
-  readonly fleetState = [
-    { label: 'Disponibles', value: 18, tone: 'available' },
-    { label: 'En alquiler', value: 8, tone: 'reserved' },
-    { label: 'Mantenimiento', value: 4, tone: 'maintenance' },
-    { label: 'Fuera de servicio', value: 2, tone: 'critical' },
-  ];
-  readonly attentionItems = [
-    { title: 'Toyota Corolla 2024', detail: 'Confirmacion pendiente', tone: 'critical' },
-    { title: 'Hyundai Tucson 2025', detail: 'Revision de frenos', tone: 'warning' },
-    { title: 'Cliente: Laura Méndez', detail: 'Contrato por firmar', tone: 'neutral' },
-  ];
-  readonly recentReservations = [
-    { client: 'Laura Méndez', vehicleId: 'vehicle-001', start: '12 oct.', end: '15 oct.', status: 'Activa' },
-    { client: 'Luis Martínez', vehicleId: 'vehicle-002', start: '15 oct.', end: '18 oct.', status: 'Próxima' },
-    { client: 'Carla Díaz', vehicleId: 'vehicle-001', start: '18 oct.', end: '20 oct.', status: 'En proceso' },
-  ];
-  readonly quickOps = [
-    { value: '3', label: 'Vehiculos en mantenimiento' },
-    { value: '2', label: 'Incidentes sin resolver' },
-    { value: '5', label: 'Contratos por vencer' },
-  ];
+  readonly adminMetrics = computed(() => [
+    { label: 'Reservas activas', value: String(this.state.reservations().filter(row => ['pending', 'confirmed'].includes(row.status)).length), trend: 'Supabase' },
+    { label: 'Vehículos disponibles', value: String(this.vehicles().filter(row => row.status === 'available').length), trend: `${this.vehicles().length} total` },
+    { label: 'Clientes registrados', value: String(this.customers().length), trend: 'Activos' },
+    { label: 'Reservas facturadas', value: new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', maximumFractionDigits: 0 }).format(this.state.reservations().reduce((sum, row) => sum + row.total, 0)), trend: 'Total registrado' },
+  ]);
+  readonly bookingDays = computed(() => {
+    const labels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const totals = Array(7).fill(0) as number[];
+    this.state.reservations().forEach(row => totals[new Date(row.startsAt).getDay()]++);
+    return labels.map((label, index) => ({ label, value: Math.max(4, totals[index] * 12) }));
+  });
+  readonly fleetState = computed(() => [
+    { label: 'Disponibles', value: this.vehicles().filter(row => row.status === 'available').length, tone: 'available' },
+    { label: 'Reservados', value: this.vehicles().filter(row => row.status === 'reserved').length, tone: 'reserved' },
+    { label: 'En alquiler', value: this.vehicles().filter(row => row.status === 'rented').length, tone: 'reserved' },
+    { label: 'Mantenimiento', value: this.vehicles().filter(row => row.status === 'maintenance').length, tone: 'maintenance' },
+  ]);
+  readonly attentionItems = computed(() => [
+    ...this.state.reservations().filter(row => row.status === 'pending').slice(0, 2).map(row => ({ title: this.vehicleName(row.vehicleId), detail: 'Reserva pendiente de confirmación', tone: 'critical' })),
+    ...this.contracts().filter(row => row.status === 'pending_signature').slice(0, 2).map(row => ({ title: row.number, detail: 'Contrato pendiente de firma', tone: 'neutral' })),
+  ]);
+  readonly recentReservations = computed(() => this.state.reservations().slice(0, 5).map(row => ({
+    client: this.customerName(row.customerId), vehicleId: row.vehicleId,
+    start: new Date(row.startsAt).toLocaleDateString('es-DO', { day: '2-digit', month: 'short' }),
+    end: new Date(row.endsAt).toLocaleDateString('es-DO', { day: '2-digit', month: 'short' }),
+    status: row.status === 'confirmed' ? 'Confirmada' : row.status === 'pending' ? 'Pendiente' : row.status,
+  })));
+  readonly quickOps = computed(() => [
+    { value: String(this.vehicles().filter(row => row.status === 'maintenance').length), label: 'Vehículos en mantenimiento' },
+    { value: String(this.state.incidents().filter(row => row.status !== 'resolved').length), label: 'Incidentes sin resolver' },
+    { value: String(this.contracts().filter(row => row.status === 'pending_signature').length), label: 'Contratos por firmar' },
+  ]);
   readonly vehicleTypes = ['SUV', 'Sedán', 'Económico', 'Pickup'];
-  readonly agentActions = [
-    { label: 'Entregas', value: '5 pendientes', path: 'operaciones', icon: keyOutline },
-    { label: 'Devoluciones', value: '3 pendientes', path: 'operaciones', icon: returnDownBackOutline },
+  readonly agentActions = computed(() => [
+    { label: 'Entregas', value: `${this.operations().filter(row => row.type === 'delivery' && row.status !== 'completed').length} pendientes`, path: 'operaciones', icon: keyOutline },
+    { label: 'Devoluciones', value: `${this.operations().filter(row => row.type === 'return' && row.status !== 'completed').length} pendientes`, path: 'operaciones', icon: returnDownBackOutline },
     { label: 'Escanear vehiculo', value: 'Abrir ficha', path: 'escanear', icon: scanOutline },
     { label: 'Reportar incidente', value: 'Nuevo registro', path: 'incidentes', icon: alertCircleOutline },
-  ];
-  readonly companiesSummary = [
-    { id: 'tenant-001', vehicles: 150, status: 'Activa' },
-    { id: 'tenant-002', vehicles: 85, status: 'Activa' },
-    { id: 'tenant-003', name: 'Punta Cana Drive', city: 'Punta Cana', vehicles: 60, status: 'Activa' },
-    { id: 'tenant-004', name: 'Santo Domingo Cars', city: 'Santo Domingo', vehicles: 42, status: 'En revision' },
-  ];
+  ]);
+  readonly companiesSummary = computed(() => this.companies().map(company => ({
+    id: company.id,
+    name: company.name,
+    city: company.city,
+    vehicles: this.vehicles().filter(vehicle => vehicle.tenantId === company.id).length,
+    status: company.active ? 'Activa' : 'Inactiva',
+  })));
   link(path: string) { return '/' + this.role + '/' + path; }
   vehicleLink(id: string) { return this.link((this.role === 'admin' ? 'flota/' : 'vehiculos/') + id); }
   vehicleName(id: string) { const v = this.vehicles().find(v => v.id === id); return v ? v.brand + ' ' + v.model : 'Vehículo'; }
   vehicleImage(id: string) { return this.vehicles().find(v => v.id === id)?.imageUrl ?? 'assets/images/vehicles/tucson.jpg'; }
   vehiclePlate(id: string) { return this.vehicles().find(v => v.id === id)?.plate ?? 'PPA-0000'; }
+  customerName(id: string) { return this.customers().find(customer => customer.id === id)?.name ?? 'Cliente'; }
+  reservationCount(customerId: string) { return this.state.reservations().filter(reservation => reservation.customerId === customerId).length; }
+  branchVehicleCount(branchId: string) { return this.vehicles().filter(vehicle => vehicle.branchId === branchId).length; }
+  organizationVehicleCount(organizationId: string) { return this.vehicles().filter(vehicle => vehicle.tenantId === organizationId).length; }
   categoryLabel(category: string) { return category === 'suv' ? 'SUV' : category === 'sedan' ? 'Sedán' : category; }
-  companyNameFor(id: string) { return TENANTS_MOCK.find(t => t.id === id)?.name ?? this.companiesSummary.find(t => t.id === id)?.name ?? 'Empresa Hermes'; }
-  companyCityFor(id: string) { return TENANTS_MOCK.find(t => t.id === id)?.city ?? this.companiesSummary.find(t => t.id === id)?.city ?? 'República Dominicana'; }
+  companyNameFor(id: string) { return this.companies().find(t => t.id === id)?.name ?? 'Empresa Hermes'; }
+  companyCityFor(id: string) { return this.companies().find(t => t.id === id)?.city ?? 'República Dominicana'; }
   readonly businessIcon = businessOutline;
   readonly carIcon = carSportOutline;
   readonly cubeIcon = cubeOutline;
@@ -204,30 +219,36 @@ export class DemoScreenPage {
   flowLink(suffix = '') { return this.link(this.flow() + '/' + this.id() + suffix); }
   get days() { return Math.max(0, (Date.parse(this.endsAt) - Date.parse(this.startsAt)) / 86400000); }
   searchVehicles() { void this.router.navigate([this.link('resultados')], { queryParams: { q: this.search, categoria: this.category } }); }
-  createReservation() {
+  async createReservation() {
     if (!this.vehicle() || !Number.isFinite(this.days) || this.days < 1) { this.message = 'Selecciona una devolución posterior a la recogida.'; return; }
-    const reservation: Reservation = { ...RESERVATIONS_MOCK[0], id: 'RSV-2026-' + String(this.state.reservations().length + 1).padStart(3, '0'), vehicleId: this.vehicle()!.id, startsAt: this.startsAt + 'T09:00:00-04:00', endsAt: this.endsAt + 'T09:00:00-04:00', total: this.days * this.vehicle()!.dailyRate, status: 'pending' };
-    this.state.reservations.update(rows => [...rows, reservation]);
-    void this.router.navigate([this.link('reservas/' + reservation.id)]);
+    try {
+      const reservation = await this.state.createReservation(this.vehicle()!, this.startsAt + 'T09:00:00-04:00', this.endsAt + 'T09:00:00-04:00', this.days * this.vehicle()!.dailyRate);
+      await this.router.navigate([this.link('reservas/' + reservation.id)]);
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible crear la reserva.';
+    }
   }
-  createVehicle() {
+  async createVehicle() {
     const plate = this.newVehicle.plate.trim().toUpperCase();
     if (!this.newVehicle.brand.trim() || !this.newVehicle.model.trim() || !plate) return;
-    const id = 'vehicle-' + String(Date.now());
     const fallbackImage = this.newVehicle.category === 'sedan' ? 'assets/images/vehicles/corolla.jpg' : this.newVehicle.category === 'van' ? 'assets/images/vehicles/sportage.jpg' : 'assets/images/vehicles/tucson.jpg';
-    this.state.addVehicle({
-      ...this.newVehicle,
-      id,
-      tenantId: 'tenant-001',
-      branchId: 'branch-001',
-      currency: 'DOP',
-      brand: this.newVehicle.brand.trim(),
-      model: this.newVehicle.model.trim(),
-      plate,
-      imageUrl: this.vehicleImagePreview || fallbackImage,
-      imageAlt: `${this.newVehicle.brand.trim()} ${this.newVehicle.model.trim()} agregado a la flota Hermes.`,
-    });
-    void this.router.navigateByUrl(this.link('flota/' + id));
+    const branchId = this.branches()[0]?.id;
+    if (!branchId) { this.message = 'Primero debes registrar una sucursal activa.'; return; }
+    try {
+      const vehicle = await this.state.createVehicle({
+        ...this.newVehicle,
+        branchId,
+        currency: 'DOP',
+        brand: this.newVehicle.brand.trim(),
+        model: this.newVehicle.model.trim(),
+        plate,
+        imageUrl: this.vehicleImagePreview || fallbackImage,
+        imageAlt: `${this.newVehicle.brand.trim()} ${this.newVehicle.model.trim()} agregado a la flota Hermes.`,
+      });
+      await this.router.navigateByUrl(this.link('flota/' + vehicle.id));
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible guardar el vehículo.';
+    }
   }
   selectVehicleImage(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -264,10 +285,21 @@ export class DemoScreenPage {
     else this.message = 'No se encontró esa placa. Prueba A987601 o G987602.';
   }
   check(index: number, value: boolean) { const checks = [...this.step().checks]; checks[index] = value; this.state.update(this.stepKey(), { checks }); }
-  sign() {
+  async sign() {
     if (!this.signatureName.trim() || !this.consent) return;
-    this.state.update(this.stepKey(), { signed: true });
-    this.message = 'Operacion completada. Firma registrada en esta sesion.';
+    try {
+      await this.state.completeOperation({
+        vehicleId: this.id(),
+        type: this.flow() === 'devolucion' ? 'return' : 'delivery',
+        checks: this.step().checks,
+        evidenceUrls: this.step().evidence ? [this.vehicle()?.imageUrl ?? 'evidencia-local'] : [],
+        signatureName: this.signatureName.trim(),
+      });
+      this.state.update(this.stepKey(), { signed: true });
+      this.message = 'Operación, inspección y firma guardadas en Supabase.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible completar la operación.';
+    }
   }
   async reportIncident() {
     if (!this.incident.trim()) return;
@@ -283,6 +315,14 @@ export class DemoScreenPage {
     this.auth.logout();
     void this.router.navigateByUrl('/login');
   }
+  async saveProfile() {
+    try {
+      await this.auth.updateProfile(this.profileName || this.currentUser()?.name || '', this.phone);
+      this.message = 'Perfil actualizado correctamente en Supabase.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible actualizar el perfil.';
+    }
+  }
   async saveInspection() {
     this.state.saveInspection(this.stepKey());
     await this.handleOfflineAwareOperation('inspection.saved', { key: this.stepKey(), role: this.role });
@@ -290,9 +330,13 @@ export class DemoScreenPage {
 
   private async handleOfflineAwareOperation(type: string, payload: unknown) {
     if (this.network.connected) {
-      // Procesa la acción al momento cuando existe conexión
-      await this.offline.sendOperation(type, payload);
-      this.message = type === 'incident.reported' ? 'Incidente registrado correctamente.' : 'Inspeccion guardada correctamente.';
+      try {
+        await this.offline.sendOperation(type, payload);
+        this.message = type === 'incident.reported' ? 'Incidente registrado correctamente.' : 'Inspección guardada correctamente.';
+      } catch (error) {
+        await this.offline.savePendingOperation(type, payload);
+        this.message = error instanceof Error ? `${error.message} Guardamos la operación en la cola local.` : 'No se pudo sincronizar; guardamos la operación localmente.';
+      }
       return;
     }
     // Guarda la acción para enviarla cuando regrese Internet

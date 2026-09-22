@@ -6,7 +6,7 @@
         <h1>Identifica un vehículo con un toque.</h1>
         <p>Acerca una etiqueta NFC para abrir la ficha correcta y registrar una inspección, incluso sin Internet.</p>
       </div>
-      <div class="adapter" [class.adapter--ready]="status() === 'ready'">
+      <div class="adapter" [class.adapter--ready]="status() === 'ready' || status() === 'web-ready'">
         <ion-icon [icon]="radioIcon" aria-hidden="true" />
         <span>Estado del dispositivo</span>
         <strong>{{ statusLabel() }}</strong>
@@ -14,7 +14,10 @@
     </header>
 
     @if (status() === 'web') {
-      <p class="notice notice--warning" role="status">La interfaz puede revisarse en el navegador, pero la lectura y escritura se habilitan al instalar HERMES en un teléfono Android con NFC.</p>
+      <p class="notice notice--warning" role="status">Este navegador no ofrece Web NFC. En computadora puedes administrar la flota; para escanear usa Chrome en Android o la aplicación instalada.</p>
+    }
+    @if (status() === 'web-ready') {
+      <p class="notice" role="status">Web NFC disponible. Chrome pedirá permiso al iniciar la lectura o escritura.</p>
     }
     @if (status() === 'disabled') {
       <div class="notice notice--warning actions"><span>El NFC está apagado en este teléfono.</span><ion-button size="small" (click)="openSettings()">Abrir ajustes</ion-button></div>
@@ -70,7 +73,7 @@
             </dl>
             <div class="actions">
               <ion-button (click)="saveInspection()">Registrar inspección</ion-button>
-              <ion-button fill="outline" [routerLink]="['/agente/vehiculos', vehicle.id]">Ver ficha</ion-button>
+              <ion-button fill="outline" [routerLink]="vehicleDetailLink(vehicle.id)">Ver ficha</ion-button>
             </div>
           </div>
         </section>
@@ -80,8 +83,8 @@
     @if (operationMessage()) { <p class="notice" role="status">{{ operationMessage() }}</p> }
 
     <footer class="evidence-note">
-      <strong>Formato de etiqueta:</strong><code>HERMES_VEHICLE:vehicle-001</code>
-      <span>Los datos de demostración son ficticios y se almacenan localmente.</span>
+      <strong>Formato de etiqueta:</strong><code>HERMES_VEHICLE:&lt;UUID del vehículo&gt;</code>
+      <span>Las asociaciones y lecturas quedan registradas en Supabase.</span>
     </footer>
   </main>
 </ion-content>

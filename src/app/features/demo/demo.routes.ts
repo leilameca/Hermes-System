@@ -58,7 +58,8 @@ export const ADMIN_ROUTES = space('admin', [
   screen('flota', 'Flota', 'vehicles'),
   screen('flota/nuevo', 'Nuevo vehículo', 'new-vehicle'),
   screen('flota/:id', 'Detalle del vehiculo', 'vehicle'),
-  ...DEMO_SPACES.admin.areas.slice(2).map(area => screen(area.path, area.label)),
+  { path: 'escanear', title: 'NFC · Hermes System', loadComponent: () => import('../nfc/nfc.page').then(m => m.NfcPage) },
+  ...DEMO_SPACES.admin.areas.filter(area => !['dashboard', 'flota', 'escanear'].includes(area.path)).map(area => screen(area.path, area.label)),
   screen('perfil', 'Mi perfil'),
 ]);
 

@@ -1,7 +1,7 @@
 import { Vehicle } from './vehicle.model';
 
 // Estados que puede informar el adaptador NFC del dispositivo.
-export type HermesNfcStatus = 'ready' | 'disabled' | 'unsupported' | 'web' | 'checking';
+export type HermesNfcStatus = 'ready' | 'web-ready' | 'disabled' | 'unsupported' | 'web' | 'checking';
 
 // Resultado normalizado de una etiqueta leída por HERMES.
 export interface HermesNfcScan {

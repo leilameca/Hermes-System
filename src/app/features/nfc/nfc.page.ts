@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -10,6 +10,7 @@ import { NfcService } from '../../core/services/nfc.service';
 import { OfflineService } from '../../core/services/offline.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { VehicleImageComponent } from '../../shared/components/vehicle-image/vehicle-image.component';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-nfc',
@@ -22,6 +23,7 @@ export class NfcPage {
   private readonly nfc = inject(NfcService);
   private readonly network = inject(NetworkService);
   private readonly offline = inject(OfflineService);
+  private readonly auth = inject(AuthService);
 
   readonly vehicles = toSignal(inject(VehicleService).getAll(), { initialValue: [] });
   readonly status = toSignal(this.nfc.status$, { initialValue: 'checking' });
@@ -29,7 +31,7 @@ export class NfcPage {
   readonly scan = toSignal(this.nfc.lastScan$, { initialValue: null });
   readonly writeResult = toSignal(this.nfc.lastWrite$, { initialValue: null });
   readonly error = toSignal(this.nfc.error$, { initialValue: '' });
-  readonly selectedVehicleId = signal('vehicle-001');
+  readonly selectedVehicleId = signal('');
   readonly operationMessage = signal('');
   readonly scanIcon = scanOutline;
   readonly radioIcon = radioOutline;
@@ -37,8 +39,14 @@ export class NfcPage {
 
   readonly statusLabel = computed(() => ({
     checking: 'Comprobando NFC', ready: 'NFC listo', disabled: 'NFC desactivado',
-    unsupported: 'NFC no compatible', web: 'Vista web',
+    unsupported: 'NFC no compatible', web: 'Navegador sin Web NFC', 'web-ready': 'Web NFC listo',
   }[this.status()]));
+
+  constructor() {
+    effect(() => {
+      if (!this.selectedVehicleId() && this.vehicles().length) this.selectedVehicleId.set(this.vehicles()[0].id);
+    });
+  }
 
   async startReading(): Promise<void> {
     this.operationMessage.set('');
@@ -47,6 +55,10 @@ export class NfcPage {
 
   async writeTag(): Promise<void> {
     this.operationMessage.set('');
+    if (!this.selectedVehicleId()) {
+      this.operationMessage.set('Selecciona un vehículo antes de preparar la etiqueta.');
+      return;
+    }
     await this.nfc.startWriting(this.selectedVehicleId());
   }
 
@@ -74,4 +86,7 @@ export class NfcPage {
   }
 
   openSettings(): Promise<void> { return this.nfc.openSettings(); }
+  vehicleDetailLink(id: string): string[] {
+    return this.auth.user()?.role === 'admin' ? ['/admin/flota', id] : ['/agente/vehiculos', id];
+  }
 }

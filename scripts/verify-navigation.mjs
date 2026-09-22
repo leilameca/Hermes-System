@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 
 const root = resolve('www');
+const demoPassword = process.env.HERMES_DEMO_PASSWORD || '';
 const types = { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
 const users = [
   ['cliente@hermes.app', '/cliente/inicio', ['Inicio', 'Explorar', 'Reservas']],
@@ -104,15 +105,15 @@ try {
   assert.equal(await evaluate("document.querySelector('.logo')?.naturalWidth > 0"), true);
   assert.equal(await evaluate("document.querySelectorAll('.profiles button').length"), 4);
   await evaluate("document.querySelector('.profiles button').click()");
-  assert.equal(await evaluate("document.querySelector('input[name=email]').value === 'cliente@hermes.app' && document.querySelector('input[name=password]').value === 'Hermes123' && document.querySelector('input[name=password]').type === 'text' && location.pathname === '/login'"), true);
+  assert.equal(await evaluate("document.querySelector('input[name=email]').value === 'cliente@hermes.app' && document.querySelector('input[name=password]').value === '' && location.pathname === '/login'"), true);
 
   await evaluate("(() => { const form = document.querySelector('form'); form.querySelector('input[name=email]').value='nadie@hermes.demo'; form.querySelector('input[name=email]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('input[name=password]').value='mal'; form.querySelector('input[name=password]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('button[type=submit]').click(); })()");
   await until("document.body.innerText.includes('El correo o la contraseña no coinciden.')");
 
-  for (const [email, home] of users) {
+  for (const [email, home] of demoPassword ? users : []) {
     await evaluate("localStorage.clear()");
     await open('/login');
-    await evaluate(`(() => { const form = document.querySelector('form'); form.querySelector('input[name=email]').value=${JSON.stringify(email)}; form.querySelector('input[name=email]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('input[name=password]').value='Hermes123'; form.querySelector('input[name=password]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('button[type=submit]').click(); })()`);
+    await evaluate(`(() => { const form = document.querySelector('form'); form.querySelector('input[name=email]').value=${JSON.stringify(email)}; form.querySelector('input[name=email]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('input[name=password]').value=${JSON.stringify(demoPassword)}; form.querySelector('input[name=password]').dispatchEvent(new Event('input',{bubbles:true})); form.querySelector('button[type=submit]').click(); })()`);
     await until(`location.pathname === ${JSON.stringify(home)}`);
     const role = email.startsWith('superadmin') ? 'super-admin' : email.split('@')[0];
     await open(`/${role}/perfil`);

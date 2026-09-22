@@ -1,20 +1,26 @@
-import { Injectable } from '@angular/core';
-import { defer, Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { Reservation } from '../models';
-import { RESERVATIONS_MOCK } from '../../data/mocks/reservations.mock';
+import { HermesDataService } from './hermes-data.service';
 
 @Injectable({ providedIn: 'root' })
 export class ReservationService {
-  // Se entrega una copia para no modificar los datos originales desde una página.
-  // TODO: sustituir los mocks cuando se autorice una etapa de integración.
+  private readonly data = inject(HermesDataService);
+
   getAll(tenantId?: string): Observable<Reservation[]> {
-    return defer(() => of(RESERVATIONS_MOCK.filter(item => tenantId === undefined || item.tenantId === tenantId).map(item => ({ ...item }))));
+    return injectObservable(this.data, tenantId);
   }
 
   getById(id: string, tenantId?: string): Observable<Reservation | undefined> {
-    return defer(() => {
-      const item = RESERVATIONS_MOCK.find(item => item.id === id && (tenantId === undefined || item.tenantId === tenantId));
-      return of(item ? { ...item } : undefined);
-    });
+    return this.getAll(tenantId).pipe(map(items => items.find(item => item.id === id)));
   }
+}
+
+function injectObservable(data: HermesDataService, tenantId?: string): Observable<Reservation[]> {
+  return new Observable(subscriber => {
+    void data.refresh().then(() => {
+      subscriber.next(data.reservations().filter(item => tenantId === undefined || item.tenantId === tenantId).map(item => ({ ...item })));
+      subscriber.complete();
+    }).catch(error => subscriber.error(error));
+  });
 }
