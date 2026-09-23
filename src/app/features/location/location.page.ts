@@ -1,10 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular/standalone';
 import * as L from 'leaflet';
 import { locateOutline, navigateOutline, searchOutline, shareSocialOutline, stopCircleOutline } from 'ionicons/icons';
 import { HermesLocation, LocationSearchResult, LocationService, NearbyPlace } from '../../core/services/location.service';
+import { AuthService } from '../../core/services/auth.service';
+import { CustomerLocationEvent, HermesDataService } from '../../core/services/hermes-data.service';
 
 @Component({
   selector: 'app-location',
@@ -16,11 +18,16 @@ import { HermesLocation, LocationSearchResult, LocationService, NearbyPlace } fr
 export class LocationPage implements AfterViewInit {
   private readonly locationService = inject(LocationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly auth = inject(AuthService);
+  private readonly data = inject(HermesDataService);
   private map?: L.Map;
   private currentMarker?: L.Marker;
   private accuracyCircle?: L.Circle;
   private placeLayer = L.layerGroup();
   private watchId = '';
+  private readonly trackingSessionId = crypto.randomUUID();
+  private lastPersistedAt = 0;
+  private adminRefreshTimer?: number;
 
   @ViewChild('map') private mapElement?: ElementRef<HTMLElement>;
   readonly currentLocation = signal<HermesLocation | null>(null);
@@ -30,6 +37,19 @@ export class LocationPage implements AfterViewInit {
   readonly loading = signal(false);
   readonly message = signal('Pulsa “Mi ubicación” para comenzar.');
   searchText = '';
+  readonly role = computed(() => this.auth.user()?.role ?? 'cliente');
+  readonly isAdmin = computed(() => this.role() === 'admin');
+  readonly adminView = signal<'customers' | 'personal'>('customers');
+  readonly showCustomerTracking = computed(() => this.isAdmin() && this.adminView() === 'customers');
+  readonly customerLocations = this.data.customerLocations;
+  readonly latestCustomerLocations = computed(() => {
+    const seen = new Set<string>();
+    return this.customerLocations().filter(row => {
+      if (seen.has(row.customerId)) return false;
+      seen.add(row.customerId);
+      return true;
+    });
+  });
 
   readonly locateIcon = locateOutline;
   readonly navigateIcon = navigateOutline;
@@ -40,6 +60,7 @@ export class LocationPage implements AfterViewInit {
   constructor() {
     this.destroyRef.onDestroy(() => {
       if (this.watchId) void this.locationService.stopWatch(this.watchId);
+      if (this.adminRefreshTimer) window.clearInterval(this.adminRefreshTimer);
       this.map?.remove();
     });
   }
@@ -52,6 +73,10 @@ export class LocationPage implements AfterViewInit {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.map);
     this.placeLayer.addTo(this.map);
+    if (this.isAdmin()) {
+      void this.refreshAdminLocations();
+      this.adminRefreshTimer = window.setInterval(() => void this.refreshAdminLocations(), 20000);
+    }
   }
 
   async locate() {
@@ -81,10 +106,15 @@ export class LocationPage implements AfterViewInit {
       await this.locate();
       this.watchId = await this.locationService.watch((location, error) => {
         if (error) this.message.set(error);
-        if (location) this.showCurrentLocation(location, false);
+        if (location) {
+          this.showCurrentLocation(location, false);
+          if (this.role() === 'cliente') void this.persistLocation(location);
+        }
       });
       this.tracking.set(true);
-      this.message.set('Compartiendo cambios de ubicación en tiempo real dentro de esta pantalla.');
+      this.message.set(this.role() === 'cliente'
+        ? 'Compartiendo tu ubicación con la empresa mientras esta pantalla permanezca abierta.'
+        : 'Seguimiento en tiempo real activo dentro de esta pantalla.');
     } catch (error) {
       this.message.set(error instanceof Error ? error.message : 'No fue posible iniciar el seguimiento.');
     }
@@ -149,6 +179,41 @@ export class LocationPage implements AfterViewInit {
     this.map?.setView([place.latitude, place.longitude], 17);
   }
 
+  customerName(customerId: string): string {
+    return this.data.customers().find(customer => customer.id === customerId)?.name ?? 'Cliente';
+  }
+
+  focusCustomer(location: CustomerLocationEvent) {
+    this.map?.setView([location.latitude, location.longitude], 17);
+  }
+
+  async setAdminView(view: 'customers' | 'personal') {
+    if (!this.isAdmin()) return;
+    if (view === 'customers' && this.tracking()) await this.toggleTracking();
+    this.adminView.set(view);
+    this.placeLayer.clearLayers();
+    if (view === 'customers') {
+      await this.refreshAdminLocations();
+    } else {
+      this.message.set('Usa Mi ubicación para localizarte, compartir o iniciar tu seguimiento en tiempo real.');
+      if (this.currentLocation()) this.showCurrentLocation(this.currentLocation()!, true);
+    }
+  }
+
+  async refreshAdminLocations() {
+    if (!this.showCustomerTracking()) return;
+    this.loading.set(true);
+    try {
+      await this.data.refresh();
+      this.drawCustomerLocations();
+      this.message.set(this.latestCustomerLocations().length
+        ? `${this.latestCustomerLocations().length} clientes con ubicación registrada.`
+        : 'Todavía ningún cliente ha compartido su ubicación.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   private showCurrentLocation(location: HermesLocation, center: boolean) {
     this.currentLocation.set(location);
     const point: L.LatLngExpression = [location.latitude, location.longitude];
@@ -162,12 +227,55 @@ export class LocationPage implements AfterViewInit {
     if (center) this.map?.setView(point, 17);
   }
 
+  private async persistLocation(location: HermesLocation) {
+    const now = Date.now();
+    if (now - this.lastPersistedAt < 10000) return;
+    this.lastPersistedAt = now;
+    try {
+      await this.data.recordCustomerLocation({
+        sessionId: this.trackingSessionId,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+        recordedAt: new Date(location.timestamp).toISOString(),
+      });
+    } catch (error) {
+      this.message.set(error instanceof Error ? error.message : 'No fue posible guardar la ubicación en la empresa.');
+    }
+  }
+
+  private drawCustomerLocations() {
+    this.placeLayer.clearLayers();
+    const byCustomer = new Map<string, CustomerLocationEvent[]>();
+    this.customerLocations().forEach(location => {
+      const rows = byCustomer.get(location.customerId) ?? [];
+      rows.push(location);
+      byCustomer.set(location.customerId, rows);
+    });
+    byCustomer.forEach(rows => {
+      const ordered = [...rows].sort((a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt));
+      const latest = ordered[ordered.length - 1];
+      L.marker([latest.latitude, latest.longitude], { icon: this.customerIcon() })
+        .addTo(this.placeLayer)
+        .bindPopup(`<strong>${this.escape(this.customerName(latest.customerId))}</strong><br>Actualizado ${new Date(latest.recordedAt).toLocaleString('es-DO')}`);
+      if (ordered.length > 1) {
+        L.polyline(ordered.map(row => [row.latitude, row.longitude] as L.LatLngTuple), { color: '#17448f', weight: 3, opacity: .7 }).addTo(this.placeLayer);
+      }
+    });
+    const first = this.latestCustomerLocations()[0];
+    if (first) this.map?.setView([first.latitude, first.longitude], 13);
+  }
+
   private currentIcon() {
     return L.divIcon({ className: 'hermes-map-marker', html: '<span></span>', iconSize: [24, 24], iconAnchor: [12, 12] });
   }
 
   private placeIcon() {
     return L.divIcon({ className: 'hermes-place-marker', html: '<span></span>', iconSize: [18, 18], iconAnchor: [9, 9] });
+  }
+
+  private customerIcon() {
+    return L.divIcon({ className: 'hermes-customer-marker', html: '<span></span>', iconSize: [28, 28], iconAnchor: [14, 14] });
   }
 
   private escape(value: string) {

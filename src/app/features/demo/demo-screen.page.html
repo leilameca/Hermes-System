@@ -48,9 +48,9 @@
             </div>
           </article>
           <aside class="panel attention-panel">
-            <div class="panel-title"><h2>Atencion requerida</h2><a [routerLink]="link('operaciones')">Ver todas</a></div>
+            <div class="panel-title"><h2>Atencion requerida</h2><a [routerLink]="link('reservas')">Ver reservas</a></div>
             @for (item of attentionItems(); track item.title) {
-              <a class="attention-row" [class]="item.tone" [routerLink]="link('operaciones')"><strong>{{ item.title }}</strong><span>{{ item.detail }}</span></a>
+              <a class="attention-row" [class]="item.tone" [routerLink]="link(item.path)"><strong>{{ item.title }}</strong><span>{{ item.detail }}</span></a>
             }
           </aside>
         </section>
@@ -81,20 +81,17 @@
         <section class="client-home">
           <div class="mobile-hero">
             <div>
-              <p class="eyebrow">Hola, Laura</p>
+              <p class="eyebrow">Hola, {{ currentUser()?.name }}</p>
               <h2>¿A donde te gustaria ir hoy?</h2>
             </div>
-            <img src="assets/images/vehicles/tucson.jpg" alt="Hyundai Tucson disponible">
-            <input aria-label="Buscar vehiculo" placeholder="Buscar vehiculo...">
+            <img [src]="featuredVehicle().imageUrl || 'assets/images/vehicles/tucson.jpg'" [alt]="featuredVehicle() ? vehicleName(featuredVehicle()!.id) : 'Vehículo disponible'">
+            <form class="home-search" (ngSubmit)="searchVehicles()"><input name="homeSearch" [(ngModel)]="search" aria-label="Buscar vehiculo" placeholder="Buscar vehiculo..."><button type="submit">Buscar</button></form>
           </div>
           <div class="type-grid" aria-label="Tipos de vehiculo">
-            @for (type of vehicleTypes; track type) { <button type="button"><ion-icon [icon]="type === 'Pickup' ? cubeIcon : carIcon" aria-hidden="true" />{{ type }}</button> }
+            @for (type of vehicleTypes; track type) { <button type="button" (click)="browseCategory(type)"><ion-icon [icon]="type === 'Pickup' ? cubeIcon : carIcon" aria-hidden="true" />{{ type }}</button> }
           </div>
-          <div class="section-row"><h2>Recomendados</h2><a [routerLink]="link('explorar')">Explorar</a></div>
-          <section class="featured-vehicle">
-            <img src="assets/images/vehicles/corolla.jpg" alt="Toyota Corolla recomendado">
-            <div><h3>Toyota Corolla 2024</h3><p>Desde RD$ 2,800 / dia</p><span>Disponible en Santo Domingo</span></div>
-          </section>
+          @if (latestClientReservation(); as reservation) { <div class="section-row"><h2>Tu reserva más reciente</h2><a [routerLink]="link('reservas/' + reservation.id)">Ver seguimiento</a></div><a class="featured-vehicle" [routerLink]="link('reservas/' + reservation.id)"><img [src]="vehicleImage(reservation.vehicleId)" [alt]="vehicleName(reservation.vehicleId)"><div><h3>{{ vehicleName(reservation.vehicleId) }}</h3><p>{{ reservation.status === 'pending' ? 'Esperando confirmación' : reservation.status === 'confirmed' ? 'Reserva confirmada' : reservation.status }}</p><span>{{ reservation.startsAt | date:'dd MMM' }} — {{ reservation.endsAt | date:'dd MMM' }}</span></div></a> }
+          @else if (featuredVehicle(); as featured) { <div class="section-row"><h2>Recomendado</h2><a [routerLink]="link('explorar')">Explorar</a></div><a class="featured-vehicle" [routerLink]="vehicleLink(featured.id)"><img [src]="featured.imageUrl" [alt]="vehicleName(featured.id)"><div><h3>{{ vehicleName(featured.id) }}</h3><p>Desde {{ featured.dailyRate | currency:'DOP':'RD$ ':'1.0-0' }} / día</p><span>Disponible para reservar</span></div></a> }
         </section>
       } @else if (role === 'agente') {
         <section class="agent-home">
@@ -139,11 +136,12 @@
       @if (role === 'cliente') { <a class="text-link" [routerLink]="link('explorar')">← Modificar búsqueda</a> }
       @if (role === 'admin') {
         <section class="fleet-toolbar">
-          <input aria-label="Buscar vehiculo" placeholder="Buscar vehiculo...">
-          <button class="icon-button" type="button" aria-label="Filtrar"><ion-icon [icon]="filterIcon" aria-hidden="true" /></button>
+          <input name="fleetSearch" [(ngModel)]="fleetSearch" aria-label="Buscar vehiculo" placeholder="Buscar por marca, modelo o placa">
+          <button class="icon-button" type="button" aria-label="Limpiar filtros" (click)="fleetSearch = ''; setFleetFilter('all')"><ion-icon [icon]="filterIcon" aria-hidden="true" /></button>
           <a class="button" [routerLink]="link('flota/nuevo')">Nuevo vehículo</a>
         </section>
-        <nav class="tabs" aria-label="Filtros de flota"><a class="active">Todos</a><a>Disponibles</a><a>En alquiler</a><a>Mantenimiento</a></nav>
+        <nav class="tabs" aria-label="Filtros de flota"><button type="button" [class.active]="fleetStatusFilter() === 'all'" (click)="setFleetFilter('all')">Todos</button><button type="button" [class.active]="fleetStatusFilter() === 'available'" (click)="setFleetFilter('available')">Disponibles</button><button type="button" [class.active]="fleetStatusFilter() === 'rented'" (click)="setFleetFilter('rented')">En alquiler</button><button type="button" [class.active]="fleetStatusFilter() === 'maintenance'" (click)="setFleetFilter('maintenance')">Mantenimiento</button></nav>
+        <p class="result-count">{{ filteredVehicles().length }} de {{ vehicles().length }} vehículos</p>
         <section class="list-panel">
           @for (v of filteredVehicles(); track v.id) {
             <a class="vehicle-row" [routerLink]="vehicleLink(v.id)">
@@ -152,7 +150,7 @@
               <span class="badge">{{ statuses[v.status].label }}</span>
               <strong>›</strong>
             </a>
-          }
+          } @empty { <p class="notice">No hay vehículos que coincidan con este filtro.</p> }
         </section>
       } @else {
         <p>{{ filteredVehicles().length }} vehículos encontrados</p>
@@ -174,7 +172,7 @@
           <label>Modelo<input name="model" [(ngModel)]="newVehicle.model" placeholder="Ej. RAV4" required></label>
           <label>Año<input name="year" type="number" [(ngModel)]="newVehicle.year" min="2000" max="2027" required></label>
           <label>Placa<input name="plate" [(ngModel)]="newVehicle.plate" placeholder="Ej. G123456" required></label>
-          <label>Categoría<select name="category" [(ngModel)]="newVehicle.category"><option value="sedan">Sedán</option><option value="suv">SUV</option><option value="van">Van</option></select></label>
+          <label>Categoría<select name="category" [(ngModel)]="newVehicle.category"><option value="sedan">Sedán</option><option value="suv">SUV</option><option value="van">Van</option><option value="pickup">Pickup</option><option value="other">Otro</option></select></label>
           <label>Transmisión<select name="transmission" [(ngModel)]="newVehicle.transmission"><option value="automatic">Automática</option><option value="manual">Manual</option></select></label>
           <label>Asientos<input name="seats" type="number" [(ngModel)]="newVehicle.seats" min="2" max="15" required></label>
           <label>Tarifa diaria (RD$)<input name="rate" type="number" [(ngModel)]="newVehicle.dailyRate" min="1" required></label>
@@ -190,8 +188,26 @@
         <section class="mini-grid" aria-label="Datos rapidos"><article><strong>Seguro</strong><span>Basico incluido</span></article><article><strong>Combustible</strong><span>Entrega 3/4</span></article><article><strong>Sucursal</strong><span>Santo Domingo</span></article></section>
         @if (role === 'cliente') { <a class="button" [routerLink]="link('reservas/nueva')" [queryParams]="{vehiculo: v.id}">Nueva reserva →</a> }
         @if (role === 'agente') { <a class="button" [routerLink]="link('entrega/' + v.id)">Iniciar entrega →</a><a class="button secondary" [routerLink]="link('devolucion/' + v.id)">Iniciar devolución →</a> }
-        @if (role === 'admin') { <a class="button" [routerLink]="link('mantenimiento')">Ver mantenimiento →</a><a [routerLink]="link('reservas')">Ver reservas</a> }
+        @if (role === 'admin') { <div class="actions"><button class="button" type="button" (click)="startEditVehicle(v)">Editar vehículo</button><button class="button secondary danger-button" type="button" (click)="deleteVehicle(v)">Eliminar</button><a [routerLink]="link('reservas')">Ver reservas</a></div> }
         </div></section>
+        @if (role === 'admin' && editingVehicle) {
+          <form class="panel stack" (ngSubmit)="saveVehicleEdit()">
+            <h2>Editar vehículo</h2>
+            <div class="form-grid">
+              <label>Marca<input name="editVehicleBrand" [(ngModel)]="editVehicle.brand" required></label>
+              <label>Modelo<input name="editVehicleModel" [(ngModel)]="editVehicle.model" required></label>
+              <label>Año<input name="editVehicleYear" type="number" [(ngModel)]="editVehicle.year" required></label>
+              <label>Placa<input name="editVehiclePlate" [(ngModel)]="editVehicle.plate" required></label>
+              <label>Sucursal<select name="editVehicleBranch" [(ngModel)]="editVehicle.branchId">@for (branch of branches(); track branch.id) { <option [value]="branch.id">{{ branch.name }}</option> }</select></label>
+              <label>Estado<select name="editVehicleStatus" [(ngModel)]="editVehicle.status"><option value="available">Disponible</option><option value="reserved">Reservado</option><option value="rented">En alquiler</option><option value="maintenance">Mantenimiento</option><option value="inactive">Inactivo</option></select></label>
+              <label>Tarifa diaria<input name="editVehicleRate" type="number" [(ngModel)]="editVehicle.dailyRate" min="0" required></label>
+              <label>Kilometraje<input name="editVehicleMileage" type="number" [(ngModel)]="editVehicle.mileage" min="0" required></label>
+              <label>Asientos<input name="editVehicleSeats" type="number" [(ngModel)]="editVehicle.seats" min="1" required></label>
+              <label>Nueva fotografía<input name="editVehiclePhoto" type="file" accept="image/jpeg,image/png,image/webp" (change)="selectVehicleImage($event)"></label>
+            </div>
+            <div class="actions"><button class="button" type="submit">Guardar cambios</button><button class="button secondary" type="button" (click)="editingVehicle = false">Cancelar</button></div>
+          </form>
+        }
       } @else { <p class="notice">Este vehículo no existe en el catálogo.</p><a [routerLink]="link(space.home)">Volver al inicio</a> }
     }
     @case ('new-reservation') {
@@ -202,23 +218,26 @@
     @case ('reservas') {
       @if (role === 'cliente') { <a class="button" [routerLink]="link('explorar')">Explorar vehículos →</a> }
       @if (role === 'cliente') {
-        <nav class="tabs" aria-label="Estados de reserva"><a class="active">Activas</a><a>Finalizadas</a><a>Canceladas</a></nav>
+        <p class="notice">Después de solicitar una reserva, la empresa la revisa. Cuando sea confirmada aparecerán el contrato y la factura listos para consultar o imprimir.</p>
+        <nav class="tabs" aria-label="Estados de reserva"><button type="button" [class.active]="reservationFilter() === 'active'" (click)="setReservationFilter('active')">Activas</button><button type="button" [class.active]="reservationFilter() === 'completed'" (click)="setReservationFilter('completed')">Finalizadas</button><button type="button" [class.active]="reservationFilter() === 'cancelled'" (click)="setReservationFilter('cancelled')">Canceladas</button></nav>
         <section class="list-panel">
-          @for (r of state.reservations(); track r.id) {
+          @for (r of filteredReservations(); track r.id) {
             <a class="reservation-row" [routerLink]="link('reservas/' + r.id)">
               <img [src]="vehicleImage(r.vehicleId)" [alt]="vehicleName(r.vehicleId)">
               <div><h2>{{ vehicleName(r.vehicleId) }}</h2><p>{{ r.startsAt | date:'dd MMM' }} - {{ r.endsAt | date:'dd MMM' }}</p></div>
               <span class="badge">{{ r.status === 'confirmed' ? 'Activa' : 'Pendiente' }}</span>
               <strong>›</strong>
             </a>
-          }
+          } @empty { <p class="notice">No hay reservas en este estado.</p> }
         </section>
       } @else {
-        @for (r of state.reservations(); track r.id) { <article class="panel stack"><div class="row"><h2>{{ vehicleName(r.vehicleId) }}</h2><span class="badge">{{ r.status === 'confirmed' ? 'Confirmada' : 'Pendiente' }}</span></div><p>{{ r.id }} · {{ r.startsAt | date:'dd MMM yyyy' }} — {{ r.endsAt | date:'dd MMM yyyy' }}</p><strong>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</strong><a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo →</a><a [routerLink]="link('operaciones')">Ver operaciones →</a></article> }
+        <div class="section-row"><div><p class="eyebrow">Control de reservas</p><h2>Solicitudes de clientes y mostrador</h2></div><button class="button" type="button" (click)="openAdminReservationForm()">Nueva reserva</button></div>
+        @if (adminReservationFormOpen) { <form class="panel stack" (ngSubmit)="createAdminReservation()"><h2>Registrar reserva desde administración</h2><div class="form-grid"><label>Cliente<select name="adminCustomer" [(ngModel)]="newAdminReservation.customerId" required>@for (customer of customers(); track customer.id) { <option [value]="customer.id">{{ customer.name }}</option> }</select></label><label>Vehículo<select name="adminVehicle" [(ngModel)]="newAdminReservation.vehicleId" (ngModelChange)="updateAdminReservationTotal()" required>@for (vehicle of vehicles(); track vehicle.id) { <option [value]="vehicle.id">{{ vehicleName(vehicle.id) }} · {{ vehicle.plate }}</option> }</select></label><label>Recogida<input name="adminStart" type="date" [(ngModel)]="newAdminReservation.startsAt" (ngModelChange)="updateAdminReservationTotal()" required></label><label>Devolución<input name="adminEnd" type="date" [(ngModel)]="newAdminReservation.endsAt" [min]="newAdminReservation.startsAt" (ngModelChange)="updateAdminReservationTotal()" required></label><label>Sucursal de recogida<select name="adminPickupBranch" [(ngModel)]="newAdminReservation.pickupBranchId" required>@for (branch of branches(); track branch.id) { <option [value]="branch.id">{{ branch.name }}</option> }</select></label><label>Sucursal de devolución<select name="adminReturnBranch" [(ngModel)]="newAdminReservation.returnBranchId" required>@for (branch of branches(); track branch.id) { <option [value]="branch.id">{{ branch.name }}</option> }</select></label><label>Total<input name="adminTotal" type="number" [(ngModel)]="newAdminReservation.total" min="0" required></label></div><label>Notas<textarea name="adminNotes" [(ngModel)]="newAdminReservation.notes" rows="2"></textarea></label><div class="actions"><button class="button" type="submit">Guardar reserva pendiente</button><button class="button secondary" type="button" (click)="adminReservationFormOpen = false">Cancelar</button></div></form> }
+        @for (r of state.reservations(); track r.id) { <article class="panel stack"><div class="row"><h2>{{ vehicleName(r.vehicleId) }}</h2><span class="badge">{{ r.status }}</span></div><p>{{ r.reference || r.id }} · {{ r.startsAt | date:'dd MMM yyyy' }} — {{ r.endsAt | date:'dd MMM yyyy' }}</p><p>Cliente: {{ customerName(r.customerId) }}</p><strong>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</strong><div class="actions">@if (r.status === 'pending') { <button class="button" type="button" (click)="confirmReservation(r)">Confirmar y preparar documentos</button> }<button class="button secondary" type="button" (click)="startEditReservation(r)">Modificar</button>@if (r.status !== 'cancelled' && r.status !== 'completed') { <button class="button secondary" type="button" (click)="cancelReservation(r)">Cancelar</button> }<button class="button secondary" type="button" (click)="printReservation(r, 'Factura')">Imprimir factura</button><button class="button secondary" type="button" (click)="printReservation(r, 'Contrato de alquiler')">Imprimir contrato</button><a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo</a></div>@if (editingReservationId === r.id) { <form class="stack" (ngSubmit)="saveReservationEdit()"><div class="form-grid"><label>Recogida<input name="reservationStart" type="date" [(ngModel)]="reservationEdit.startsAt" required></label><label>Devolución<input name="reservationEnd" type="date" [(ngModel)]="reservationEdit.endsAt" [min]="reservationEdit.startsAt" required></label><label>Estado<select name="reservationStatus" [(ngModel)]="reservationEdit.status"><option value="pending">Pendiente</option><option value="confirmed">Confirmada</option><option value="cancelled">Cancelada</option><option value="completed">Completada</option></select></label><label>Total<input name="reservationTotal" type="number" [(ngModel)]="reservationEdit.total" min="0" required></label></div><label>Notas<textarea name="reservationNotes" [(ngModel)]="reservationEdit.notes" rows="2"></textarea></label><div class="actions"><button class="button" type="submit">Guardar reserva</button><button class="button secondary" type="button" (click)="editingReservationId = ''">Cerrar</button></div></form> }</article> }
       }
     }
     @case ('reservation') {
-      @if (reservation(); as r) { <section class="panel stack"><span class="badge">{{ r.status === 'confirmed' ? 'Confirmada' : 'Pendiente' }}</span><h2>{{ vehicleName(r.vehicleId) }}</h2><p>{{ r.id }}</p><dl><dt>Recogida</dt><dd>{{ r.startsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Devolución</dt><dd>{{ r.endsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Sucursal</dt><dd>Santo Domingo</dd><dt>Total</dt><dd>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</dd></dl><div class="actions"><a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo</a><a [routerLink]="link('contratos')">Contrato</a><a [routerLink]="link('facturas')">Factura</a><a [routerLink]="link('incidentes')">Reportar incidente</a></div></section> }
+      @if (reservation(); as r) { <section class="panel stack"><span class="badge">{{ r.status }}</span><h2>{{ vehicleName(r.vehicleId) }}</h2><p>{{ r.reference || r.id }}</p><div class="booking-progress"><div class="done"><strong>1</strong><span>Solicitud enviada</span></div><div [class.done]="r.status !== 'pending'"><strong>2</strong><span>Revisión administrativa</span></div><div [class.done]="r.status === 'confirmed' || r.status === 'completed'"><strong>3</strong><span>Confirmación y documentos</span></div><div [class.done]="r.status === 'completed'"><strong>4</strong><span>Alquiler completado</span></div></div><dl><dt>Recogida</dt><dd>{{ r.startsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Devolución</dt><dd>{{ r.endsAt | date:'dd MMM yyyy, HH:mm' }}</dd><dt>Sucursal</dt><dd>Santo Domingo</dd><dt>Total</dt><dd>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</dd></dl><p class="notice">{{ r.status === 'pending' ? 'Tu solicitud está esperando confirmación de la empresa.' : r.status === 'confirmed' ? 'La empresa confirmó tu reserva. Ya puedes imprimir tus documentos.' : 'Consulta aquí el estado y los documentos de tu reserva.' }}</p><div class="actions"><a [routerLink]="vehicleLink(r.vehicleId)">Ver vehículo</a><a [routerLink]="link('contratos')">Contrato</a><a [routerLink]="link('facturas')">Factura</a>@if (r.status === 'confirmed' || r.status === 'completed') { <button class="button secondary" type="button" (click)="printReservation(r, 'Factura')">Imprimir factura</button> }<a [routerLink]="link('incidentes')">Reportar incidente</a>@if (r.status === 'pending') { <button class="button secondary" type="button" (click)="cancelReservation(r)">Cancelar reserva</button> }</div></section> }
       @else { <p class="notice">La reserva no existe o ya no está disponible.</p><a [routerLink]="link('reservas')">Volver a mis reservas</a> }
     }
     @case ('operaciones') {
@@ -253,10 +272,10 @@
       <p>Planes y precios de referencia para la plataforma.</p><section class="cards">@for (plan of plans; track plan.name) { <article class="card"><h2>{{ plan.name }}</h2><strong>{{ plan.price | currency:'DOP':'RD$ ':'1.0-0' }} / mes</strong><p>{{ plan.detail }}</p><ul class="plain-list">@for (feature of plan.features; track feature) { <li>{{ feature }}</li> }</ul><button class="button secondary" type="button" (click)="simulateAction('Cambio al plan ' + plan.name)">Seleccionar plan</button><a [routerLink]="link('suscripciones')">Ver suscripciones →</a></article> }</section>
     }
     @case ('clientes') {
-      <section class="fleet-toolbar"><input name="customerSearch" [(ngModel)]="customerSearch" aria-label="Buscar cliente" placeholder="Buscar por nombre, correo, teléfono o ciudad"><button class="button" type="button" (click)="customerFormOpen = !customerFormOpen">{{ customerFormOpen ? 'Cerrar formulario' : 'Nuevo cliente' }}</button></section>
+      <section class="fleet-toolbar"><input name="customerSearch" [(ngModel)]="customerSearch" aria-label="Buscar cliente" placeholder="Buscar por nombre, correo, teléfono o ciudad"><button class="button" type="button" (click)="customerFormOpen ? cancelCustomerForm() : (customerFormOpen = true)">{{ customerFormOpen ? 'Cerrar formulario' : 'Nuevo cliente' }}</button></section>
       @if (customerFormOpen) {
-        <form class="panel stack customer-form" (ngSubmit)="createCustomer()">
-          <div><p class="eyebrow">Registro de cliente</p><h2>Información personal y de conducción</h2><p class="text-secondary">Los datos quedarán disponibles para reservas, contratos, entregas y devoluciones.</p></div>
+        <form class="panel stack customer-form" (ngSubmit)="saveCustomer()">
+          <div><p class="eyebrow">{{ editingCustomerId ? 'Edición de cliente' : 'Registro de cliente' }}</p><h2>Información personal y de conducción</h2><p class="text-secondary">Los datos quedarán disponibles para reservas, contratos, entregas y devoluciones.</p></div>
           <div class="form-grid">
             <label>Nombre completo<input name="customerName" [(ngModel)]="newCustomer.name" required></label>
             <label>Correo electrónico<input name="customerEmail" type="email" [(ngModel)]="newCustomer.email" required></label>
@@ -266,27 +285,42 @@
             <label>Número de documento<input name="customerDocument" [(ngModel)]="newCustomer.documentNumber"></label>
             <label>Licencia de conducir<input name="customerLicense" [(ngModel)]="newCustomer.driverLicense"></label>
           </div>
-          <label class="check"><input type="checkbox" name="createCustomerAccess" [(ngModel)]="createCustomerAccess"> Crear también su acceso a la plataforma</label>
-          @if (createCustomerAccess) {
+          @if (editingCustomerId) { <label class="check"><input type="checkbox" name="customerActive" [(ngModel)]="customerActive"> Cliente activo</label> }
+          @if (!editingCustomerId) { <label class="check"><input type="checkbox" name="createCustomerAccess" [(ngModel)]="createCustomerAccess"> Crear también su acceso a la plataforma</label> }
+          @if (!editingCustomerId && createCustomerAccess) {
             <label>Contraseña temporal<input name="temporaryPassword" type="password" [(ngModel)]="temporaryPassword" minlength="8" autocomplete="new-password" required><small>Puede usar una contraseña provisional acordada con el cliente. Hermes le exigirá cambiarla al entrar.</small></label>
           }
-          <div class="actions"><button class="button" type="submit">Guardar cliente</button><button class="button secondary" type="button" (click)="customerFormOpen = false">Cancelar</button></div>
+          <div class="actions"><button class="button" type="submit">{{ editingCustomerId ? 'Guardar cambios' : 'Guardar cliente' }}</button><button class="button secondary" type="button" (click)="cancelCustomerForm()">Cancelar</button></div>
         </form>
       }
-      @for (customer of visibleCustomers(); track customer.id) { <article class="panel stack"><div class="row"><h2>{{ customer.name }}</h2><span class="badge">Activo</span></div><p>{{ customer.email }} · {{ customer.phone || 'Sin teléfono' }}</p><p>{{ customer.city || 'Ciudad no indicada' }} · {{ reservationCount(customer.id) }} reservas registradas</p><div class="actions"><a [routerLink]="link('reservas')">Ver reservas</a></div></article> }
+      @for (customer of visibleCustomers(); track customer.id) { <article class="panel stack"><div class="row"><h2>{{ customer.name }}</h2><span class="badge">{{ customer.active ? 'Activo' : 'Inactivo' }}</span></div><p>{{ customer.email }} · {{ customer.phone || 'Sin teléfono' }}</p><p>{{ customer.city || 'Ciudad no indicada' }} · {{ reservationCount(customer.id) }} reservas registradas</p><p>Documento: {{ customer.documentNumber || 'No indicado' }} · Licencia: {{ customer.driverLicense || 'No indicada' }}</p><div class="actions"><button class="button" type="button" (click)="startEditCustomer(customer)">Editar</button><button class="button secondary" type="button" (click)="toggleCustomerHistory(customer.id)">{{ expandedCustomerId === customer.id ? 'Ocultar historial' : 'Ver historial' }}</button><label class="button secondary">Subir documento<input class="file-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="uploadCustomerDocument(customer.id, $event)"></label><button class="button secondary danger-button" type="button" (click)="deleteCustomer(customer)">Eliminar</button></div>@if (expandedCustomerId === customer.id) { <section class="history-list"><h3>Historial completo</h3>@for (item of state.customerHistory(customer.id); track item.type + item.id) { <article class="history-row"><span class="badge">{{ item.type }}</span><div><strong>{{ item.title }}</strong><p>{{ item.detail }}</p><small>{{ item.date | date:'dd MMM yyyy, h:mm a' }}</small></div></article> } @empty { <p class="notice">Este cliente todavía no tiene actividad registrada.</p> }</section> }</article> }
       @empty { <p class="notice">No hay clientes que coincidan con la búsqueda.</p> }
     }
     @case ('sucursales') {
-      @for (branch of branches(); track branch.id) { <article class="panel stack"><div class="row"><h2>{{ branch.name }}</h2><span class="badge">Activa</span></div><p>{{ branch.address }}</p><p>{{ branch.city }} · {{ branchVehicleCount(branch.id) }} vehículos asignados</p></article> }
+      <div class="actions"><button class="button" type="button" (click)="startBranchForm()">Nueva sucursal</button></div>
+      @if (branchFormOpen) { <form class="panel stack" (ngSubmit)="saveBranch()"><h2>{{ editingBranchId ? 'Editar sucursal' : 'Nueva sucursal' }}</h2><div class="form-grid"><label>Nombre<input name="branchName" [(ngModel)]="branchForm.name" required></label><label>Ciudad<input name="branchCity" [(ngModel)]="branchForm.city" required></label><label>Dirección<input name="branchAddress" [(ngModel)]="branchForm.address" required></label></div>@if (editingBranchId) { <label class="check"><input type="checkbox" name="branchActive" [(ngModel)]="branchForm.active"> Sucursal activa</label> }<div class="actions"><button class="button" type="submit">Guardar sucursal</button><button class="button secondary" type="button" (click)="branchFormOpen = false">Cancelar</button></div></form> }
+      @for (branch of branches(); track branch.id) { <article class="panel stack"><div class="row"><h2>{{ branch.name }}</h2><span class="badge">{{ branch.active ? 'Activa' : 'Inactiva' }}</span></div><p>{{ branch.address }}</p><p>{{ branch.city }} · {{ branchVehicleCount(branch.id) }} vehículos asignados</p><div class="actions"><button class="button" type="button" (click)="startBranchForm(branch)">Editar</button><button class="button secondary danger-button" type="button" (click)="deleteBranch(branch)">Eliminar</button></div></article> }
       @empty { <p class="notice">No hay sucursales registradas.</p> }
     }
     @case ('usuarios') {
-      @for (member of members(); track member.id) { <article class="panel stack"><div class="row"><h2>{{ member.name }}</h2><span class="badge">{{ member.active ? 'Activo' : 'Inactivo' }}</span></div><p>{{ member.role === 'admin' ? 'Administrador' : 'Agente' }} · acceso mediante Supabase Auth</p></article> }
+      <p class="notice">Los administradores pueden cambiar el rol operativo o suspender el acceso a esta empresa.</p>
+      @for (member of members(); track member.id) { <article class="panel stack"><div class="row"><h2>{{ member.name }}</h2><span class="badge">{{ member.active ? 'Activo' : 'Inactivo' }}</span></div><div class="form-grid"><label>Permiso<select #memberRole [value]="member.role"><option value="agent">Agente</option><option value="admin">Administrador</option></select></label><label>Estado<select #memberActive [value]="member.active ? 'true' : 'false'"><option value="true">Activo</option><option value="false">Suspendido</option></select></label></div><button class="button" type="button" (click)="changeMember(member.id, memberRole.value === 'admin' ? 'admin' : 'agent', memberActive.value === 'true')">Guardar permisos</button></article> }
       @empty { <p class="notice">No hay usuarios operativos visibles para esta empresa.</p> }
     }
     @case ('contratos') {
-      @for (contract of contracts(); track contract.id) { <article class="panel stack"><div class="row"><h2>{{ contract.number }}</h2><span class="badge">{{ contract.status === 'signed' ? 'Firmado' : 'Pendiente de firma' }}</span></div><p>{{ customerName(contract.customerId) }} · reserva {{ contract.reservationId }}</p><p>{{ contract.terms }}</p></article> }
+      <p class="notice">Los contratos se preparan al confirmar una reserva. El botón abre el diálogo del dispositivo para imprimir o guardar como PDF.</p>
+      @for (contract of contracts(); track contract.id) { <article class="panel stack"><div class="row"><h2>{{ contract.number }}</h2><span class="badge">{{ contract.status === 'signed' ? 'Firmado' : 'Pendiente de firma' }}</span></div><p>{{ customerName(contract.customerId) }} · reserva {{ contract.reservationId }}</p><p>{{ contract.terms }}</p><button class="button" type="button" (click)="printContract(contract)">Imprimir contrato</button></article> }
       @empty { <p class="notice">No hay contratos disponibles.</p> }
+    }
+    @case ('facturacion') {
+      <p class="notice">Facturación se construye con las reservas reales de la empresa. Puedes imprimir en papel o guardar cada documento como PDF.</p>
+      @for (r of state.reservations(); track r.id) { <article class="panel stack"><div class="row"><div><h2>FAC-{{ r.reference || r.id }}</h2><p>{{ customerName(r.customerId) }} · {{ vehicleName(r.vehicleId) }}</p></div><span class="badge">{{ r.status === 'completed' ? 'Pagada' : r.status === 'cancelled' ? 'Anulada' : 'Abierta' }}</span></div><p>{{ r.startsAt | date:'dd MMM yyyy' }} — {{ r.endsAt | date:'dd MMM yyyy' }}</p><strong>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</strong><button class="button" type="button" (click)="printReservation(r, 'Factura')">Imprimir factura</button></article> }
+      @empty { <p class="notice">Todavía no hay reservas para facturar.</p> }
+    }
+    @case ('facturas') {
+      <p class="notice">Tus facturas se generan a partir de las reservas registradas. Al imprimir también puedes elegir “Guardar como PDF”.</p>
+      @for (r of state.reservations(); track r.id) { <article class="panel stack"><div class="row"><div><h2>FAC-{{ r.reference || r.id }}</h2><p>{{ vehicleName(r.vehicleId) }} · {{ r.startsAt | date:'dd MMM yyyy' }}</p></div><span class="badge">{{ r.status === 'completed' ? 'Pagada' : r.status === 'cancelled' ? 'Anulada' : 'Pendiente' }}</span></div><strong>{{ r.total | currency:'DOP':'RD$ ':'1.0-0' }}</strong><button class="button" type="button" (click)="printReservation(r, 'Factura')">Imprimir factura</button></article> }
+      @empty { <p class="notice">Todavía no tienes facturas disponibles.</p> }
     }
     @case ('perfil') {
       <section class="profile-layout">
@@ -316,7 +350,7 @@
       <nav class="steps" aria-label="Pasos de la operación"><a [routerLink]="flowLink()">1. Resumen</a><a [routerLink]="flowLink('/checklist')">2. Checklist</a><a [routerLink]="flowLink('/evidencias')">3. Evidencias</a><a [routerLink]="flowLink('/firma')">4. Firma</a></nav>
       @if (kind() === 'handover' || kind() === 'return') { <section class="panel stack"><h2>Resumen de la operación</h2><p>Vehículo: {{ v.brand }} {{ v.model }} · Sucursal Santo Domingo</p><p>Kilometraje inicial: {{ v.mileage }} km · Combustible: ¾</p><p>Revisa el vehículo, documenta su estado y completa la firma.</p><a class="button" [routerLink]="flowLink('/checklist')">Comenzar checklist →</a></section> }
       @if (kind() === 'checklist') { <section class="panel stack"><h2>Verificación del vehículo</h2>@for (label of checks; track label; let i = $index) { <label class="check"><input type="checkbox" [ngModel]="step().checks[i]" (ngModelChange)="check(i, $event)">{{ label }}</label> }<p>{{ allChecked() ? 'Revisión completada.' : 'Marca los cuatro puntos para completar la revisión.' }}</p><a class="button" [routerLink]="flowLink('/evidencias')">Continuar a evidencias →</a></section> }
-      @if (kind() === 'evidence') { <section class="panel stack"><h2>Registro visual</h2><p>Adjunta evidencia visual del estado del vehículo.</p>@if (step().evidence) { <img class="evidence" [src]="v.imageUrl" [alt]="'Evidencia: ' + v.model"><p class="badge">1 evidencia añadida</p> }<button type="button" class="button secondary" (click)="state.update(stepKey(), { evidence: !step().evidence })">{{ step().evidence ? 'Quitar evidencia' : 'Añadir evidencia' }}</button><a class="button" [routerLink]="flowLink('/firma')">Continuar a firma →</a></section> }
+      @if (kind() === 'evidence') { <section class="panel stack"><h2>Registro visual</h2><p>Adjunta una fotografía o PDF. El archivo se subirá al Storage privado al firmar la operación.</p><input id="operationEvidence" class="file-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="selectOperationEvidence($event)"><label class="button secondary" for="operationEvidence">Seleccionar evidencia</label>@if (step().evidence) { @if (operationEvidencePreview) { <img class="evidence" [src]="operationEvidencePreview" [alt]="'Evidencia: ' + v.model"> }<p class="badge">Evidencia preparada</p> }<a class="button" [routerLink]="flowLink('/firma')">Continuar a firma →</a></section> }
       @if (kind() === 'signature') { <form class="panel stack" (ngSubmit)="sign()"><h2>Conformidad</h2><p>Firma mediante nombre escrito para cerrar la operación.</p><p>Checklist: {{ allChecked() ? 'Completo' : 'Pendiente' }} · Evidencias: {{ step().evidence ? '1 añadida' : 'Pendientes' }}</p><label>Nombre del firmante<input name="signature" [(ngModel)]="signatureName" required></label><label class="check"><input type="checkbox" name="consent" [(ngModel)]="consent" required> Confirmo que la información revisada es correcta.</label><button class="button" type="submit" [disabled]="!allChecked() || !step().evidence || !consent || !signatureName.trim()">Firmar operación</button>@if (step().signed) { <p class="notice" role="status">Operación completada.</p> }<a [routerLink]="link('operaciones')">Volver a operaciones →</a></form> }
     } @else { <p class="notice">Vehículo no encontrado para esta operación.</p><a [routerLink]="link('operaciones')">Volver a operaciones</a> }
   }
