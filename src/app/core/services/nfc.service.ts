@@ -9,6 +9,7 @@ import { SupabaseService } from './supabase.service';
 
 // Texto que identifica las etiquetas de Hermes.
 const HERMES_VEHICLE_PREFIX = 'HERMES_VEHICLE:';
+const HERMES_TOKEN_PREFIX = 'HERMES:V1:';
 
 // Activa los tipos de NFC usados por Android y permite leer NDEF.
 const ANDROID_NDEF_READER_FLAGS = 0x0f;
@@ -89,7 +90,7 @@ export class NfcService implements OnDestroy {
   }
 
   // Guarda el identificador del vehiculo en la etiqueta.
-  async startWriting(vehicleId: string): Promise<void> {
+  async startWriting(vehicleId: string, label = ''): Promise<void> {
     await this.data.refresh();
     const vehicle = this.data.vehicles().find(item => item.id === vehicleId);
     if (!vehicle) {
@@ -98,14 +99,22 @@ export class NfcService implements OnDestroy {
     }
     if (!(await this.prepareSession())) return;
 
-    const value = HERMES_VEHICLE_PREFIX + vehicleId;
+    const resolvedLabel = label.trim() || `Etiqueta ${vehicle.plate}`;
+    const value = HERMES_TOKEN_PREFIX + crypto.randomUUID();
     if (!Capacitor.isNativePlatform()) {
       try {
         const Reader = this.webNfcConstructor()!;
         const writer = new Reader();
         await writer.write(value);
-        await this.persistAssignment(vehicleId, value);
-        this.writeSubject.next({ vehicleId, value, writtenAt: new Date().toISOString() });
+        await this.persistAssignment(vehicleId, value, resolvedLabel);
+        this.writeSubject.next({
+          vehicleId,
+          tagId: 'No disponible en Web NFC',
+          token: value,
+          label: resolvedLabel,
+          value,
+          writtenAt: new Date().toISOString(),
+        });
       } catch (error) {
         this.setError('El navegador no pudo escribir la etiqueta. Mantén la página visible y acerca una etiqueta NDEF regrabable.', error);
       }
@@ -119,9 +128,10 @@ export class NfcService implements OnDestroy {
         if (writing) return;
         writing = true;
         try {
+          const tagId = this.bytesToHex(event.tag.id ?? []);
           await CapacitorNfc.write({ records: [this.createTextRecord(value)], allowFormat: true });
-          await this.persistAssignment(vehicleId, value, this.bytesToHex(event.tag.id ?? []));
-          this.writeSubject.next({ vehicleId, value, writtenAt: new Date().toISOString() });
+          await this.persistAssignment(vehicleId, value, resolvedLabel, tagId);
+          this.writeSubject.next({ vehicleId, tagId, token: value, label: resolvedLabel, value, writtenAt: new Date().toISOString() });
           this.errorSubject.next('');
           await this.stopScanning();
         } catch (error) {
@@ -193,6 +203,7 @@ export class NfcService implements OnDestroy {
     const baseScan: HermesNfcScan = {
       tagId: this.bytesToHex(event.tag.id ?? []),
       rawValue,
+      token: rawValue || undefined,
       vehicleId,
       scannedAt: new Date().toISOString(),
       valid: false,
@@ -224,7 +235,7 @@ export class NfcService implements OnDestroy {
     const rawValue = record?.data ? this.decodeWebRecord(record.data) : '';
     const vehicleId = rawValue.startsWith(HERMES_VEHICLE_PREFIX) ? rawValue.slice(HERMES_VEHICLE_PREFIX.length).trim() : undefined;
     const tagId = event.serialNumber || 'No disponible en Web NFC';
-    const baseScan: HermesNfcScan = { tagId, rawValue, vehicleId, scannedAt: new Date().toISOString(), valid: false };
+    const baseScan: HermesNfcScan = { tagId, rawValue, token: rawValue || undefined, vehicleId, scannedAt: new Date().toISOString(), valid: false };
     this.scanSubject.next(baseScan);
     await this.resolveVehicle(baseScan);
     await this.stopScanning();
@@ -239,7 +250,25 @@ export class NfcService implements OnDestroy {
       this.errorSubject.next('La etiqueta fue detectada, pero no contiene un texto NDEF de HERMES. Puedes asignarla desde esta pantalla.');
       return;
     }
-    if (!scan.vehicleId) {
+    let vehicleId = scan.vehicleId;
+    let label = scan.label;
+
+    if (scan.rawValue.startsWith(HERMES_TOKEN_PREFIX)) {
+      const { data: binding, error } = await this.supabase
+        .from('nfc_tags')
+        .select('vehicle_id,label')
+        .eq('token', scan.rawValue)
+        .eq('active', true)
+        .maybeSingle();
+      if (error) {
+        this.errorSubject.next('La etiqueta fue leída, pero no fue posible verificar su asignación en Supabase.');
+        return;
+      }
+      vehicleId = binding?.vehicle_id;
+      label = binding?.label;
+    }
+
+    if (!vehicleId) {
       this.errorSubject.next('La etiqueta fue leída, pero no tiene el formato HERMES esperado.');
       return;
     }
@@ -250,8 +279,8 @@ export class NfcService implements OnDestroy {
       return;
     }
 
-    const vehicle = this.data.vehicles().find(item => item.id === scan.vehicleId);
-    this.scanSubject.next({ ...scan, vehicle: vehicle ? { ...vehicle } : undefined, valid: Boolean(vehicle) });
+    const vehicle = this.data.vehicles().find(item => item.id === vehicleId);
+    this.scanSubject.next({ ...scan, vehicleId, label, vehicle: vehicle ? { ...vehicle } : undefined, valid: Boolean(vehicle) });
     if (!vehicle) {
       this.errorSubject.next('La etiqueta se leyó, pero apunta a un vehículo que no existe en el Supabase conectado. Vuelve a asignar la etiqueta.');
       return;
@@ -265,7 +294,7 @@ export class NfcService implements OnDestroy {
     return (window as unknown as { NDEFReader?: WebNdefReaderConstructor }).NDEFReader ?? null;
   }
 
-  private async persistAssignment(vehicleId: string, token: string, physicalTagId?: string): Promise<void> {
+  private async persistAssignment(vehicleId: string, token: string, label: string, physicalTagId?: string): Promise<void> {
     const user = this.auth.user();
     if (!user?.organizationId) throw new Error('La sesión no está vinculada a una empresa.');
     const { data: tag, error } = await this.supabase.from('nfc_tags').upsert({
@@ -273,7 +302,7 @@ export class NfcService implements OnDestroy {
       vehicle_id: vehicleId,
       token,
       physical_tag_id: physicalTagId && physicalTagId !== 'No disponible' ? physicalTagId : null,
-      label: `Etiqueta ${token.slice(-8)}`,
+      label,
       active: true,
       assigned_by: user.id,
       assigned_at: new Date().toISOString(),

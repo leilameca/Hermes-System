@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { IonButton, IonContent, IonIcon, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, IonInput, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 import { radioOutline, scanOutline, stopCircleOutline } from 'ionicons/icons';
 import { NetworkService } from '../../core/services/network.service';
 import { NfcService } from '../../core/services/nfc.service';
@@ -15,7 +15,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-nfc',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, IonButton, IonContent, IonIcon, IonSelect, IonSelectOption, VehicleImageComponent],
+  imports: [DatePipe, FormsModule, RouterLink, IonButton, IonContent, IonIcon, IonInput, IonSelect, IonSelectOption, VehicleImageComponent],
   templateUrl: './nfc.page.html',
   styleUrl: './nfc.page.scss',
 })
@@ -32,6 +32,7 @@ export class NfcPage {
   readonly writeResult = toSignal(this.nfc.lastWrite$, { initialValue: null });
   readonly error = toSignal(this.nfc.error$, { initialValue: '' });
   readonly selectedVehicleId = signal('');
+  readonly tagLabel = signal('');
   readonly operationMessage = signal('');
   readonly scanIcon = scanOutline;
   readonly radioIcon = radioOutline;
@@ -59,7 +60,7 @@ export class NfcPage {
       this.operationMessage.set('Selecciona un vehículo antes de preparar la etiqueta.');
       return;
     }
-    await this.nfc.startWriting(this.selectedVehicleId());
+    await this.nfc.startWriting(this.selectedVehicleId(), this.tagLabel());
   }
 
   async stopScanning(): Promise<void> {
