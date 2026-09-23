@@ -39,6 +39,8 @@ export class LocationPage implements AfterViewInit {
   searchText = '';
   readonly role = computed(() => this.auth.user()?.role ?? 'cliente');
   readonly isAdmin = computed(() => this.role() === 'admin');
+  readonly adminView = signal<'customers' | 'personal'>('customers');
+  readonly showCustomerTracking = computed(() => this.isAdmin() && this.adminView() === 'customers');
   readonly customerLocations = this.data.customerLocations;
   readonly latestCustomerLocations = computed(() => {
     const seen = new Set<string>();
@@ -185,8 +187,21 @@ export class LocationPage implements AfterViewInit {
     this.map?.setView([location.latitude, location.longitude], 17);
   }
 
-  async refreshAdminLocations() {
+  async setAdminView(view: 'customers' | 'personal') {
     if (!this.isAdmin()) return;
+    if (view === 'customers' && this.tracking()) await this.toggleTracking();
+    this.adminView.set(view);
+    this.placeLayer.clearLayers();
+    if (view === 'customers') {
+      await this.refreshAdminLocations();
+    } else {
+      this.message.set('Usa Mi ubicación para localizarte, compartir o iniciar tu seguimiento en tiempo real.');
+      if (this.currentLocation()) this.showCurrentLocation(this.currentLocation()!, true);
+    }
+  }
+
+  async refreshAdminLocations() {
+    if (!this.showCustomerTracking()) return;
     this.loading.set(true);
     try {
       await this.data.refresh();

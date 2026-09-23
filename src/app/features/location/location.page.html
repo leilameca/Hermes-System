@@ -1,11 +1,13 @@
 <main class="location-page">
   <header class="page-heading">
-    <div><p class="eyebrow">Unidad VI · Servicios de localización</p><h1>{{ isAdmin() ? 'Ubicación de clientes' : 'Ubicación y lugares cercanos' }}</h1><p>{{ isAdmin() ? 'Consulta la última ubicación compartida y el recorrido de cada cliente de tu empresa.' : 'Consulta el GPS, sigue tu recorrido y encuentra servicios utilizando OpenStreetMap.' }}</p></div>
-    <span class="privacy">{{ isAdmin() ? 'Solo se muestran clientes de esta empresa que activaron el seguimiento.' : 'La ubicación se guarda solo al activar el seguimiento y mientras esta pantalla está abierta.' }}</span>
+    <div><p class="eyebrow">Unidad VI · Servicios de localización</p><h1>{{ showCustomerTracking() ? 'Ubicación de clientes' : 'Ubicación y lugares cercanos' }}</h1><p>{{ showCustomerTracking() ? 'Consulta la última ubicación compartida y el recorrido de cada cliente de tu empresa.' : 'Consulta el GPS, sigue tu recorrido y encuentra servicios utilizando OpenStreetMap.' }}</p></div>
+    <span class="privacy">{{ showCustomerTracking() ? 'Solo se muestran clientes de esta empresa que activaron el seguimiento.' : 'Tu seguimiento funciona mientras esta pantalla permanece abierta.' }}</span>
   </header>
 
+  @if (isAdmin()) { <nav class="location-mode" aria-label="Modo de ubicación"><button type="button" [class.active]="showCustomerTracking()" (click)="setAdminView('customers')">Clientes en tiempo real</button><button type="button" [class.active]="!showCustomerTracking()" (click)="setAdminView('personal')">Mi ubicación</button></nav> }
+
   <section class="location-actions" aria-label="Controles de ubicación">
-    @if (isAdmin()) {
+    @if (showCustomerTracking()) {
       <button type="button" class="primary" (click)="refreshAdminLocations()" [disabled]="loading()"><ion-icon [icon]="locateIcon" />Actualizar clientes</button>
     } @else {
     <button type="button" class="primary" (click)="locate()" [disabled]="loading()"><ion-icon [icon]="locateIcon" />Mi ubicación</button>
@@ -20,7 +22,7 @@
   <section class="map-layout">
     <div class="map-card"><div #map class="map" aria-label="Mapa de ubicación"></div></div>
     <aside class="coordinates">
-      @if (isAdmin()) {
+      @if (showCustomerTracking()) {
         <p class="eyebrow">Clientes localizados</p>
         <div class="customer-locations">
           @for (location of latestCustomerLocations(); track location.customerId) {
@@ -36,7 +38,7 @@
     </aside>
   </section>
 
-  @if (!isAdmin()) {
+  @if (!showCustomerTracking()) {
   <section class="search-card">
     <div><p class="eyebrow">Buscar una ubicación</p><h2>Direcciones y puntos de interés</h2></div>
     <form (ngSubmit)="search()"><input name="searchText" [(ngModel)]="searchText" placeholder="Ej. Monumento de Santiago" aria-label="Lugar que deseas buscar" required minlength="3"><button type="submit" [disabled]="loading() || searchText.trim().length < 3"><ion-icon [icon]="searchIcon" />Buscar</button></form>

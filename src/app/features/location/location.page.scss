@@ -6,6 +6,9 @@
 .page-heading p:not(.eyebrow), .coordinates p { color: var(--hermes-text-secondary); }
 .eyebrow { color: var(--hermes-link); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .privacy { max-width: 280px; padding: 11px 13px; border-left: 3px solid var(--hermes-amber); background: var(--hermes-surface); color: var(--hermes-text-secondary); font-size: 12px; }
+.location-mode { display: flex; gap: 6px; width: fit-content; padding: 4px; border: 1px solid var(--hermes-border); border-radius: 7px; background: var(--hermes-surface); }
+.location-mode button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 4px; background: transparent; color: var(--hermes-text-secondary); font-weight: 750; cursor: pointer; }
+.location-mode button.active { background: var(--hermes-navy); color: white; }
 .location-actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .location-actions button, form button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 46px; padding: 0 15px; border: 1px solid var(--hermes-border); border-radius: 5px; background: var(--hermes-surface); color: var(--hermes-navy); font-weight: 720; cursor: pointer; }
 .location-actions .primary { border-color: var(--hermes-navy); background: var(--hermes-navy); color: white; }
