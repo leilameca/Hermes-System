@@ -6,6 +6,25 @@
 
   @if (isAdmin()) { <nav class="location-mode" aria-label="Modo de ubicación"><button type="button" [class.active]="showCustomerTracking()" (click)="setAdminView('customers')">Clientes en tiempo real</button><button type="button" [class.active]="!showCustomerTracking()" (click)="setAdminView('personal')">Mi ubicación</button></nav> }
 
+  @if (!showCustomerTracking() && permissionState() !== 'granted') {
+    <section class="permission-card" role="region" aria-labelledby="location-permission-title">
+      <div>
+        <p class="eyebrow">Permiso necesario</p>
+        <h2 id="location-permission-title">Permitir acceso a tu ubicación</h2>
+        @if (permissionState() === 'denied') {
+          <p>La ubicación está bloqueada. En iPhone abre Ajustes, busca Safari, entra en Ubicación y permite el acceso mientras usas la app.</p>
+        } @else if (permissionState() === 'unavailable') {
+          <p>El GPS necesita una conexión HTTPS y los servicios de ubicación activos. Abre la dirección segura de HERMES desde Safari.</p>
+        } @else {
+          <p>HERMES necesita este permiso para mostrar tu posición, seguir el recorrido y encontrar lugares cercanos.</p>
+        }
+      </div>
+      <button type="button" class="primary" (click)="requestLocationPermission()" [disabled]="loading() || permissionState() === 'unavailable'">
+        <ion-icon [icon]="locateIcon" />{{ loading() ? 'Solicitando…' : 'Permitir ubicación' }}
+      </button>
+    </section>
+  }
+
   <section class="location-actions" aria-label="Controles de ubicación">
     @if (showCustomerTracking()) {
       <button type="button" class="primary" (click)="refreshAdminLocations()" [disabled]="loading()"><ion-icon [icon]="locateIcon" />Actualizar clientes</button>

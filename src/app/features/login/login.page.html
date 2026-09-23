@@ -51,7 +51,7 @@
 
       <aside class="demo-access" aria-labelledby="demo-access-title">
         <h3 id="demo-access-title">Cuentas iniciales de prueba</h3>
-        <p>Selecciona un perfil para completar el correo durante el desarrollo.</p>
+        <p>Selecciona un perfil para completar el correo y la contraseña de prueba.</p>
         <div class="profiles">
           @for (user of demoUsers; track user.email) {
             <button type="button" (click)="fill(user)">

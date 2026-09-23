@@ -59,6 +59,7 @@ Las migraciones se ejecutan en orden:
 2. `202609210002_auth_roles_and_customers.sql`
 3. `202609210003_operational_core.sql`
 4. `202609220004_customer_registration.sql`
+5. `202609220005_crm_completion.sql`
 
 La aplicacion solo contiene la clave publica de Supabase. La clave
 `service_role` se guarda en Supabase y nunca se copia al codigo Angular.
@@ -67,6 +68,13 @@ La aplicacion solo contiene la clave publica de Supabase. La clave
 
 Vercel toma la rama `develop`. Los cambios deben probarse antes de actualizar
 esa rama.
+
+## Entrega de la Unidad VI
+
+La explicacion tecnica del GPS esta en `docs/GPS_UNIDAD_VI.md`. La lista de
+capturas, pruebas y archivos que deben entregarse esta en
+`docs/ENTREGA_UNIDAD_VI.md`. El guion corto para grabar la demostracion esta en
+`docs/GUION_VIDEO_UNIDAD_VI.md`.
 
 ## Notas de NFC
 

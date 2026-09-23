@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular/standalone';
 import * as L from 'leaflet';
 import { locateOutline, navigateOutline, searchOutline, shareSocialOutline, stopCircleOutline } from 'ionicons/icons';
-import { HermesLocation, LocationSearchResult, LocationService, NearbyPlace } from '../../core/services/location.service';
+import { HermesLocation, LocationPermissionState, LocationSearchResult, LocationService, NearbyPlace } from '../../core/services/location.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CustomerLocationEvent, HermesDataService } from '../../core/services/hermes-data.service';
 
@@ -36,6 +36,7 @@ export class LocationPage implements AfterViewInit {
   readonly searchResults = signal<LocationSearchResult[]>([]);
   readonly tracking = signal(false);
   readonly loading = signal(false);
+  readonly permissionState = signal<LocationPermissionState | 'checking'>('checking');
   readonly message = signal('Pulsa “Mi ubicación” para comenzar.');
   searchText = '';
   readonly role = computed(() => this.auth.user()?.role ?? 'cliente');
@@ -74,6 +75,7 @@ export class LocationPage implements AfterViewInit {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(this.map);
     this.placeLayer.addTo(this.map);
+    void this.refreshPermissionState();
     if (this.isAdmin()) {
       void this.refreshAdminLocations();
       this.adminRefreshTimer = window.setInterval(() => void this.refreshAdminLocations(), 20000);
@@ -81,15 +83,17 @@ export class LocationPage implements AfterViewInit {
   }
 
   async ionViewDidEnter() {
-    if (this.requestingEntryLocation) return;
+    if (this.requestingEntryLocation || this.showCustomerTracking()) return;
     this.requestingEntryLocation = true;
     try {
       const location = await this.locationService.current();
-      if (!this.showCustomerTracking() && this.map) {
+      this.permissionState.set('granted');
+      if (this.map) {
         this.showCurrentLocation(location, true);
         this.message.set(`Permiso concedido. Ubicación obtenida con una precisión aproximada de ${Math.round(location.accuracy)} metros.`);
       }
     } catch (error) {
+      await this.refreshPermissionState();
       this.message.set(error instanceof Error ? error.message : 'Debes permitir el acceso a la ubicación para usar el GPS.');
     } finally {
       this.requestingEntryLocation = false;
@@ -102,13 +106,19 @@ export class LocationPage implements AfterViewInit {
     this.message.set('Obteniendo ubicación precisa…');
     try {
       const location = await this.locationService.current();
+      this.permissionState.set('granted');
       this.showCurrentLocation(location, true);
       this.message.set(`Ubicación obtenida con una precisión aproximada de ${Math.round(location.accuracy)} metros.`);
     } catch (error) {
+      await this.refreshPermissionState();
       this.message.set(error instanceof Error ? error.message : 'No fue posible obtener la ubicación.');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async requestLocationPermission() {
+    await this.locate();
   }
 
   async toggleTracking() {
@@ -212,9 +222,14 @@ export class LocationPage implements AfterViewInit {
     if (view === 'customers') {
       await this.refreshAdminLocations();
     } else {
+      await this.refreshPermissionState();
       this.message.set('Usa Mi ubicación para localizarte, compartir o iniciar tu seguimiento en tiempo real.');
       if (this.currentLocation()) this.showCurrentLocation(this.currentLocation()!, true);
     }
+  }
+
+  private async refreshPermissionState() {
+    this.permissionState.set(await this.locationService.permissionState());
   }
 
   async refreshAdminLocations() {
