@@ -26,6 +26,8 @@ export interface LocationSearchResult {
   longitude: number;
 }
 
+export type LocationPermissionState = 'granted' | 'prompt' | 'denied' | 'unavailable';
+
 interface OverpassElement {
   id: number;
   type: string;
@@ -37,6 +39,31 @@ interface OverpassElement {
 
 @Injectable({ providedIn: 'root' })
 export class LocationService {
+  // Consulta el permiso sin abrir el aviso del sistema.
+  async permissionState(): Promise<LocationPermissionState> {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const permission = await Geolocation.checkPermissions();
+        if (permission.location === 'granted') return 'granted';
+        if (permission.location === 'denied') return 'denied';
+        return 'prompt';
+      } catch {
+        return 'unavailable';
+      }
+    }
+
+    // Los navegadores solo permiten GPS desde HTTPS o localhost.
+    if (!window.isSecureContext) return 'unavailable';
+    if (!navigator.permissions?.query) return 'prompt';
+    try {
+      const permission = await navigator.permissions.query({ name: 'geolocation' });
+      return permission.state;
+    } catch {
+      // Safari puede no exponer el estado, pero muestra su aviso al solicitar GPS.
+      return 'prompt';
+    }
+  }
+
   // Pide permiso y obtiene la ubicacion actual.
   async current(): Promise<HermesLocation> {
     // En la web el navegador pide su propio permiso.
@@ -48,12 +75,20 @@ export class LocationService {
       }
     }
 
-    const position = await Geolocation.getCurrentPosition({
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 5000,
-    });
-    return this.mapPosition(position);
+    try {
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 5000,
+      });
+      return this.mapPosition(position);
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (message.includes('denied') || message.includes('permission')) {
+        throw new Error('El permiso de ubicación está bloqueado. Actívalo en los ajustes del navegador o del teléfono.');
+      }
+      throw error;
+    }
   }
 
   async watch(callback: (location: HermesLocation | null, error?: string) => void): Promise<string> {
