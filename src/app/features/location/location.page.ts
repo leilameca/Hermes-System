@@ -28,6 +28,7 @@ export class LocationPage implements AfterViewInit {
   private readonly trackingSessionId = crypto.randomUUID();
   private lastPersistedAt = 0;
   private adminRefreshTimer?: number;
+  private requestingEntryLocation = false;
 
   @ViewChild('map') private mapElement?: ElementRef<HTMLElement>;
   readonly currentLocation = signal<HermesLocation | null>(null);
@@ -76,6 +77,22 @@ export class LocationPage implements AfterViewInit {
     if (this.isAdmin()) {
       void this.refreshAdminLocations();
       this.adminRefreshTimer = window.setInterval(() => void this.refreshAdminLocations(), 20000);
+    }
+  }
+
+  async ionViewDidEnter() {
+    if (this.requestingEntryLocation) return;
+    this.requestingEntryLocation = true;
+    try {
+      const location = await this.locationService.current();
+      if (!this.showCustomerTracking() && this.map) {
+        this.showCurrentLocation(location, true);
+        this.message.set(`Permiso concedido. Ubicación obtenida con una precisión aproximada de ${Math.round(location.accuracy)} metros.`);
+      }
+    } catch (error) {
+      this.message.set(error instanceof Error ? error.message : 'Debes permitir el acceso a la ubicación para usar el GPS.');
+    } finally {
+      this.requestingEntryLocation = false;
     }
   }
 
