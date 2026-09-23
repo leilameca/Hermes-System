@@ -16,14 +16,15 @@ import {
   searchOutline,
   swapHorizontalOutline,
 } from 'ionicons/icons';
-import { Vehicle } from '../../core/models';
+import { Branch, Customer, Reservation, Vehicle } from '../../core/models';
 import { DEMO_SPACES, DemoRole } from './demo-navigation';
 import { DEMO_RECORDS } from './demo-records';
 import { VEHICLE_STATUS } from '../../shared/presentation/vehicle.presentation';
 import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
 import { AuthService } from '../../core/services/auth.service';
-import { HermesDataService, NewCustomerAccountInput, NewCustomerInput } from '../../core/services/hermes-data.service';
+import { AdminReservationInput, HermesContractRecord, HermesDataService, NewCustomerAccountInput, NewCustomerInput } from '../../core/services/hermes-data.service';
+import { DocumentPrintService } from '../../core/services/document-print.service';
 
 @Injectable({ providedIn: 'root' })
 export class DemoState {
@@ -36,6 +37,7 @@ export class DemoState {
   readonly operations = this.data.operations;
   readonly contracts = this.data.contracts;
   readonly organizations = this.data.organizations;
+  readonly customerLocations = this.data.customerLocations;
   readonly loading = this.data.loading;
   readonly error = this.data.error;
   readonly steps = signal<Record<string, { checks: boolean[]; evidence: boolean; signed: boolean }>>({});
@@ -45,7 +47,7 @@ export class DemoState {
   step(key: string) { return this.steps()[key] ?? { checks: [false, false, false, false], evidence: false, signed: false }; }
   update(key: string, patch: Partial<ReturnType<DemoState['step']>>) { this.steps.update(all => ({ ...all, [key]: { ...this.step(key), ...patch } })); }
   addIncident(detail: string) {
-    this.incidents.update(rows => [{ id: crypto.randomUUID(), title: 'Incidente reportado desde HERMES', detail, status: 'open' }, ...rows]);
+    this.incidents.update(rows => [{ id: crypto.randomUUID(), title: 'Incidente reportado desde HERMES', detail, status: 'open', createdAt: new Date().toISOString() }, ...rows]);
   }
   saveInspection(key: string) {
     this.inspectionSaved.update(rows => ({ ...rows, [key]: true }));
@@ -56,8 +58,24 @@ export class DemoState {
   refresh() { return this.data.refresh(); }
   createVehicle(vehicle: Omit<Vehicle, 'id' | 'tenantId'>) { return this.data.createVehicle(vehicle); }
   createReservation(vehicle: Vehicle, startsAt: string, endsAt: string, total: number) { return this.data.createReservation(vehicle, startsAt, endsAt, total); }
+  createAdminReservation(reservation: AdminReservationInput) { return this.data.createAdminReservation(reservation); }
+  confirmReservation(id: string) { return this.data.confirmReservation(id); }
   createCustomer(customer: NewCustomerInput) { return this.data.createCustomer(customer); }
   createCustomerAccount(customer: NewCustomerAccountInput) { return this.data.createCustomerAccount(customer); }
+  updateCustomer(id: string, customer: NewCustomerInput & { active: boolean }) { return this.data.updateCustomer(id, customer); }
+  deleteCustomer(id: string) { return this.data.deleteCustomer(id); }
+  customerHistory(id: string) { return this.data.customerHistory(id); }
+  uploadCustomerDocument(id: string, file: File, type: 'license' | 'identity' | 'contract' | 'other') { return this.data.uploadCustomerDocument(id, file, type); }
+  updateVehicle(id: string, vehicle: Partial<Omit<Vehicle, 'id' | 'tenantId'>>) { return this.data.updateVehicle(id, vehicle); }
+  deleteVehicle(id: string) { return this.data.deleteVehicle(id); }
+  uploadVehicleImage(file: File) { return this.data.uploadVehicleImage(file); }
+  uploadOperationEvidence(vehicleId: string, file: File) { return this.data.uploadOperationEvidence(vehicleId, file); }
+  updateReservation(id: string, reservation: { startsAt: string; endsAt: string; status: Reservation['status']; total: number; notes?: string }) { return this.data.updateReservation(id, reservation); }
+  cancelOwnReservation(id: string) { return this.data.cancelOwnReservation(id); }
+  createBranch(branch: { name: string; city: string; address: string }) { return this.data.createBranch(branch); }
+  updateBranch(id: string, branch: { name: string; city: string; address: string; active: boolean }) { return this.data.updateBranch(id, branch); }
+  deleteBranch(id: string) { return this.data.deleteBranch(id); }
+  updateMember(id: string, role: 'admin' | 'agent', active: boolean) { return this.data.updateMember(id, role, active); }
   completeOperation(input: { vehicleId: string; type: 'delivery' | 'return'; checks: boolean[]; evidenceUrls: string[]; signatureName: string }) { return this.data.completeOperation(input); }
 }
 
@@ -74,6 +92,7 @@ export class DemoScreenPage {
   // Guarda temporalmente las operaciones sin conexión
   private readonly offline = inject(OfflineService);
   private readonly auth = inject(AuthService);
+  private readonly printer = inject(DocumentPrintService);
   readonly state = inject(DemoState);
   readonly currentUser = this.auth.user;
   readonly data = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
@@ -102,12 +121,21 @@ export class DemoScreenPage {
   readonly stepKey = computed(() => this.flow() + '/' + this.id());
   readonly step = computed(() => this.state.step(this.stepKey()));
   readonly allChecked = computed(() => this.step().checks.every(Boolean));
+  readonly fleetStatusFilter = signal<'all' | Vehicle['status']>('all');
+  readonly reservationFilter = signal<'active' | 'completed' | 'cancelled'>('active');
   readonly filteredVehicles = computed(() => {
-    const term = (this.query().get('q') || '').toLowerCase();
+    const term = (this.role === 'admin' ? this.fleetSearch : (this.query().get('q') || '')).trim().toLowerCase();
     const category = this.query().get('categoria') || '';
-    return this.vehicles().filter(v => (v.brand + ' ' + v.model).toLowerCase().includes(term) && (!category || v.category === category));
+    const status = this.fleetStatusFilter();
+    return this.vehicles().filter(v => [v.brand, v.model, v.plate].join(' ').toLowerCase().includes(term)
+      && (!category || v.category === category) && (status === 'all' || v.status === status));
   });
+  readonly filteredReservations = computed(() => this.state.reservations().filter(reservation => {
+    const filter = this.reservationFilter();
+    return filter === 'active' ? ['pending', 'confirmed'].includes(reservation.status) : reservation.status === filter;
+  }));
   search = this.route.snapshot.queryParamMap.get('q') || '';
+  fleetSearch = '';
   category = this.route.snapshot.queryParamMap.get('categoria') || '';
   startsAt = '2026-10-20';
   endsAt = '2026-10-23';
@@ -135,6 +163,25 @@ export class DemoScreenPage {
   vehicleImagePreview = '';
   vehicleImageName = '';
   vehicleImageError = '';
+  vehicleImageFile?: File;
+  editingVehicle = false;
+  editVehicle: Pick<Vehicle, 'brand' | 'model' | 'year' | 'plate' | 'category' | 'transmission' | 'seats' | 'dailyRate' | 'mileage' | 'status' | 'branchId'> = {
+    brand: '', model: '', year: 2026, plate: '', category: 'suv', transmission: 'automatic', seats: 5, dailyRate: 0, mileage: 0, status: 'available', branchId: '',
+  };
+  editingCustomerId = '';
+  customerActive = true;
+  expandedCustomerId = '';
+  editingReservationId = '';
+  adminReservationFormOpen = false;
+  newAdminReservation = {
+    customerId: '', vehicleId: '', pickupBranchId: '', returnBranchId: '', startsAt: '', endsAt: '', total: 0, notes: '',
+  };
+  reservationEdit = { startsAt: '', endsAt: '', status: 'pending' as Reservation['status'], total: 0, notes: '' };
+  branchFormOpen = false;
+  editingBranchId = '';
+  branchForm: Pick<Branch, 'name' | 'city' | 'address' | 'active'> = { name: '', city: '', address: '', active: true };
+  operationEvidenceFile?: File;
+  operationEvidencePreview = '';
   readonly checks = ['Carrocería y cristales', 'Neumáticos y luces', 'Combustible y kilometraje', 'Documentos, llaves y accesorios'];
   readonly plans = [
     { name: 'Esencial', price: 1900, detail: 'Hasta 10 vehiculos · una sucursal', features: ['Reservas', 'Contratos', 'Soporte por correo'] },
@@ -142,6 +189,8 @@ export class DemoScreenPage {
     { name: 'Empresarial', price: 9900, detail: 'Hasta 150 vehiculos · diez sucursales', features: ['Multiempresa', 'Roles avanzados', 'Reportes SaaS'] },
   ];
   readonly nextOperation = computed(() => this.operations().find(operation => operation.status === 'scheduled'));
+  readonly featuredVehicle = computed(() => this.vehicles().find(vehicle => vehicle.status === 'available') ?? this.vehicles()[0]);
+  readonly latestClientReservation = computed(() => this.state.reservations()[0]);
   readonly todayTasks = computed(() => this.operations().filter(operation => operation.status !== 'cancelled').map(operation => ({
     time: new Date(operation.scheduledAt).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
     title: `${operation.type === 'delivery' ? 'Entrega' : 'Devolución'} ${this.vehicleName(operation.vehicleId)}`,
@@ -178,8 +227,8 @@ export class DemoScreenPage {
     { label: 'Mantenimiento', value: this.vehicles().filter(row => row.status === 'maintenance').length, tone: 'maintenance' },
   ]);
   readonly attentionItems = computed(() => [
-    ...this.state.reservations().filter(row => row.status === 'pending').slice(0, 2).map(row => ({ title: this.vehicleName(row.vehicleId), detail: 'Reserva pendiente de confirmación', tone: 'critical' })),
-    ...this.contracts().filter(row => row.status === 'pending_signature').slice(0, 2).map(row => ({ title: row.number, detail: 'Contrato pendiente de firma', tone: 'neutral' })),
+    ...this.state.reservations().filter(row => row.status === 'pending').slice(0, 2).map(row => ({ title: this.vehicleName(row.vehicleId), detail: 'Reserva pendiente de confirmación', tone: 'critical', path: 'reservas' })),
+    ...this.contracts().filter(row => row.status === 'pending_signature').slice(0, 2).map(row => ({ title: row.number, detail: 'Contrato pendiente de firma', tone: 'neutral', path: 'contratos' })),
   ]);
   readonly recentReservations = computed(() => this.state.reservations().slice(0, 5).map(row => ({
     client: this.customerName(row.customerId), vehicleId: row.vehicleId,
@@ -212,6 +261,7 @@ export class DemoScreenPage {
   vehicleImage(id: string) { return this.vehicles().find(v => v.id === id)?.imageUrl ?? 'assets/images/vehicles/tucson.jpg'; }
   vehiclePlate(id: string) { return this.vehicles().find(v => v.id === id)?.plate ?? 'PPA-0000'; }
   customerName(id: string) { return this.customers().find(customer => customer.id === id)?.name ?? 'Cliente'; }
+  customerEmail(id: string) { return this.customers().find(customer => customer.id === id)?.email ?? ''; }
   reservationCount(customerId: string) { return this.state.reservations().filter(reservation => reservation.customerId === customerId).length; }
   visibleCustomers() {
     const term = this.customerSearch.trim().toLowerCase();
@@ -232,7 +282,13 @@ export class DemoScreenPage {
   readonly swapIcon = swapHorizontalOutline;
   flowLink(suffix = '') { return this.link(this.flow() + '/' + this.id() + suffix); }
   get days() { return Math.max(0, (Date.parse(this.endsAt) - Date.parse(this.startsAt)) / 86400000); }
+  setFleetFilter(status: 'all' | Vehicle['status']) { this.fleetStatusFilter.set(status); }
+  setReservationFilter(status: 'active' | 'completed' | 'cancelled') { this.reservationFilter.set(status); }
   searchVehicles() { void this.router.navigate([this.link('resultados')], { queryParams: { q: this.search, categoria: this.category } }); }
+  browseCategory(type: string) {
+    const categories: Record<string, string> = { SUV: 'suv', 'Sedán': 'sedan', 'Económico': 'sedan', Pickup: 'pickup' };
+    void this.router.navigate([this.link('resultados')], { queryParams: { categoria: categories[type] ?? '' } });
+  }
   async createReservation() {
     if (!this.vehicle() || !Number.isFinite(this.days) || this.days < 1) { this.message = 'Selecciona una devolución posterior a la recogida.'; return; }
     try {
@@ -242,6 +298,79 @@ export class DemoScreenPage {
       this.message = error instanceof Error ? error.message : 'No fue posible crear la reserva.';
     }
   }
+  openAdminReservationForm() {
+    const vehicle = this.vehicles().find(row => row.status === 'available') ?? this.vehicles()[0];
+    const branchId = vehicle?.branchId ?? this.branches()[0]?.id ?? '';
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 3);
+    this.newAdminReservation = {
+      customerId: this.customers()[0]?.id ?? '', vehicleId: vehicle?.id ?? '', pickupBranchId: branchId,
+      returnBranchId: branchId, startsAt: start.toISOString().slice(0, 10), endsAt: end.toISOString().slice(0, 10),
+      total: vehicle ? vehicle.dailyRate * 3 : 0, notes: '',
+    };
+    this.adminReservationFormOpen = true;
+  }
+  updateAdminReservationTotal() {
+    const vehicle = this.vehicles().find(row => row.id === this.newAdminReservation.vehicleId);
+    const days = Math.max(0, (Date.parse(this.newAdminReservation.endsAt) - Date.parse(this.newAdminReservation.startsAt)) / 86400000);
+    if (vehicle && days) this.newAdminReservation.total = vehicle.dailyRate * days;
+    if (vehicle && !this.newAdminReservation.pickupBranchId) this.newAdminReservation.pickupBranchId = vehicle.branchId;
+    if (vehicle && !this.newAdminReservation.returnBranchId) this.newAdminReservation.returnBranchId = vehicle.branchId;
+  }
+  async createAdminReservation() {
+    const form = this.newAdminReservation;
+    if (!form.customerId || !form.vehicleId || !form.pickupBranchId || !form.returnBranchId || !form.startsAt || !form.endsAt) {
+      this.message = 'Completa cliente, vehículo, sucursales y fechas.';
+      return;
+    }
+    try {
+      await this.state.createAdminReservation({
+        ...form, startsAt: `${form.startsAt}T09:00:00-04:00`, endsAt: `${form.endsAt}T09:00:00-04:00`,
+      });
+      this.adminReservationFormOpen = false;
+      this.message = 'Reserva creada como pendiente. Ya puedes revisarla y confirmarla.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible crear la reserva.';
+    }
+  }
+  async confirmReservation(reservation: Reservation) {
+    try {
+      await this.state.confirmReservation(reservation.id);
+      this.message = 'Reserva confirmada. Contrato y operaciones preparados.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible confirmar la reserva.';
+    }
+  }
+  printReservation(reservation: Reservation, type: 'Factura' | 'Contrato de alquiler', contract?: HermesContractRecord) {
+    const vehicle = this.vehicles().find(row => row.id === reservation.vehicleId);
+    const organization = this.companies().find(row => row.id === reservation.tenantId);
+    try {
+      this.printer.print({
+        type,
+        number: type === 'Factura' ? `FAC-${reservation.reference ?? reservation.id.slice(0, 8)}` : contract?.number ?? `BORRADOR-${reservation.reference ?? reservation.id.slice(0, 8)}`,
+        company: organization?.name ?? 'Empresa Hermes',
+        customer: this.customerName(reservation.customerId),
+        customerEmail: this.customerEmail(reservation.customerId),
+        vehicle: vehicle ? `${vehicle.brand} ${vehicle.model} ${vehicle.year}` : 'Vehículo',
+        plate: vehicle?.plate ?? 'No indicada',
+        startsAt: reservation.startsAt,
+        endsAt: reservation.endsAt,
+        total: reservation.total,
+        currency: reservation.currency,
+        status: reservation.status,
+        terms: contract?.terms,
+      });
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible abrir la impresión.';
+    }
+  }
+  printContract(contract: HermesContractRecord) {
+    const reservation = this.state.reservations().find(row => row.id === contract.reservationId);
+    if (!reservation) { this.message = 'No se encontró la reserva relacionada con el contrato.'; return; }
+    this.printReservation(reservation, 'Contrato de alquiler', contract);
+  }
   async createVehicle() {
     const plate = this.newVehicle.plate.trim().toUpperCase();
     if (!this.newVehicle.brand.trim() || !this.newVehicle.model.trim() || !plate) return;
@@ -249,6 +378,7 @@ export class DemoScreenPage {
     const branchId = this.branches()[0]?.id;
     if (!branchId) { this.message = 'Primero debes registrar una sucursal activa.'; return; }
     try {
+      const imagePath = this.vehicleImageFile ? await this.state.uploadVehicleImage(this.vehicleImageFile) : undefined;
       const vehicle = await this.state.createVehicle({
         ...this.newVehicle,
         branchId,
@@ -256,7 +386,8 @@ export class DemoScreenPage {
         brand: this.newVehicle.brand.trim(),
         model: this.newVehicle.model.trim(),
         plate,
-        imageUrl: this.vehicleImagePreview || fallbackImage,
+        imageUrl: imagePath ? undefined : fallbackImage,
+        imagePath,
         imageAlt: `${this.newVehicle.brand.trim()} ${this.newVehicle.model.trim()} agregado a la flota Hermes.`,
       });
       await this.router.navigateByUrl(this.link('flota/' + vehicle.id));
@@ -291,6 +422,58 @@ export class DemoScreenPage {
       this.message = error instanceof Error ? error.message : 'No fue posible registrar el cliente.';
     }
   }
+  startEditCustomer(customer: Customer) {
+    this.editingCustomerId = customer.id;
+    this.customerActive = customer.active;
+    this.newCustomer = {
+      name: customer.name, email: customer.email, phone: customer.phone,
+      documentType: customer.documentType ?? 'cedula', documentNumber: customer.documentNumber ?? '',
+      driverLicense: customer.driverLicense ?? '', city: customer.city,
+    };
+    this.customerFormOpen = true;
+    this.createCustomerAccess = false;
+  }
+  cancelCustomerForm() {
+    this.editingCustomerId = '';
+    this.customerFormOpen = false;
+    this.customerActive = true;
+    this.newCustomer = { name: '', email: '', phone: '', documentType: 'cedula', documentNumber: '', driverLicense: '', city: 'Santo Domingo' };
+  }
+  async saveCustomer() {
+    if (!this.editingCustomerId) return this.createCustomer();
+    try {
+      await this.state.updateCustomer(this.editingCustomerId, { ...this.newCustomer, active: this.customerActive });
+      this.cancelCustomerForm();
+      this.message = 'Cliente actualizado correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible actualizar el cliente.';
+    }
+  }
+  async deleteCustomer(customer: Customer) {
+    if (!window.confirm(`¿Eliminar a ${customer.name}? Esta acción solo será posible si no tiene historial relacionado.`)) return;
+    try {
+      await this.state.deleteCustomer(customer.id);
+      this.message = 'Cliente eliminado correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible eliminar el cliente.';
+    }
+  }
+  async uploadCustomerDocument(customerId: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { this.message = 'El documento no puede superar 10 MB.'; return; }
+    try {
+      await this.state.uploadCustomerDocument(customerId, file, 'other');
+      this.message = 'Documento guardado en Storage privado.';
+      input.value = '';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible guardar el documento.';
+    }
+  }
+  toggleCustomerHistory(customerId: string) {
+    this.expandedCustomerId = this.expandedCustomerId === customerId ? '' : customerId;
+  }
   selectVehicleImage(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -306,6 +489,7 @@ export class DemoScreenPage {
       input.value = '';
       return;
     }
+    this.vehicleImageFile = file;
     const reader = new FileReader();
     reader.onload = () => {
       this.vehicleImagePreview = typeof reader.result === 'string' ? reader.result : '';
@@ -318,7 +502,111 @@ export class DemoScreenPage {
     this.vehicleImagePreview = '';
     this.vehicleImageName = '';
     this.vehicleImageError = '';
+    this.vehicleImageFile = undefined;
     input.value = '';
+  }
+  startEditVehicle(vehicle: Vehicle) {
+    this.editingVehicle = true;
+    this.editVehicle = {
+      brand: vehicle.brand, model: vehicle.model, year: vehicle.year, plate: vehicle.plate,
+      category: vehicle.category, transmission: vehicle.transmission, seats: vehicle.seats,
+      dailyRate: vehicle.dailyRate, mileage: vehicle.mileage, status: vehicle.status, branchId: vehicle.branchId,
+    };
+  }
+  async saveVehicleEdit() {
+    const vehicle = this.vehicle();
+    if (!vehicle) return;
+    try {
+      const imagePath = this.vehicleImageFile ? await this.state.uploadVehicleImage(this.vehicleImageFile) : undefined;
+      await this.state.updateVehicle(vehicle.id, { ...this.editVehicle, ...(imagePath ? { imagePath } : {}) });
+      this.editingVehicle = false;
+      this.vehicleImageFile = undefined;
+      this.message = 'Vehículo actualizado correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible actualizar el vehículo.';
+    }
+  }
+  async deleteVehicle(vehicle: Vehicle) {
+    if (!window.confirm(`¿Eliminar ${vehicle.brand} ${vehicle.model}?`)) return;
+    try {
+      await this.state.deleteVehicle(vehicle.id);
+      this.message = 'Vehículo eliminado correctamente.';
+      await this.router.navigateByUrl(this.link('flota'));
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible eliminar el vehículo.';
+    }
+  }
+  startEditReservation(reservation: Reservation) {
+    this.editingReservationId = reservation.id;
+    this.reservationEdit = {
+      startsAt: reservation.startsAt.slice(0, 10), endsAt: reservation.endsAt.slice(0, 10),
+      status: reservation.status, total: reservation.total, notes: reservation.notes ?? '',
+    };
+  }
+  async saveReservationEdit() {
+    if (!this.editingReservationId) return;
+    try {
+      const reservationId = this.editingReservationId;
+      await this.state.updateReservation(reservationId, {
+        ...this.reservationEdit,
+        startsAt: `${this.reservationEdit.startsAt}T09:00:00-04:00`,
+        endsAt: `${this.reservationEdit.endsAt}T09:00:00-04:00`,
+      });
+      if (this.reservationEdit.status === 'confirmed') await this.state.confirmReservation(reservationId);
+      this.editingReservationId = '';
+      this.message = this.reservationEdit.status === 'confirmed'
+        ? 'Reserva confirmada. Contrato y operaciones preparados.'
+        : 'Reserva actualizada y disponibilidad validada.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible actualizar la reserva.';
+    }
+  }
+  async cancelReservation(reservation: Reservation) {
+    try {
+      if (this.role === 'cliente') await this.state.cancelOwnReservation(reservation.id);
+      else await this.state.updateReservation(reservation.id, {
+        startsAt: reservation.startsAt, endsAt: reservation.endsAt, status: 'cancelled', total: reservation.total, notes: reservation.notes,
+      });
+      this.message = 'Reserva cancelada correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible cancelar la reserva.';
+    }
+  }
+  startBranchForm(branch?: Branch) {
+    this.branchFormOpen = true;
+    this.editingBranchId = branch?.id ?? '';
+    this.branchForm = branch
+      ? { name: branch.name, city: branch.city, address: branch.address, active: branch.active }
+      : { name: '', city: '', address: '', active: true };
+  }
+  async saveBranch() {
+    if (!this.branchForm.name.trim()) return;
+    try {
+      if (this.editingBranchId) await this.state.updateBranch(this.editingBranchId, this.branchForm);
+      else await this.state.createBranch(this.branchForm);
+      this.branchFormOpen = false;
+      this.editingBranchId = '';
+      this.message = 'Sucursal guardada correctamente.';
+    } catch (error) {
+      this.message = error instanceof Error ? error.message : 'No fue posible guardar la sucursal.';
+    }
+  }
+  async deleteBranch(branch: Branch) {
+    if (!window.confirm(`¿Eliminar la sucursal ${branch.name}?`)) return;
+    try { await this.state.deleteBranch(branch.id); this.message = 'Sucursal eliminada.'; }
+    catch (error) { this.message = error instanceof Error ? error.message : 'No fue posible eliminar la sucursal.'; }
+  }
+  async changeMember(id: string, role: 'admin' | 'agent', active: boolean) {
+    try { await this.state.updateMember(id, role, active); this.message = 'Permisos actualizados.'; }
+    catch (error) { this.message = error instanceof Error ? error.message : 'No fue posible actualizar los permisos.'; }
+  }
+  selectOperationEvidence(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { this.message = 'La evidencia no puede superar 10 MB.'; return; }
+    this.operationEvidenceFile = file;
+    this.operationEvidencePreview = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+    this.state.update(this.stepKey(), { evidence: true });
   }
   scan() {
     const found = this.vehicles().find(v => v.plate.toLowerCase() === this.scanCode.trim().toLowerCase() || v.id === this.scanCode.trim());
@@ -329,11 +617,14 @@ export class DemoScreenPage {
   async sign() {
     if (!this.signatureName.trim() || !this.consent) return;
     try {
+      const evidenceUrls = this.operationEvidenceFile
+        ? [await this.state.uploadOperationEvidence(this.id(), this.operationEvidenceFile)]
+        : [];
       await this.state.completeOperation({
         vehicleId: this.id(),
         type: this.flow() === 'devolucion' ? 'return' : 'delivery',
         checks: this.step().checks,
-        evidenceUrls: this.step().evidence ? [this.vehicle()?.imageUrl ?? 'evidencia-local'] : [],
+        evidenceUrls,
         signatureName: this.signatureName.trim(),
       });
       this.state.update(this.stepKey(), { signed: true });

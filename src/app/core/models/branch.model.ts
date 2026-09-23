@@ -4,4 +4,5 @@ export interface Branch {
   name: string;
   city: string;
   address: string;
+  active: boolean;
 }
