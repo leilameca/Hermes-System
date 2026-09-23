@@ -34,21 +34,41 @@ create trigger memberships_protect_last_admin
 before update or delete on public.memberships
 for each row execute function public.protect_last_organization_admin();
 
--- Evita dos reservas activas del mismo vehiculo en fechas cruzadas.
-do $$
+-- Evita cruces nuevos sin borrar las reservas de prueba que ya existen.
+-- El bloqueo por vehiculo evita que dos solicitudes simultaneas pasen la revision.
+create or replace function public.prevent_overlapping_reservations()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
 begin
-  if not exists (
-    select 1 from pg_constraint where conname = 'reservations_vehicle_dates_excl'
-  ) then
-    alter table public.reservations
-      add constraint reservations_vehicle_dates_excl
-      exclude using gist (
-        vehicle_id with =,
-        tstzrange(starts_at, ends_at, '[)') with &&
-      ) where (status in ('pending', 'confirmed'));
+  if new.status not in ('pending', 'confirmed') then
+    return new;
   end if;
+
+  perform pg_advisory_xact_lock(hashtextextended(new.vehicle_id::text, 0));
+
+  if exists (
+    select 1 from public.reservations r
+    where r.vehicle_id = new.vehicle_id
+      and r.id <> new.id
+      and r.status in ('pending', 'confirmed')
+      and tstzrange(r.starts_at, r.ends_at, '[)') && tstzrange(new.starts_at, new.ends_at, '[)')
+  ) then
+    raise exception using
+      errcode = '23P01',
+      message = 'El vehiculo ya tiene una reserva activa que cruza con esas fechas.';
+  end if;
+
+  return new;
 end;
 $$;
+
+drop trigger if exists reservations_prevent_overlap on public.reservations;
+create trigger reservations_prevent_overlap
+before insert or update of vehicle_id, starts_at, ends_at, status
+on public.reservations
+for each row execute function public.prevent_overlapping_reservations();
 
 create or replace function public.vehicle_is_available(
   target_vehicle_id uuid,
