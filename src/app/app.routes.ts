@@ -1,9 +1,11 @@
 import { Routes } from '@angular/router';
-import { authenticatedGuard, guestOnlyGuard, roleGuard, rolesGuard } from './core/services/auth.guard';
+import { authenticatedGuard, guestOnlyGuard, passwordChangeGuard, roleGuard, rolesGuard } from './core/services/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', title: 'Iniciar sesion · Hermes System', canMatch: [guestOnlyGuard], loadComponent: () => import('./features/login/login.page').then(m => m.LoginPage) },
+  { path: 'registro/:empresa', title: 'Crear cuenta · Hermes System', canMatch: [guestOnlyGuard], loadComponent: () => import('./features/register/register.page').then(m => m.RegisterPage) },
+  { path: 'cambiar-clave', title: 'Cambiar contraseña · Hermes System', canMatch: [passwordChangeGuard], loadComponent: () => import('./features/change-password/change-password.page').then(m => m.ChangePasswordPage) },
   { path: 'demo', redirectTo: 'login', pathMatch: 'full' },
   { path: 'cliente', canMatch: [roleGuard('cliente')], loadChildren: () => import('./features/demo/demo.routes').then(m => m.CLIENT_ROUTES) },
   { path: 'agente', canMatch: [roleGuard('agente')], loadChildren: () => import('./features/demo/demo.routes').then(m => m.AGENT_ROUTES) },

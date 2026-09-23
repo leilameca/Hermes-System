@@ -38,6 +38,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permisos requeridos por Capacitor Geolocation para obtener una ubicacion precisa. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Permite leer y escribir etiquetas NFC desde el complemento nativo de Capacitor. -->
     <uses-permission android:name="android.permission.NFC" />
     <!-- Se declara como opcional para que HERMES también pueda instalarse en equipos sin NFC. -->

@@ -48,6 +48,8 @@ input { width: 100%; min-height: 48px; padding: 0; border: 0; background: transp
 .primary:active { transform: translateY(1px); }
 .primary:disabled { opacity: .62; cursor: wait; }
 .error { animation: enter 180ms ease-out both; padding: 12px 14px; border-left: 2px solid var(--hermes-critical); background: var(--hermes-critical-light); color: var(--hermes-critical); font-size: 14px; }
+.register-link { margin-top: -8px; color: var(--hermes-text-secondary); font-size: 14px; text-align: center; }
+.register-link a { color: var(--hermes-link); font-weight: 750; }
 .demo-access { display: grid; gap: 8px; padding-top: 18px; border-top: 1px solid var(--hermes-border); }
 .demo-access h3 { font-size: 14px; color: var(--hermes-text-strong); }
 .demo-access > p { color: var(--hermes-text-secondary); font-size: 12px; }

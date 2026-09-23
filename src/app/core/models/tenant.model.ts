@@ -5,4 +5,5 @@ export interface Tenant {
   phone: string;
   email: string;
   active: boolean;
+  slug?: string;
 }

@@ -5,3 +5,10 @@ out-tsc/
 coverage/
 *.log
 .DS_Store
+.idea/
+.vscode/
+.vercel/
+android/.gradle/
+android/local.properties
+*.jks
+*.keystore

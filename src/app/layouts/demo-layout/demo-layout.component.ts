@@ -3,7 +3,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, Ro
 import { IonIcon } from '@ionic/angular/standalone';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { chevronBackOutline, chevronDownOutline, logOutOutline, menuOutline, notificationsOutline } from 'ionicons/icons';
-import { AuthDemoService } from '../../core/services/auth-demo.service';
+import { AuthService } from '../../core/services/auth.service';
 import { DEMO_SPACES, DemoArea, DemoRole } from '../../features/demo/demo-navigation';
 // Muestra avisos cuando el dispositivo pierde o recupera conexión
 import { OfflineBannerComponent } from '../../shared/components/offline-banner/offline-banner.component';
@@ -13,7 +13,7 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
   selector: 'app-demo-layout',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, OfflineBannerComponent, ThemeToggleComponent],
-  template: `<div class="shell" [class.administrative]="administrative" [class.agent]="role === 'agente'">
+  template: `<div class="shell" [class.agent]="role === 'agente'">
     <aside class="sidebar">
       <a class="brand" [routerLink]="homeLink()"><img src="assets/brand/hermes-logo.jpeg" alt="">Hermes <small>System</small></a>
       <p class="eyebrow">{{ space.label }}</p>
@@ -80,11 +80,10 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
 })
 export class DemoLayoutComponent {
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthDemoService);
+  private readonly auth = inject(AuthService);
   readonly role = inject(ActivatedRoute).snapshot.data['role'] as DemoRole;
   readonly space = DEMO_SPACES[this.role];
   readonly user = this.auth.user;
-  readonly administrative = this.role === 'admin' || this.role === 'super-admin';
   readonly menuOpen = signal(false);
   readonly accountOpen = signal(false);
   readonly backIcon = chevronBackOutline;
@@ -97,7 +96,8 @@ export class DemoLayoutComponent {
 
   readonly mobileAreas = computed(() => this.pickAreas(this.mobilePaths()));
   readonly moreAreas = computed(() => this.pickAreas(this.morePaths()));
-  readonly desktopAreas = computed(() => this.administrative ? this.space.areas : this.pickAreas(this.desktopPaths()));
+  // En computadora todos los perfiles usan la misma estructura lateral.
+  readonly desktopAreas = computed(() => this.space.areas.filter(area => area.path !== 'perfil'));
 
   constructor() {
     this.router.events.pipe(takeUntilDestroyed()).subscribe(event => {
@@ -123,9 +123,10 @@ export class DemoLayoutComponent {
     void this.router.navigateByUrl(this.current);
   }
 
-  logout() {
-    this.auth.logout();
-    void this.router.navigateByUrl('/login');
+  async logout() {
+    this.accountOpen.set(false);
+    await this.auth.logout();
+    await this.router.navigateByUrl('/login', { replaceUrl: true });
   }
 
   private pickAreas(paths: string[]) {
@@ -135,18 +136,14 @@ export class DemoLayoutComponent {
   private mobilePaths() {
     if (this.role === 'cliente') return ['inicio', 'explorar', 'reservas'];
     if (this.role === 'agente') return ['inicio', 'operaciones', 'escanear', 'incidentes'];
-    if (this.role === 'admin') return ['dashboard', 'flota', 'reservas', 'operaciones'];
+    if (this.role === 'admin') return ['dashboard', 'flota', 'escanear', 'operaciones'];
     return ['dashboard', 'empresas', 'planes', 'suscripciones', 'plataforma'];
   }
 
   private morePaths() {
-    if (this.role === 'admin') return ['sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'configuracion'];
+    if (this.role === 'admin') return ['reservas', 'sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'configuracion'];
+    if (this.role === 'agente' || this.role === 'cliente') return ['gps'];
     return [];
   }
 
-  private desktopPaths() {
-    if (this.role === 'cliente') return ['inicio', 'explorar', 'reservas', 'perfil'];
-    if (this.role === 'agente') return ['inicio', 'operaciones', 'escanear', 'incidentes', 'perfil'];
-    return this.space.areas.map(area => area.path);
-  }
 }

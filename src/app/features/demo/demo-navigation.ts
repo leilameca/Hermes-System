@@ -35,6 +35,7 @@ export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
     { path: 'contratos', label: 'Contratos', icon: documentTextOutline },
     { path: 'facturas', label: 'Facturas', icon: receiptOutline },
     { path: 'incidentes', label: 'Incidentes', icon: warningOutline },
+    { path: 'gps', label: 'Ubicación GPS', icon: locationOutline },
     { path: 'perfil', label: 'Perfil', icon: personCircleOutline },
   ] },
   agente: { label: 'Agente', description: 'Acompaña cada entrega y devolucion paso a paso.', home: 'inicio', areas: [
@@ -42,11 +43,13 @@ export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
     { path: 'operaciones', label: 'Operaciones', icon: swapHorizontalOutline },
     { path: 'escanear', label: 'Escanear', icon: scanOutline },
     { path: 'incidentes', label: 'Incidentes', icon: warningOutline },
+    { path: 'gps', label: 'Ubicación GPS', icon: locationOutline },
     { path: 'perfil', label: 'Perfil', icon: personCircleOutline },
   ] },
   admin: { label: 'Administrador', description: 'Una vision completa de tu empresa de alquiler.', home: 'dashboard', areas: [
     { path: 'dashboard', label: 'Resumen', icon: gridOutline },
     { path: 'flota', label: 'Flota', icon: carSportOutline },
+    { path: 'escanear', label: 'NFC', icon: scanOutline },
     { path: 'sucursales', label: 'Sucursales', icon: businessOutline },
     { path: 'usuarios', label: 'Usuarios y permisos', icon: personAddOutline },
     { path: 'reservas', label: 'Reservas', icon: calendarClearOutline },

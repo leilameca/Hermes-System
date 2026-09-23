@@ -45,6 +45,10 @@
         </button>
       </form>
 
+      @if (companySlug) {
+        <p class="register-link">¿Eres cliente nuevo? <a [routerLink]="['/registro', companySlug]">Crear mi cuenta</a></p>
+      }
+
       <aside class="demo-access" aria-labelledby="demo-access-title">
         <h3 id="demo-access-title">Cuentas iniciales de prueba</h3>
         <p>Selecciona un perfil para completar el correo durante el desarrollo.</p>

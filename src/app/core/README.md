@@ -1,7 +1,12 @@
 # Core
 
-Modelos y servicios compartidos. Los filtros `tenantId` todavia organizan datos de demostracion y no son controles de acceso.
+Aqui estan los modelos y los servicios generales de Hermes.
 
-`SupabaseService` contiene la conexion central con el proyecto remoto. La migracion a datos reales se hara por modulos para mantener estables las pantallas actuales.
+- `AuthService` controla la sesion.
+- `HermesDataService` consulta y guarda datos en Supabase.
+- `NfcService` lee y escribe etiquetas.
+- `LocationService` trabaja con GPS y lugares cercanos.
+- `NetworkService` revisa la conexion.
+- `OfflineService` guarda operaciones pendientes.
 
-La seguridad multiempresa se aplica en la base de datos mediante Row Level Security. La guia de activacion esta en `docs/SUPABASE_SETUP.md`.
+Las pantallas deben usar estos servicios y no conectarse directamente a la base de datos.

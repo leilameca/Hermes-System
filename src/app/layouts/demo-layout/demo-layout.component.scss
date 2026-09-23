@@ -44,15 +44,15 @@ a, button { transition: background var(--hermes-duration), border-color var(--he
 .active { background: var(--hermes-blue-light); color: var(--hermes-link) !important; font-weight: 700; }
 
 @media(min-width:1024px) {
-  .administrative { display: grid; grid-template-columns: 244px minmax(0,1fr); }
-  .administrative .sidebar { display: flex; flex-direction: column; gap: 18px; padding: 24px 14px; border-right: 1px solid #16345f; background:
+  .shell { display: grid; grid-template-columns: 244px minmax(0,1fr); }
+  .sidebar { display: flex; flex-direction: column; gap: 18px; padding: 24px 14px; border-right: 1px solid #16345f; background:
     radial-gradient(circle at 20% 0%, rgba(255,255,255,.12), transparent 28%),
     linear-gradient(180deg,#07162f,var(--hermes-navy) 54%,#07162f);
     color: white; overflow: auto;
   }
-  .administrative .sidebar .brand { color: white; }
-  .administrative .sidebar .brand small { color: rgba(255,255,255,.64); }
-  .administrative .sidebar .brand img { background: white; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+  .sidebar .brand { color: white; }
+  .sidebar .brand small { color: rgba(255,255,255,.64); }
+  .sidebar .brand img { background: white; box-shadow: 0 8px 20px rgba(0,0,0,.18); }
   .sidebar nav { display: grid; gap: 3px; }
   .sidebar nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: 43px; padding: 10px 12px; color: rgba(255,255,255,.74); text-decoration: none; border-radius: 5px; font-size: 14px; }
   .sidebar nav a ion-icon { width: 20px; font-size: 19px; color: rgba(255,255,255,.66); }
@@ -60,9 +60,9 @@ a, button { transition: background var(--hermes-duration), border-color var(--he
   .sidebar nav a.active { background: linear-gradient(90deg,rgba(208,138,50,.22),rgba(255,255,255,.08)); color: white !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); }
   .sidebar nav a.active::before { position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--hermes-amber); content: ''; }
   .sidebar nav a.active ion-icon { color: var(--hermes-amber); }
-  .administrative .logout { border-color: rgba(255,255,255,.2); background: transparent; color: white; }
-  .administrative .compact { display: none; }
-  .administrative header .user-menu { display: none; }
+  header { grid-template-columns: auto minmax(0,1fr) auto; }
+  .compact { display: none; }
+  header .user-menu { display: none; }
 }
 
 @media(max-width:1023px) {

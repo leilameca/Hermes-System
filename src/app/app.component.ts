@@ -11,11 +11,10 @@ import { ThemeService } from './core/services/theme.service';
   template: '<ion-app><ion-router-outlet /></ion-app>',
 })
 export class AppComponent {
-  private readonly theme = inject(ThemeService);
-
-  // Inicia la lectura global del estado de red
-  private readonly network = inject(NetworkService);
-
-  // Prepara la cola local desde el inicio de la aplicación
-  private readonly offline = inject(OfflineService);
+  constructor() {
+    // Estos servicios deben iniciar junto con la app.
+    inject(ThemeService);
+    inject(NetworkService);
+    inject(OfflineService);
+  }
 }

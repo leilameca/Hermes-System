@@ -1,0 +1,37 @@
+<ion-content>
+  <main class="register-shell">
+    <header>
+      <a class="brand" [routerLink]="['/login']" [queryParams]="{ empresa: companySlug }"><img src="assets/brand/hermes-logo.jpeg" alt="">Hermes <small>System</small></a>
+      <hermes-theme-toggle />
+    </header>
+
+    <section class="register-card" aria-labelledby="register-title">
+      <div class="company-mark"><ion-icon [icon]="businessIcon" aria-hidden="true" /></div>
+      @if (loading) {
+        <h1 id="register-title">Validando empresa…</h1>
+      } @else if (!company) {
+        <h1 id="register-title">Enlace no disponible</h1>
+        <p class="error" role="alert">{{ error }}</p>
+        <a class="secondary" routerLink="/login">Volver al inicio de sesión</a>
+      } @else {
+        <p class="eyebrow">{{ company.name }}</p>
+        <h1 id="register-title">Crea tu cuenta de cliente</h1>
+        <p>Usarás esta cuenta para reservar vehículos y consultar tus operaciones con {{ company.name }}.</p>
+
+        <form (ngSubmit)="submit()">
+          @if (error) { <p class="error" role="alert">{{ error }}</p> }
+          @if (message) { <p class="success" role="status">{{ message }}</p> }
+
+          <label>Nombre completo<span class="input-shell"><ion-icon [icon]="personIcon" aria-hidden="true" /><input name="name" [(ngModel)]="name" autocomplete="name" required></span></label>
+          <label>Teléfono<span class="input-shell"><ion-icon [icon]="personIcon" aria-hidden="true" /><input name="phone" type="tel" [(ngModel)]="phone" autocomplete="tel"></span></label>
+          <label>Correo electrónico<span class="input-shell"><ion-icon [icon]="mailIcon" aria-hidden="true" /><input name="email" type="email" [(ngModel)]="email" autocomplete="email" required></span></label>
+          <label>Contraseña<span class="password-row"><span class="input-shell"><ion-icon [icon]="lockIcon" aria-hidden="true" /><input name="password" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" autocomplete="new-password" minlength="8" required></span><button type="button" class="icon-button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"><ion-icon [icon]="showPassword ? eyeOffIcon : eyeIcon" /></button></span></label>
+          <label>Confirmar contraseña<span class="input-shell"><ion-icon [icon]="lockIcon" aria-hidden="true" /><input name="confirmation" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="confirmation" autocomplete="new-password" minlength="8" required></span></label>
+
+          <button class="primary" type="submit" [disabled]="sending || !!message || !name || !email || !password || !confirmation"><span>{{ sending ? 'Creando cuenta…' : 'Crear mi cuenta' }}</span><ion-icon [icon]="arrowIcon" /></button>
+        </form>
+        <p class="login-link">¿Ya tienes una cuenta? <a [routerLink]="['/login']" [queryParams]="{ empresa: companySlug }">Inicia sesión</a></p>
+      }
+    </section>
+  </main>
+</ion-content>

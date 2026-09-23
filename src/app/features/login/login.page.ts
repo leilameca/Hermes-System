@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { arrowForwardOutline, eyeOffOutline, eyeOutline, lockClosedOutline, mailOutline } from 'ionicons/icons';
 import { InitialAccount } from '../../core/models/auth-user.model';
@@ -10,14 +10,16 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, IonContent, IonIcon, ThemeToggleComponent],
+  imports: [FormsModule, RouterLink, IonContent, IonIcon, ThemeToggleComponent],
   templateUrl: './login.page.html',
   styleUrl: './login.page.scss',
 })
 export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly demoUsers = INITIAL_ACCOUNTS;
+  readonly companySlug = this.route.snapshot.queryParamMap.get('empresa')?.trim() ?? '';
   email = '';
   password = '';
   showPassword = false;

@@ -1,64 +1,76 @@
-# Hermes System - Acceso y navegacion
+# HERMES SYSTEM
 
-Frontend academico de Rent-a-Car en Republica Dominicana. Angular 20 standalone,
-Ionic 8 y Capacitor 7. La aplicacion inicia con login mock y conserva navegacion
-por roles con datos locales.
+Aplicacion web y movil para administrar una empresa rent a car. El proyecto usa
+Angular, Ionic, Capacitor y Supabase.
 
-## Ejecutar
+## Funciones principales
+
+- Inicio de sesion y acceso por roles.
+- Administracion de clientes, vehiculos y reservas.
+- Lectura y escritura de etiquetas NFC.
+- GPS, mapa y lugares cercanos.
+- Trabajo sin conexion para algunas operaciones.
+- Registro de clientes por medio del enlace de una empresa.
+
+## Ejecutar el proyecto
 
 ```sh
 npm install
 npm start
 ```
 
-Abrir `/` o `/login`. El acceso valida usuarios locales desde
-`AuthDemoService`; no hay autenticacion real, JWT, Firebase, APIs, pagos,
-servidores ni base de datos.
+La aplicacion abre en `http://localhost:4200`.
 
-## Usuarios
-
-| Rol | Usuario | Contrasena |
-| --- | --- | --- |
-| Cliente | `cliente@hermes.app` | `Hermes123` |
-| Agente | `agente@hermes.app` | `Hermes123` |
-| Administrador | `admin@hermes.app` | `Hermes123` |
-| Super Admin | `superadmin@hermes.app` | `Hermes123` |
-
-Los accesos de demostracion del login solo autocompletan el formulario. La sesion
-activa se guarda en almacenamiento local y se limpia con Cerrar sesion.
-
-## Navegacion
-
-| Espacio | Rutas relativas |
-| --- | --- |
-| `/cliente` | `inicio`, `explorar`, `resultados`, `vehiculos/:id`, `reservas/nueva`, `reservas`, `reservas/:id`, `contratos`, `facturas`, `incidentes`, `perfil` |
-| `/agente` | `inicio`, `operaciones`, `escanear`, `vehiculos/:id`, `entrega/:id`, `entrega/:id/checklist`, `entrega/:id/evidencias`, `entrega/:id/firma`, `devolucion/:id`, `devolucion/:id/checklist`, `devolucion/:id/evidencias`, `devolucion/:id/firma`, `incidentes`, `perfil` |
-| `/admin` | `dashboard`, `flota`, `flota/:id`, `reservas`, `operaciones`, `clientes`, `inspecciones`, `contratos`, `facturacion`, `mantenimiento`, `configuracion` |
-| `/super-admin` | `dashboard`, `empresas`, `empresas/:id`, `planes`, `suscripciones`, `plataforma` |
-
-Cliente usa navegacion principal reducida: Inicio, Explorar, Reservas y Perfil.
-Contratos, facturas e incidentes siguen accesibles desde reservas y perfil.
-Agente usa Inicio, Operaciones, Escanear, Incidentes y Perfil. Admin usa Resumen,
-Flota, Reservas, Operaciones y Mas en movil; en escritorio usa sidebar. Super Admin
-mantiene un enfoque administrativo con sidebar en escritorio.
-
-## Archivos clave
-
-- `src/app/app.routes.ts`: login, guards por rol, rutas heredadas y 404.
-- `src/app/core/services/auth-demo.service.ts`: usuarios y sesion mock.
-- `src/app/core/services/auth-demo.guard.ts`: acceso por rol.
-- `src/app/features/login/`: pantalla profesional de login.
-- `src/app/layouts/demo-layout/`: header, sidebar, tabs moviles y logout.
-- `src/app/features/demo/`: pantallas navegables con datos locales.
-
-## Verificacion
+## Revisar antes de publicar
 
 ```sh
-npm run typecheck
-npm run build
-node scripts/verify-navigation.mjs
+npm run check
 ```
 
-La prueba comprueba que la app inicia en `/login`, que los cuatro usuarios entran
-al layout correcto, que logout vuelve al login, que las 42 rutas siguen vivas y que
-la navegacion movil por rol no muestra el selector como flujo principal.
+Este comando revisa TypeScript, rutas, permisos, plugins y el build de Angular.
+
+## Abrir en Android Studio
+
+```sh
+npm run sync:android
+npm run open:android
+```
+
+Luego se conecta el telefono y se pulsa **Run** en Android Studio.
+
+## Carpetas importantes
+
+| Carpeta | Contenido |
+| --- | --- |
+| `src/app/core` | Modelos y servicios generales |
+| `src/app/features` | Pantallas de la aplicacion |
+| `src/app/layouts` | Menu lateral, encabezado y navegacion movil |
+| `src/app/shared` | Componentes que se usan en varias pantallas |
+| `supabase/migrations` | Tablas, politicas y datos de prueba |
+| `supabase/functions` | Funcion segura para crear cuentas de clientes |
+| `android` | Proyecto nativo que abre Android Studio |
+| `AP4_EquipoN` | Copia de la evidencia de la actividad AP4 |
+
+## Base de datos
+
+Las migraciones se ejecutan en orden:
+
+1. `202609210001_initial_saas.sql`
+2. `202609210002_auth_roles_and_customers.sql`
+3. `202609210003_operational_core.sql`
+4. `202609220004_customer_registration.sql`
+
+La aplicacion solo contiene la clave publica de Supabase. La clave
+`service_role` se guarda en Supabase y nunca se copia al codigo Angular.
+
+## Publicacion
+
+Vercel toma la rama `develop`. Los cambios deben probarse antes de actualizar
+esa rama.
+
+## Notas de NFC
+
+- En Android instalado se usa el plugin nativo.
+- En la web se necesita Chrome en un telefono Android.
+- Un navegador de computadora no puede leer etiquetas NFC.
+- Las etiquetas guardan el identificador del vehiculo conectado a Supabase.

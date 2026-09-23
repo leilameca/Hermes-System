@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { IonContent } from '@ionic/angular/standalone';
 import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
+import { HermesDataService } from '../../core/services/hermes-data.service';
 
 // Presenta el estado de red y permite probar la cola offline
 @Component({
@@ -71,6 +72,7 @@ export class ConnectivityPage {
 
   // Controla las operaciones guardadas en la cola local
   private readonly offline = inject(OfflineService);
+  private readonly data = inject(HermesDataService);
 
   // Convierte los cambios de los servicios en valores para la pantalla
   readonly connected = toSignal(this.network.connected$, { initialValue: this.network.connected });
@@ -80,20 +82,30 @@ export class ConnectivityPage {
   readonly message = signal('');
 
   async saveTestInspection() {
+    await this.data.refresh();
+    const vehicle = this.data.vehicles()[0];
+    if (!vehicle) {
+      this.message.set('No hay vehículos disponibles para crear la inspección de prueba.');
+      return;
+    }
     // Prepara una inspección sencilla para probar la conectividad
     const payload = {
-      vehicleId: 'vehicle-001',
+      vehicleId: vehicle.id,
       checklist: ['carroceria', 'luces', 'neumaticos', 'documentos'],
       createdAt: new Date().toISOString(),
     };
     if (this.network.connected) {
       // Procesa la inspección al momento cuando hay conexión
-      await this.offline.sendOperation('inspection.saved', payload);
-      this.message.set('Inspección guardada correctamente.');
+      try {
+        await this.offline.sendOperation('inspection.nfc.saved', payload);
+        this.message.set('Inspección guardada correctamente en Supabase.');
+      } catch (error) {
+        this.message.set(error instanceof Error ? error.message : 'No se pudo guardar la inspección.');
+      }
       return;
     }
     // Guarda la inspección en el dispositivo cuando no hay conexión
-    await this.offline.savePendingOperation('inspection.saved', payload);
+    await this.offline.savePendingOperation('inspection.nfc.saved', payload);
     this.message.set('Sin conexión. Guardamos tus cambios en este dispositivo y se sincronizarán automáticamente cuando recuperes Internet.');
   }
 }

@@ -1,20 +1,27 @@
-import { Injectable } from '@angular/core';
-import { defer, Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Tenant } from '../models';
-import { TENANTS_MOCK } from '../../data/mocks/tenants.mock';
+import { HermesDataService } from './hermes-data.service';
 
 @Injectable({ providedIn: 'root' })
 export class TenantService {
-  // Se entrega una copia para no modificar los datos originales desde una página.
-  // TODO: sustituir los mocks cuando se autorice una etapa de integración.
+  private readonly data = inject(HermesDataService);
+
   getAll(): Observable<Tenant[]> {
-    return defer(() => of(TENANTS_MOCK.map(item => ({ ...item }))));
+    return new Observable(subscriber => {
+      void this.data.refresh().then(() => {
+        subscriber.next(this.data.organizations().map(item => ({ ...item })));
+        subscriber.complete();
+      }).catch(error => subscriber.error(error));
+    });
   }
 
   getById(id: string): Observable<Tenant | undefined> {
-    return defer(() => {
-      const item = TENANTS_MOCK.find(item => item.id === id);
-      return of(item ? { ...item } : undefined);
+    return new Observable(subscriber => {
+      void this.data.refresh().then(() => {
+        subscriber.next(this.data.organizations().find(item => item.id === id));
+        subscriber.complete();
+      }).catch(error => subscriber.error(error));
     });
   }
 }
