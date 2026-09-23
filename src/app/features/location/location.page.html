@@ -1,14 +1,18 @@
 <main class="location-page">
   <header class="page-heading">
-    <div><p class="eyebrow">Unidad VI · Servicios de localización</p><h1>Ubicación y lugares cercanos</h1><p>Consulta el GPS, sigue tu recorrido y encuentra servicios utilizando OpenStreetMap.</p></div>
-    <span class="privacy">La ubicación se utiliza solo cuando autorizas el permiso.</span>
+    <div><p class="eyebrow">Unidad VI · Servicios de localización</p><h1>{{ isAdmin() ? 'Ubicación de clientes' : 'Ubicación y lugares cercanos' }}</h1><p>{{ isAdmin() ? 'Consulta la última ubicación compartida y el recorrido de cada cliente de tu empresa.' : 'Consulta el GPS, sigue tu recorrido y encuentra servicios utilizando OpenStreetMap.' }}</p></div>
+    <span class="privacy">{{ isAdmin() ? 'Solo se muestran clientes de esta empresa que activaron el seguimiento.' : 'La ubicación se guarda solo al activar el seguimiento y mientras esta pantalla está abierta.' }}</span>
   </header>
 
   <section class="location-actions" aria-label="Controles de ubicación">
+    @if (isAdmin()) {
+      <button type="button" class="primary" (click)="refreshAdminLocations()" [disabled]="loading()"><ion-icon [icon]="locateIcon" />Actualizar clientes</button>
+    } @else {
     <button type="button" class="primary" (click)="locate()" [disabled]="loading()"><ion-icon [icon]="locateIcon" />Mi ubicación</button>
     <button type="button" (click)="toggleTracking()"><ion-icon [icon]="tracking() ? stopIcon : navigateIcon" />{{ tracking() ? 'Detener seguimiento' : 'Seguir en tiempo real' }}</button>
     <button type="button" (click)="share()" [disabled]="!currentLocation()"><ion-icon [icon]="shareIcon" />Compartir</button>
     <button type="button" (click)="loadNearby()" [disabled]="loading()"><ion-icon [icon]="searchIcon" />Lugares cercanos</button>
+    }
   </section>
 
   <p class="status" role="status">{{ message() }}</p>
@@ -16,13 +20,23 @@
   <section class="map-layout">
     <div class="map-card"><div #map class="map" aria-label="Mapa de ubicación"></div></div>
     <aside class="coordinates">
+      @if (isAdmin()) {
+        <p class="eyebrow">Clientes localizados</p>
+        <div class="customer-locations">
+          @for (location of latestCustomerLocations(); track location.customerId) {
+            <button type="button" class="location-row" (click)="focusCustomer(location)"><strong>{{ customerName(location.customerId) }}</strong><span>{{ location.recordedAt | date:'dd/MM/yyyy, h:mm a' }}</span><small>Precisión {{ location.accuracy.toFixed(0) }} m</small></button>
+          } @empty { <p>Ningún cliente está compartiendo ubicación todavía.</p> }
+        </div>
+      } @else {
       <p class="eyebrow">Lectura del GPS</p>
       @if (currentLocation(); as location) {
         <dl><dt>Latitud</dt><dd>{{ location.latitude.toFixed(6) }}</dd><dt>Longitud</dt><dd>{{ location.longitude.toFixed(6) }}</dd><dt>Precisión</dt><dd>{{ location.accuracy.toFixed(0) }} m</dd><dt>Actualización</dt><dd>{{ location.timestamp | date:'mediumTime' }}</dd></dl>
       } @else { <p>Aún no hay coordenadas disponibles.</p> }
+      }
     </aside>
   </section>
 
+  @if (!isAdmin()) {
   <section class="search-card">
     <div><p class="eyebrow">Buscar una ubicación</p><h2>Direcciones y puntos de interés</h2></div>
     <form (ngSubmit)="search()"><input name="searchText" [(ngModel)]="searchText" placeholder="Ej. Monumento de Santiago" aria-label="Lugar que deseas buscar" required minlength="3"><button type="submit" [disabled]="loading() || searchText.trim().length < 3"><ion-icon [icon]="searchIcon" />Buscar</button></form>
@@ -36,4 +50,5 @@
       @empty { <p class="empty">Pulsa «Lugares cercanos» para consultar restaurantes, tiendas y puntos turísticos.</p> }
     </div>
   </section>
+  }
 </main>

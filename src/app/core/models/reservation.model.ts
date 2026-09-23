@@ -10,5 +10,8 @@ export interface Reservation {
   endsAt: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   total: number;
-  currency: 'DOP';
+  currency: 'DOP' | 'USD';
+  reference?: string;
+  notes?: string;
+  createdAt?: string;
 }

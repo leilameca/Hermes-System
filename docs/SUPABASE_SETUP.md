@@ -11,7 +11,7 @@ en las migraciones son solamente para pruebas.
 1. Abrir el proyecto de HERMES en Supabase.
 2. Entrar en **SQL Editor**.
 3. Crear una consulta nueva.
-4. Ejecutar en orden los cuatro archivos de `supabase/migrations`.
+4. Ejecutar en orden los cinco archivos de `supabase/migrations`.
 5. Confirmar en **Table Editor** que aparezcan las tablas nuevas.
 
 La funcion `create_organization` permitira que un usuario autenticado cree su empresa y quede registrado como administrador sin desactivar las politicas de seguridad.
@@ -28,6 +28,12 @@ La funcion `create_organization` permitira que un usuario autenticado cree su em
 | `nfc_tags` | Tarjetas vinculadas con vehiculos |
 | `nfc_events` | Historial de asignaciones y lecturas NFC |
 | `location_events` | Ubicaciones de entregas, devoluciones e inspecciones |
+| `customer_location_events` | Recorrido compartido por clientes con la app abierta |
+| `customer_documents` | Metadatos de licencias, identificaciones y documentos privados |
+
+La migracion `202609220005_crm_completion.sql` agrega tambien tres buckets privados:
+`vehicle-images`, `operation-evidence` y `crm-documents`. Las politicas RLS separan
+los archivos por empresa y los enlaces de lectura tienen vencimiento.
 
 ## Seguridad
 
@@ -79,3 +85,17 @@ HERMES puede utilizarse como aplicacion web mientras se desarrollan los modulos.
 - Carpeta publicada: `www`
 - NFC: disponible en Android instalado y en Chrome para Android.
 - GPS del telefono: requiere permiso del navegador y se usara solamente en operaciones autorizadas.
+
+## Aplicar la ampliacion del CRM con Supabase CLI
+
+Desde la carpeta principal del proyecto:
+
+```powershell
+npx supabase login
+npx supabase link --project-ref ymgglpxuqcbedcbvglwd
+npx supabase db push
+```
+
+El ultimo comando aplica disponibilidad sin cruces, Storage privado, documentos,
+permisos protegidos y ubicaciones de clientes. Debe ejecutarse antes de probar las
+funciones nuevas en Vercel o Android.
