@@ -3,7 +3,7 @@ import { Component, Injectable, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { IonIcon } from '@ionic/angular/standalone';
+import { IonIcon, IonContent } from '@ionic/angular/standalone';
 import {
   alertCircleOutline,
   businessOutline,
@@ -24,6 +24,7 @@ import { NetworkService } from '../../core/services/network.service';
 import { OfflineService } from '../../core/services/offline.service';
 import { AuthService } from '../../core/services/auth.service';
 import { HermesDataService, NewCustomerAccountInput, NewCustomerInput } from '../../core/services/hermes-data.service';
+import { CameraService } from '../../core/services/camera.service';
 
 @Injectable({ providedIn: 'root' })
 export class DemoState {
@@ -77,10 +78,12 @@ export class DemoState {
 }
 
 @Component({
-  selector: 'app-demo-screen', standalone: true, imports: [RouterLink, FormsModule, CurrencyPipe, DatePipe, IonIcon],
+  selector: 'app-demo-screen', standalone: true, imports: [RouterLink, FormsModule, CurrencyPipe, DatePipe, IonIcon, IonContent],
   templateUrl: './demo-screen.page.html', styleUrl: './demo-screen.page.scss',
 })
 export class DemoScreenPage {
+  private readonly camera = inject(CameraService);
+  cameraBusy = false;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   // Lee si el dispositivo tiene conexión
@@ -94,7 +97,8 @@ export class DemoScreenPage {
   readonly data = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
   readonly params = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
-  readonly role = this.route.parent!.snapshot.data['role'] as DemoRole;
+  // Ionic conserva proxies de ActivatedRoute; parent puede ser null durante la activación.
+  readonly role = (this.route.snapshot.data['role'] ?? this.auth.user()?.role ?? 'cliente') as DemoRole;
   readonly space = DEMO_SPACES[this.role];
   readonly kind = computed(() => this.data()['kind'] as string);
   readonly id = computed(() => this.params().get('id') ?? '');
@@ -505,6 +509,21 @@ export class DemoScreenPage {
     this.operationEvidencePreview = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
     this.state.update(this.stepKey(), { evidence: true });
   }
+  async captureOperationEvidence() {
+    if (this.cameraBusy) return;
+    this.cameraBusy = true;
+    try {
+      const photo = await this.camera.capture();
+      const response = await fetch(photo);
+      const blob = await response.blob();
+      this.operationEvidenceFile = new File([blob], `evidencia-${Date.now()}.jpg`, { type: blob.type || 'image/jpeg' });
+      if (this.operationEvidencePreview.startsWith('blob:')) URL.revokeObjectURL(this.operationEvidencePreview);
+      this.operationEvidencePreview = photo;
+      this.state.update(this.stepKey(), { evidence: true });
+      this.message = 'Fotografía preparada para esta operación.';
+    } catch (error) { this.message = this.camera.errorMessage(error); }
+    finally { this.cameraBusy = false; }
+  }
   scan() {
     const found = this.vehicles().find(v => v.plate.toLowerCase() === this.scanCode.trim().toLowerCase() || v.id === this.scanCode.trim());
     if (found) void this.router.navigate([this.vehicleLink(found.id)]);
@@ -553,8 +572,7 @@ export class DemoScreenPage {
     }
   }
   async saveInspection() {
-    this.state.saveInspection(this.stepKey());
-    await this.handleOfflineAwareOperation('inspection.saved', { key: this.stepKey(), role: this.role });
+    await this.router.navigate(['/', this.role, 'escanear']);
   }
 
   private async handleOfflineAwareOperation(type: string, payload: unknown) {
@@ -563,8 +581,8 @@ export class DemoScreenPage {
         await this.offline.sendOperation(type, payload);
         this.message = type === 'incident.reported' ? 'Incidente registrado correctamente.' : 'Inspección guardada correctamente.';
       } catch (error) {
-        await this.offline.savePendingOperation(type, payload);
-        this.message = error instanceof Error ? `${error.message} Guardamos la operación en la cola local.` : 'No se pudo sincronizar; guardamos la operación localmente.';
+        // sendOperation ya guarda antes de enviar; no crear una segunda copia al fallar.
+        this.message = error instanceof Error ? error.message : 'No se pudo sincronizar; revisa la operación pendiente.';
       }
       return;
     }

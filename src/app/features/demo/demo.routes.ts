@@ -32,11 +32,15 @@ export const CLIENT_ROUTES = space('cliente', [
   screen('contratos', 'Mis contratos'),
   screen('facturas', 'Mis facturas'),
   screen('incidentes', 'Incidentes'),
+  { path: 'bitacora', title: 'Mi bitácora · Hermes System', loadComponent: () => import('../notes/notes.page').then(m => m.NotesPage) },
+  { path: 'multimedia', title: 'Multimedia · Hermes System', loadComponent: () => import('../multimedia/multimedia.page').then(m => m.MultimediaPage) },
   { path: 'gps', title: 'Ubicación y lugares cercanos · Hermes System', loadComponent: () => import('../location/location.page').then(m => m.LocationPage) },
   screen('perfil', 'Mi perfil'),
 ]);
 
 export const AGENT_ROUTES = space('agente', [
+  { path: 'bitacora', title: 'Mi bitácora · Hermes System', loadComponent: () => import('../notes/notes.page').then(m => m.NotesPage) },
+  { path: 'multimedia', title: 'Multimedia · Hermes System', loadComponent: () => import('../multimedia/multimedia.page').then(m => m.MultimediaPage) },
   screen('inicio', 'Tu jornada de operaciones', 'home'),
   screen('operaciones', 'Operaciones'),
   // Esta ruta usa el lector NFC real en lugar de la pantalla demostrativa genérica.
@@ -56,12 +60,14 @@ export const AGENT_ROUTES = space('agente', [
 ]);
 
 export const ADMIN_ROUTES = space('admin', [
+  { path: 'bitacora', title: 'Mi bitácora · Hermes System', loadComponent: () => import('../notes/notes.page').then(m => m.NotesPage) },
+  { path: 'multimedia', title: 'Multimedia · Hermes System', loadComponent: () => import('../multimedia/multimedia.page').then(m => m.MultimediaPage) },
   screen('dashboard', 'Resumen de tu empresa', 'home'),
   screen('flota', 'Flota', 'vehicles'),
   screen('flota/nuevo', 'Nuevo vehículo', 'new-vehicle'),
   screen('flota/:id', 'Detalle del vehiculo', 'vehicle'),
   { path: 'escanear', title: 'NFC · Hermes System', loadComponent: () => import('../nfc/nfc.page').then(m => m.NfcPage) },
-  ...DEMO_SPACES.admin.areas.filter(area => !['dashboard', 'flota', 'escanear', 'gps'].includes(area.path)).map(area => screen(area.path, area.label)),
+  ...DEMO_SPACES.admin.areas.filter(area => !['dashboard', 'flota', 'escanear', 'gps', 'multimedia', 'bitacora'].includes(area.path)).map(area => screen(area.path, area.label)),
   { path: 'gps', title: 'Ubicación y lugares cercanos · Hermes System', loadComponent: () => import('../location/location.page').then(m => m.LocationPage) },
   screen('perfil', 'Mi perfil'),
 ]);

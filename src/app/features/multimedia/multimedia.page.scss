@@ -1,13 +1,14 @@
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: var(--ion-color-primary);
-}
-
-ion-card {
-  margin-bottom: 20px;
-}
-
-video, audio {
-  border-radius: 10px;
-}
+.media-page { max-width: 1120px; margin: auto; padding: 24px; display: grid; gap: 20px; }
+.hero { padding: 30px; border-radius: 16px; background: linear-gradient(135deg, var(--hermes-navy), #173d83); color: white; }
+.hero h1 { color: white; font-size: clamp(26px,4vw,40px); margin: 12px 0; }
+.hero p { max-width: 650px; }
+.hero .eyebrow { color: #e5bd82; }
+ion-card { margin: 0; --background: var(--hermes-surface); border: 1px solid var(--hermes-border); border-radius: 12px; box-shadow: none; }
+.gallery { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.gallery img { width: 100%; height: 180px; object-fit: cover; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 14px 0; }
+.time { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.selected { --background: var(--hermes-blue-light); }
+iframe { width: 100%; aspect-ratio: 16/9; border: 0; border-radius: 8px; margin: 12px 0; }
+.error { color: var(--hermes-critical); }
+@media(max-width:600px) { .media-page { padding: 16px; }.hero { padding: 22px; }.gallery { grid-template-columns: 1fr; } }

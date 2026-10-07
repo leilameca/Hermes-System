@@ -15,7 +15,7 @@ for (const route of ['login', 'registro/:empresa', 'cliente', 'agente', 'admin',
   assert.ok(routes.includes(`path: '${route}'`), `Falta la ruta ${route}`);
 }
 
-for (const route of ['escanear', 'gps', 'flota']) {
+for (const route of ['escanear', 'gps', 'flota', 'multimedia', 'bitacora']) {
   assert.ok(demoRoutes.includes(`'${route}'`), `Falta la ruta ${route}`);
 }
 
@@ -23,11 +23,14 @@ for (const permission of ['android.permission.INTERNET', 'android.permission.NFC
   assert.ok(manifest.includes(permission), `Falta el permiso ${permission}`);
 }
 
-for (const dependency of ['@capgo/capacitor-nfc', '@capacitor/geolocation', '@capacitor/network']) {
+for (const dependency of ['@capgo/capacitor-nfc', '@capacitor/geolocation', '@capacitor/network', '@capacitor/camera']) {
   assert.ok(packageFile.includes(`"${dependency}"`), `Falta la dependencia ${dependency}`);
 }
 
 await access('src/assets/brand/hermes-logo.jpeg');
 await access('supabase/migrations/202609220004_customer_registration.sql');
+await access('src/assets/audio/ruta-urbana.mp3');
+await access('src/assets/audio/viaje-tranquilo.mp3');
+await access('src/app/features/notes/notes.page.ts');
 
-console.log('OK: rutas, permisos, plugins y archivos principales revisados.');
+console.log('OK: estructura, rutas, permisos, plugins y medios locales. No sustituye las pruebas funcionales o físicas.');

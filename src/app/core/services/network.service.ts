@@ -59,7 +59,7 @@ export class NetworkService implements OnDestroy {
     this.statusSubject.next(status);
     if (wasOffline && status.connected) {
       // Sincroniza la cola cuando regresa Internet
-      void this.injector.get(OfflineService).syncPendingOperations();
+      void this.injector.get(OfflineService).syncPendingOperations().catch(error => console.error('[Hermes] Sincronización', error));
     }
   }
 

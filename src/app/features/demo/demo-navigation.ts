@@ -29,6 +29,8 @@ export interface DemoSpace { label: string; description: string; home: string; a
 
 export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
   cliente: { label: 'Cliente', description: 'Encuentra tu vehiculo y organiza tu proximo viaje.', home: 'inicio', areas: [
+    { path: 'bitacora', label: 'Mi bitácora', icon: documentTextOutline },
+    { path: 'multimedia', label: 'Multimedia', icon: albumsOutline },
     { path: 'inicio', label: 'Inicio', icon: homeOutline },
     { path: 'explorar', label: 'Explorar', icon: searchOutline },
     { path: 'reservas', label: 'Reservas', icon: calendarClearOutline },
@@ -39,6 +41,8 @@ export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
     { path: 'perfil', label: 'Perfil', icon: personCircleOutline },
   ] },
   agente: { label: 'Agente', description: 'Acompaña cada entrega y devolucion paso a paso.', home: 'inicio', areas: [
+    { path: 'bitacora', label: 'Mi bitácora', icon: documentTextOutline },
+    { path: 'multimedia', label: 'Multimedia', icon: albumsOutline },
     { path: 'inicio', label: 'Inicio', icon: homeOutline },
     { path: 'operaciones', label: 'Operaciones', icon: swapHorizontalOutline },
     { path: 'escanear', label: 'Escanear', icon: scanOutline },
@@ -47,6 +51,8 @@ export const DEMO_SPACES: Record<DemoRole, DemoSpace> = {
     { path: 'perfil', label: 'Perfil', icon: personCircleOutline },
   ] },
   admin: { label: 'Administrador', description: 'Una vision completa de tu empresa de alquiler.', home: 'dashboard', areas: [
+    { path: 'bitacora', label: 'Mi bitácora', icon: documentTextOutline },
+    { path: 'multimedia', label: 'Multimedia', icon: albumsOutline },
     { path: 'dashboard', label: 'Resumen', icon: gridOutline },
     { path: 'flota', label: 'Flota', icon: carSportOutline },
     { path: 'escanear', label: 'NFC', icon: scanOutline },

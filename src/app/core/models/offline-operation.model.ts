@@ -10,4 +10,7 @@ export interface OfflineOperation {
   status: 'pending' | 'syncing' | 'synced' | 'failed';
   // Datos necesarios para repetir la acción
   payload: unknown;
+  // Opcionales únicamente para preservar colas antiguas sin atribuirles otra identidad.
+  userId?: string;
+  organizationId?: string | null;
 }

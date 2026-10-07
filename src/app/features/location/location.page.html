@@ -1,3 +1,4 @@
+<ion-content>
 <main class="location-page">
   <header class="page-heading">
     <div><p class="eyebrow">Unidad VI · Servicios de localización</p><h1>{{ isAdmin() ? 'Ubicación de clientes' : 'Ubicación y lugares cercanos' }}</h1><p>{{ isAdmin() ? 'Consulta la última ubicación compartida y el recorrido de cada cliente de tu empresa.' : 'Consulta el GPS, sigue tu recorrido y encuentra servicios utilizando OpenStreetMap.' }}</p></div>
@@ -16,6 +17,7 @@
   </section>
 
   <p class="status" role="status">{{ message() }}</p>
+  @if (cachedResult()) { <p class="status">Resultados guardados en este dispositivo. Pueden haber cambiado desde la última consulta.</p> }
 
   <section class="map-layout">
     <div class="map-card"><div #map class="map" aria-label="Mapa de ubicación"></div></div>
@@ -38,6 +40,12 @@
 
   @if (!isAdmin()) {
   <section class="search-card">
+    <div><p class="eyebrow">Zona de referencia</p><h2>Control de entrada y salida</h2><p>Se comprueba mientras esta pantalla está abierta. La precisión del GPS puede afectar el resultado.</p></div>
+    <label>Radio en metros <input name="geofenceRadius" type="number" min="100" max="5000" [(ngModel)]="geofenceRadius"></label>
+    <button type="button" (click)="setGeofence()" [disabled]="!currentLocation()">Definir zona aquí</button><button type="button" (click)="clearGeofence()" [disabled]="!geofenceCenter()">Quitar zona</button>
+    <p role="status">{{ geofenceState() }}</p>
+  </section>
+  <section class="search-card">
     <div><p class="eyebrow">Buscar una ubicación</p><h2>Direcciones y puntos de interés</h2></div>
     <form (ngSubmit)="search()"><input name="searchText" [(ngModel)]="searchText" placeholder="Ej. Monumento de Santiago" aria-label="Lugar que deseas buscar" required minlength="3"><button type="submit" [disabled]="loading() || searchText.trim().length < 3"><ion-icon [icon]="searchIcon" />Buscar</button></form>
     @for (result of searchResults(); track result.id) { <button class="result" type="button" (click)="selectSearchResult(result)"><strong>{{ result.name }}</strong><span>{{ result.latitude.toFixed(5) }}, {{ result.longitude.toFixed(5) }}</span></button> }
@@ -52,3 +60,5 @@
   </section>
   }
 </main>
+
+</ion-content>

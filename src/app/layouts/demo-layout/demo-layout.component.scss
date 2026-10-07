@@ -75,7 +75,7 @@ a, button { transition: background var(--hermes-duration), border-color var(--he
   .bottom .scan-tab ion-icon { width: 34px; height: 28px; padding: 4px; background: var(--hermes-blue); color: white; border-radius: 4px; }
   .more-menu { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding: 12px; overflow: auto; max-height: 45vh; background: var(--hermes-surface); border-bottom: 1px solid var(--hermes-border); }
   .more-menu a { min-height: 44px; padding: 12px; color: var(--hermes-graphite); text-decoration: none; border: 1px solid var(--hermes-border); border-radius: 4px; }
-  .content { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .content { padding-bottom: 0; }
 }
 
 @media(max-width:520px) {
@@ -93,3 +93,10 @@ a, button { transition: background var(--hermes-duration), border-color var(--he
   .bottom ion-icon { font-size: 19px; }
   .bottom a, .bottom button { min-height: 54px; }
 }
+
+.content { position: relative; display: flex; overflow: hidden; }
+.mobile-tabs { --background: var(--hermes-surface); border-top: 1px solid var(--hermes-border); }
+ion-tab-button { --color: var(--hermes-text-secondary); --color-selected: var(--hermes-blue); }
+.more-tab { min-width: 56px; display: grid; place-items: center; font-size: 11px; color: var(--hermes-text-secondary); }
+.more-tab ion-icon { font-size: 22px; }
+@media(min-width:1024px) { .mobile-tabs { display: none; } }
