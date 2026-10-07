@@ -52,7 +52,7 @@ npm run test:pwa
 
 Las pruebas automatizadas usan transporte simulado y cámara virtual. No acreditan por sí solas autenticación remota real, políticas RLS para cada rol, lectura NFC física ni captura en Android. También se verificó en la base de datos conectada la inserción y lectura de una inspección y un incidente bajo el rol autenticado de agente, en una transacción revertida sin registros permanentes. Antes de defender hay que ejecutar los flujos completos con las cuentas y el teléfono reales.
 
-La compilación de producción termina correctamente; conserva una advertencia de tamaño del paquete inicial (aproximadamente 1,38 MB frente al umbral de aviso de 1,3 MB).
+La compilación de producción termina correctamente; conserva advertencias de tamaño del paquete inicial (aproximadamente 1,38 MB frente al umbral de aviso de 1,3 MB) y del estilo de la pantalla operativa (aproximadamente 22,95 kB frente al aviso de 22 kB).
 
 ## Compilar y abrir Android
 
@@ -63,31 +63,23 @@ npm run open:android
 
 Requiere Android Studio y SDK. Instalar la app en el teléfono, permitir ubicación y probar NFC con una etiqueta compatible. La captura de fotografías no guarda automáticamente en la galería.
 
-## Capturas de la versión local
+## Capturas de verificación
 
-Capturas obtenidas al ejecutar la aplicación en navegador con cuenta, coordenadas, API y cámara de pruebas controladas. Son evidencias de interfaz y comportamiento local, no de uso físico de NFC ni del backend real.
-
-| Bitácora y persistencia | Multimedia |
-| --- | --- |
-| ![Bitácora local](docs/screenshots/bitacora.png) | ![Reproductor multimedia](docs/screenshots/multimedia.png) |
-
-| Cámara virtual | GPS y mapa |
-| --- | --- |
-| ![Captura de prueba](docs/screenshots/camara.png) | ![GPS con coordenadas de prueba](docs/screenshots/gps.png) |
+Las pruebas de navegador generan capturas locales en `docs/screenshots/`: bitácora, multimedia, cámara virtual y GPS con coordenadas controladas. No se publican imágenes de evidencia en este repositorio. Las capturas sirven como evidencia de interfaz local, no de uso físico de NFC ni del backend real.
 
 ## Equipo y distribución para revisión y defensa
 
 Las responsabilidades siguientes distribuyen estudio, pruebas y defensa. No atribuyen autoría de código a quien no lo desarrolló.
 
-| Integrante | Matrícula | Responsabilidad |
-| --- | --- | --- |
-| Leilany Morán | 100074062 | Conectividad y NFC, U4 y U5 |
-| Gustavo Pascual | 100058813 | Navegación, roles y servicios web, U1, U2 y U10 |
-| Jhovanny Rosado | 100069725 | Multimedia y captura, U7 y U8 |
-| Luis Eduardo Matos | 100073071 | Interfaz, gestos y almacenamiento local, U3 y U9 |
-| Jean de la Rosa | 100039486 | Geolocalización, U6 |
+| Integrante | Responsabilidad |
+| --- | --- |
+| Integrante 1 | Conectividad y NFC, U4 y U5 |
+| Integrante 2 | Navegación, roles y servicios web, U1, U2 y U10 |
+| Integrante 3 | Multimedia y captura, U7 y U8 |
+| Integrante 4 | Interfaz, gestos y almacenamiento local, U3 y U9 |
+| Integrante 5 | Geolocalización, U6 |
 
-El aporte original de multimedia está en el commit `7cb3d3a`, realizado por Jhovanny. Las ampliaciones e integración asistidas deben declararse conforme a las indicaciones del facilitador; cada integrante necesita comprender su módulo.
+Se conserva el aporte original de multimedia del commit `7cb3d3a`. Las ampliaciones e integración asistidas deben declararse conforme a las indicaciones del facilitador; cada integrante necesita comprender su módulo.
 
 ## Estructura
 
@@ -106,3 +98,7 @@ El aporte original de multimedia está en el commit `7cb3d3a`, realizado por Jho
 El frontend contiene únicamente la clave pública de Supabase. Las claves privilegiadas permanecen en el servidor. Las migraciones se aplican en orden según su fecha; revisar las instrucciones del proyecto antes de modificar el esquema.
 
 El README original indica que Vercel publica `develop`. La integración debe revisarse y llevarse a esa rama antes de tomar evidencias de la aplicación publicada. Este cambio se prepara mediante una rama y pull request; no equivale a un despliegue ya realizado.
+
+## Documentación previa de la Unidad VI
+
+Se conservan `docs/ENTREGA_UNIDAD_VI.md`, `docs/GUION_VIDEO_UNIDAD_VI.md` y las mejoras de reservas, impresión y permisos GPS existentes en `develop`.

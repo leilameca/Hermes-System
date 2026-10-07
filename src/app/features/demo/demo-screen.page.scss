@@ -78,6 +78,8 @@ th { color: var(--hermes-text-secondary); font-size: 12px; font-weight: 700; }
 .mobile-hero img { position: static; grid-column: 2; grid-row: 1; align-self: center; width: 100%; max-width: none; height: 112px; object-fit: cover; border-radius: 6px; box-shadow: 0 18px 34px rgba(11,23,54,.16); }
 .mobile-hero input { grid-column: 1 / -1; }
 .mobile-hero input, .fleet-toolbar input { position: relative; align-self: end; min-height: 44px; padding: 10px 12px; border: 1px solid var(--hermes-border); border-radius: 5px; background: var(--hermes-field); color: var(--hermes-graphite); }
+.home-search { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; max-width: none; }
+.home-search button { min-height: 44px; padding: 0 16px; border: 1px solid var(--hermes-action); border-radius: 4px; background: var(--hermes-action); color: white; font-weight: 700; cursor: pointer; }
 .compact-hero { min-height: 126px; grid-template-columns: 1fr auto; align-items: start; background: linear-gradient(135deg,var(--hermes-navy),#173d83); color: white; }
 .compact-hero > div { grid-column: 1; }
 .compact-hero h2, .compact-hero .eyebrow { color: white; }
@@ -95,7 +97,7 @@ th { color: var(--hermes-text-secondary); font-size: 12px; font-weight: 700; }
 .section-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .section-row h2 { font-size: 18px; letter-spacing: 0; }
 .section-row a { color: var(--hermes-link); font-size: 13px; font-weight: 700; text-decoration: none; }
-.featured-vehicle { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(0,1fr); gap: 14px; padding: 12px; border: 1px solid var(--hermes-border); border-radius: 8px; background: var(--hermes-surface); box-shadow: 0 18px 36px rgba(11,23,54,.06); }
+.featured-vehicle { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(0,1fr); gap: 14px; padding: 12px; border: 1px solid var(--hermes-border); border-radius: 8px; background: var(--hermes-surface); color: var(--hermes-graphite); text-decoration: none; box-shadow: 0 18px 36px rgba(11,23,54,.06); }
 .featured-vehicle img { width: 100%; height: 126px; object-fit: cover; border-radius: 4px; }
 .featured-vehicle h3 { font-size: 16px; letter-spacing: 0; }
 .featured-vehicle p { color: var(--hermes-text-strong); font-weight: 700; }
@@ -148,8 +150,9 @@ dd { margin: 0; overflow-wrap: anywhere; }
 .icon-button { display: grid; place-items: center; width: 44px; min-height: 44px; border: 1px solid var(--hermes-border); border-radius: 5px; background: var(--hermes-surface); color: var(--hermes-text-strong); cursor: pointer; }
 .icon-button ion-icon { font-size: 19px; }
 .tabs { display: flex; gap: 4px; max-width: 100%; border-bottom: 1px solid var(--hermes-border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.tabs a { min-height: 38px; padding: 10px 14px; color: var(--hermes-text-secondary); text-decoration: none; font-size: 13px; font-weight: 700; border-bottom: 2px solid transparent; white-space: nowrap; }
-.tabs a.active { color: var(--hermes-text-strong); border-color: var(--hermes-amber); background: transparent; }
+.tabs a, .tabs button { min-height: 38px; padding: 10px 14px; color: var(--hermes-text-secondary); text-decoration: none; font-size: 13px; font-weight: 700; border: 0; border-bottom: 2px solid transparent; background: transparent; white-space: nowrap; cursor: pointer; }
+.tabs a.active, .tabs button.active { color: var(--hermes-text-strong); border-color: var(--hermes-amber); background: transparent; }
+.result-count { color: var(--hermes-text-secondary); font-size: 13px; }
 .list-panel { display: grid; border: 1px solid var(--hermes-border); border-radius: 6px; background: var(--hermes-surface); overflow: hidden; box-shadow: 0 12px 34px rgba(11,23,54,.035); }
 .vehicle-row, .reservation-row, .company-row { display: grid; grid-template-columns: 76px minmax(0,1fr) auto auto; gap: 12px; align-items: center; min-height: 82px; padding: 10px 12px; color: var(--hermes-graphite); text-decoration: none; }
 .vehicle-row > div, .reservation-row > div, .operation-row > div, .company-row > div { min-width: 0; }
@@ -168,6 +171,12 @@ dd { margin: 0; overflow-wrap: anywhere; }
 .plain-list { display: grid; gap: 8px; margin: 0; padding-left: 18px; color: var(--hermes-text-secondary); }
 .record details { border-top: 1px solid var(--hermes-border); padding-top: 8px; }
 .row, .steps { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.section-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+.booking-progress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.booking-progress div { display: grid; gap: 7px; padding: 12px; border: 1px solid var(--hermes-border); border-radius: 5px; color: var(--hermes-text-secondary); font-size: 12px; }
+.booking-progress strong { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--hermes-border); color: var(--hermes-text-secondary); }
+.booking-progress .done { border-color: rgba(23,68,143,.35); background: var(--hermes-blue-light); color: var(--hermes-text-strong); }
+.booking-progress .done strong { background: var(--hermes-blue); color: white; }
 .steps { justify-content: flex-start; }
 .steps a { padding: 10px 0; }
 .scan { display: grid; place-items: center; min-height: 156px; color: var(--hermes-link); background: var(--hermes-blue-light); }
@@ -242,7 +251,8 @@ details p { margin-top: 12px; }
   .action-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .action-grid a { grid-template-columns: 38px minmax(0,1fr); gap: 3px 8px; padding: 10px 8px; font-size: 12px; }
   .action-grid ion-icon { width: 20px; height: 20px; padding: 9px; }
-  .tabs a { flex: 1 0 auto; padding-inline: 10px; font-size: 12px; }
+  .tabs a, .tabs button { flex: 1 0 auto; padding-inline: 10px; font-size: 12px; }
+  .booking-progress { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media(max-width:360px) {
   .vehicle-row, .reservation-row { grid-template-columns: 56px minmax(0,1fr); }

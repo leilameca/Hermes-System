@@ -33,8 +33,8 @@ export class LoginPage {
 
   fill(user: InitialAccount) {
     this.email = user.email;
-    this.password = '';
-    this.showPassword = false;
+    this.password = 'Hermes123';
+    this.showPassword = true;
     this.error = '';
   }
 

@@ -81,6 +81,17 @@ export interface NewCustomerAccountInput extends NewCustomerInput {
   temporaryPassword: string;
 }
 
+export interface AdminReservationInput {
+  customerId: string;
+  vehicleId: string;
+  pickupBranchId: string;
+  returnBranchId: string;
+  startsAt: string;
+  endsAt: string;
+  total: number;
+  notes?: string;
+}
+
 // Formas basicas de las filas que llegan de Supabase.
 interface VehicleRow {
   id: string;
@@ -333,6 +344,73 @@ export class HermesDataService {
     const reservation = this.mapReservation(data);
     this.reservations.update(rows => [reservation, ...rows]);
     return reservation;
+  }
+
+  // El administrador puede registrar una reserva recibida por telefono o en mostrador.
+  async createAdminReservation(input: AdminReservationInput): Promise<Reservation> {
+    const organizationId = this.requireOrganization();
+    if (!(await this.isVehicleAvailable(input.vehicleId, input.startsAt, input.endsAt))) {
+      throw new Error('El vehículo ya tiene una reserva activa que cruza con esas fechas.');
+    }
+    const reference = `RSV-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+    const { data, error } = await this.supabase.from('reservations').insert({
+      organization_id: organizationId,
+      customer_id: input.customerId,
+      vehicle_id: input.vehicleId,
+      pickup_branch_id: input.pickupBranchId,
+      return_branch_id: input.returnBranchId,
+      reference,
+      starts_at: input.startsAt,
+      ends_at: input.endsAt,
+      status: 'pending',
+      total: input.total,
+      currency: 'DOP',
+      notes: input.notes?.trim() || null,
+      created_by: this.auth.user()!.id,
+    }).select('*').single();
+    if (error) {
+      if (error.code === '23P01') throw new Error('El vehículo acaba de ser reservado para esas fechas.');
+      throw new Error(error.message);
+    }
+    const reservation = this.mapReservation(data);
+    this.reservations.update(rows => [reservation, ...rows]);
+    return reservation;
+  }
+
+  // Al confirmar se prepara el contrato y las dos operaciones del alquiler.
+  async confirmReservation(id: string): Promise<void> {
+    const reservation = this.reservations().find(row => row.id === id);
+    if (!reservation) throw new Error('La reserva no existe.');
+    if (!(await this.isVehicleAvailable(reservation.vehicleId, reservation.startsAt, reservation.endsAt, id))) {
+      throw new Error('Las fechas se cruzan con otra reserva activa del vehículo.');
+    }
+
+    const { error: reservationError } = await this.supabase.from('reservations').update({ status: 'confirmed' }).eq('id', id);
+    if (reservationError) throw new Error(reservationError.message);
+
+    const number = `CTR-${new Date().getFullYear()}-${(reservation.reference ?? id).replace(/[^0-9]/g, '').slice(-6)}`;
+    const contract = await this.supabase.from('contracts').upsert({
+      organization_id: reservation.tenantId,
+      reservation_id: reservation.id,
+      customer_id: reservation.customerId,
+      number,
+      terms: 'Al firmar, el cliente acepta las fechas, tarifa, inspección de entrega y devolución, uso responsable del vehículo y cargos documentados durante el alquiler.',
+      status: 'pending_signature',
+    }, { onConflict: 'reservation_id' });
+    if (contract.error) throw new Error(`La reserva fue confirmada, pero no se pudo preparar el contrato: ${contract.error.message}`);
+
+    const operations = await this.supabase.from('rental_operations').upsert([
+      {
+        organization_id: reservation.tenantId, reservation_id: reservation.id, vehicle_id: reservation.vehicleId,
+        customer_id: reservation.customerId, operation_type: 'delivery', status: 'scheduled', scheduled_at: reservation.startsAt,
+      },
+      {
+        organization_id: reservation.tenantId, reservation_id: reservation.id, vehicle_id: reservation.vehicleId,
+        customer_id: reservation.customerId, operation_type: 'return', status: 'scheduled', scheduled_at: reservation.endsAt,
+      },
+    ], { onConflict: 'reservation_id,operation_type' });
+    if (operations.error) throw new Error(`La reserva y el contrato se guardaron, pero no se pudo crear la agenda: ${operations.error.message}`);
+    await this.refresh();
   }
 
   async updateReservation(id: string, input: { startsAt: string; endsAt: string; status: Reservation['status']; total: number; notes?: string }): Promise<void> {
