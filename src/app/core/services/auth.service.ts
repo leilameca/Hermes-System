@@ -1,15 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
-import { AuthState, AuthUserContext, InitialAccount } from '../models/auth-user.model';
+import { AuthState, AuthUserContext } from '../models/auth-user.model';
 import { SupabaseService } from './supabase.service';
 import { Storage } from '@ionic/storage-angular';
-
-export const INITIAL_ACCOUNTS: readonly InitialAccount[] = [
-  { email: 'cliente@hermes.app', name: 'Laura Méndez', role: 'cliente' },
-  { email: 'agente@hermes.app', name: 'Carlos Reyes', role: 'agente' },
-  { email: 'admin@hermes.app', name: 'Mariana Soto', role: 'admin' },
-  { email: 'superadmin@hermes.app', name: 'Valeria Núñez', role: 'super-admin' },
-];
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

@@ -12,9 +12,3 @@ export interface AuthUserContext {
   organizationName: string | null;
   mustChangePassword: boolean;
 }
-
-export interface InitialAccount {
-  email: string;
-  name: string;
-  role: DemoRole;
-}

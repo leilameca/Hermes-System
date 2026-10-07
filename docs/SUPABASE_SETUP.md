@@ -54,6 +54,18 @@ El GPS del telefono registra el lugar de una operacion. El seguimiento permanent
 
 ## Preparar las cuentas de prueba
 
+Las credenciales se crean y comparten fuera del repositorio. Usa una contrasena
+unica para cada cuenta; la pantalla de acceso no publica ni rellena credenciales.
+Si las cuentas existentes usaron la antigua contrasena compartida incluida en el
+codigo, cambiala en Supabase Authentication: eliminarla del codigo no la revoca
+y las versiones anteriores de Git siguen conservandola. Verifica especialmente
+las cuentas con permisos de administrador y superadministrador.
+
+No subir archivos `.env`, claves privadas, cuentas de servicio ni estados de
+autenticacion de Playwright. La URL y la clave `sb_publishable_...` del cliente
+son publicas por diseno; las claves `service_role` y `sb_secret_...` deben
+permanecer exclusivamente en el servidor.
+
 1. Ejecutar `202609210002_auth_roles_and_customers.sql`.
 2. Crear las cuatro cuentas iniciales desde **Authentication / Users**.
 3. Ejecutar `select * from public.configure_demo_accounts();` en SQL Editor.

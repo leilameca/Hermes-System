@@ -6,7 +6,6 @@ coverage/
 *.log
 .DS_Store
 .idea/
-.idea/
 .vscode/
 .vercel/
 android/.gradle/
@@ -19,3 +18,26 @@ test-results/
 
 # Evidencias locales generadas por pruebas
 docs/screenshots/
+
+# Configuracion privada y credenciales locales
+.env
+.env.*
+!.env.example
+!.env.*.example
+.npmrc
+.netrc
+.aws/
+.ssh/
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision
+android/keystore.properties
+android/key.properties
+service-account*.json
+*-service-account.json
+credentials.json
+# Estado de autenticacion de pruebas
+playwright/.auth/
+tests/.auth/

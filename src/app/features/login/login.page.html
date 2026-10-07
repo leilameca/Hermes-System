@@ -49,20 +49,6 @@
         <p class="register-link">¿Eres cliente nuevo? <a [routerLink]="['/registro', companySlug]">Crear mi cuenta</a></p>
       }
 
-      <aside class="demo-access" aria-labelledby="demo-access-title">
-        <h3 id="demo-access-title">Cuentas iniciales de prueba</h3>
-        <p>Selecciona un perfil para completar el correo y la contraseña de prueba.</p>
-        <div class="profiles">
-          @for (user of demoUsers; track user.email) {
-            <button type="button" (click)="fill(user)">
-              <span class="profile-role">{{ user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Administrador' : user.role === 'agente' ? 'Agente' : 'Cliente' }}</span>
-              <strong>{{ user.name }}</strong>
-              <ion-icon class="profile-arrow" [icon]="arrowIcon" aria-hidden="true" />
-            </button>
-          }
-        </div>
-      </aside>
-
       <p class="access-footer"><strong>HERMES SYSTEM</strong><span>Rent-a-Car · Control de flota · Acceso autorizado</span></p>
     </section>
   </main>

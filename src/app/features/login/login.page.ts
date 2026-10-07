@@ -3,8 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { arrowForwardOutline, eyeOffOutline, eyeOutline, lockClosedOutline, mailOutline } from 'ionicons/icons';
-import { InitialAccount } from '../../core/models/auth-user.model';
-import { AuthService, INITIAL_ACCOUNTS } from '../../core/services/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
@@ -18,7 +17,6 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  readonly demoUsers = INITIAL_ACCOUNTS;
   readonly companySlug = this.route.snapshot.queryParamMap.get('empresa')?.trim() ?? '';
   email = '';
   password = '';
@@ -30,13 +28,6 @@ export class LoginPage {
   readonly eyeOffIcon = eyeOffOutline;
   readonly lockIcon = lockClosedOutline;
   readonly mailIcon = mailOutline;
-
-  fill(user: InitialAccount) {
-    this.email = user.email;
-    this.password = 'Hermes123';
-    this.showPassword = true;
-    this.error = '';
-  }
 
   async submit() {
     if (this.loading) return;
