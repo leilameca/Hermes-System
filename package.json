@@ -8,9 +8,13 @@
     "build": "ng build",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.capacitor.json",
     "verify": "node scripts/verify-project.mjs",
-    "check": "npm run typecheck && npm run verify && npm run build",
+    "check": "npm run typecheck && npm test && npm run verify && npm run build",
     "sync:android": "npm run build && cap sync android",
-    "open:android": "cap open android"
+    "open:android": "cap open android",
+    "test": "node --test tests/local-storage.test.mjs",
+    "test:e2e": "playwright test",
+    "preview": "node scripts/preview.mjs",
+    "test:pwa": "npm run build && playwright test --config playwright.pwa.config.ts"
   },
   "dependencies": {
     "@angular/common": "^20.3.0",
@@ -19,7 +23,9 @@
     "@angular/forms": "^20.3.0",
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
+    "@angular/service-worker": "20.3.33",
     "@capacitor/android": "^7.6.9",
+    "@capacitor/camera": "7.0.5",
     "@capacitor/core": "^7.6.9",
     "@capacitor/geolocation": "^7.1.8",
     "@capacitor/ios": "^7.6.9",
@@ -28,6 +34,7 @@
     "@capgo/capacitor-nfc": "^7.2.0",
     "@ionic/angular": "^8.7.0",
     "@ionic/angular-toolkit": "^13.0.0",
+    "@ionic/pwa-elements": "3.4.0",
     "@ionic/storage": "^4.0.0",
     "@ionic/storage-angular": "^4.0.0",
     "@supabase/supabase-js": "^2.116.0",
@@ -44,6 +51,7 @@
     "@angular/compiler-cli": "^20.3.0",
     "@capacitor/cli": "^7.6.9",
     "@ionic/cli": "^7.2.1",
+    "@playwright/test": "1.63.0",
     "@types/node": "^22.0.0",
     "typescript": "~5.9.2"
   }

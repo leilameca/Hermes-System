@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { AfterViewInit, Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonIcon } from '@ionic/angular/standalone';
+import { IonIcon, IonContent } from '@ionic/angular/standalone';
 import * as L from 'leaflet';
 import { locateOutline, navigateOutline, searchOutline, shareSocialOutline, stopCircleOutline } from 'ionicons/icons';
 import { HermesLocation, LocationPermissionState, LocationSearchResult, LocationService, NearbyPlace } from '../../core/services/location.service';
@@ -11,7 +11,7 @@ import { CustomerLocationEvent, HermesDataService } from '../../core/services/he
 @Component({
   selector: 'app-location',
   standalone: true,
-  imports: [FormsModule, DatePipe, IonIcon],
+  imports: [FormsModule, DatePipe, IonIcon, IonContent],
   templateUrl: './location.page.html',
   styleUrl: './location.page.scss',
 })
@@ -28,6 +28,43 @@ export class LocationPage implements AfterViewInit {
   private readonly trackingSessionId = crypto.randomUUID();
   private lastPersistedAt = 0;
   private adminRefreshTimer?: number;
+  private geofenceCircle?: L.Circle;
+  private visible = true;
+  readonly geofenceCenter = signal<HermesLocation | null>(null);
+  readonly geofenceState = signal('Sin zona configurada');
+  geofenceRadius = 500;
+
+  async ionViewWillLeave() {
+    this.visible = false;
+    if (this.watchId) {
+      const id = this.watchId; this.watchId = ''; this.tracking.set(false);
+      await this.locationService.stopWatch(id);
+    }
+    if (this.adminRefreshTimer) window.clearInterval(this.adminRefreshTimer);
+    this.adminRefreshTimer = undefined;
+  }
+
+  setGeofence() {
+    const center = this.currentLocation();
+    if (!center || !Number.isFinite(this.geofenceRadius) || this.geofenceRadius < 100 || this.geofenceRadius > 5000) {
+      this.message.set('Obtén tu ubicación y elige un radio entre 100 y 5000 metros.'); return;
+    }
+    this.geofenceCenter.set(center);
+    this.geofenceCircle?.remove();
+    if (this.map) this.geofenceCircle = L.circle([center.latitude, center.longitude], { radius: this.geofenceRadius, color: '#d08a32', fillOpacity: 0.08 }).addTo(this.map);
+    this.updateGeofence(center);
+  }
+
+  clearGeofence() { this.geofenceCircle?.remove(); this.geofenceCircle = undefined; this.geofenceCenter.set(null); this.geofenceState.set('Sin zona configurada'); }
+
+  private updateGeofence(location: HermesLocation) {
+    const center = this.geofenceCenter(); if (!center) return;
+    const distance = L.latLng(center.latitude, center.longitude).distanceTo([location.latitude, location.longitude]);
+    const radius = this.geofenceCircle?.getRadius() ?? this.geofenceRadius;
+    this.geofenceState.set(Math.abs(distance - radius) <= location.accuracy
+      ? 'Cerca del límite: precisión insuficiente para confirmar el cruce'
+      : distance <= radius ? 'Dentro de la zona' : 'Fuera de la zona');
+  }
   private requestingEntryLocation = false;
 
   @ViewChild('map') private mapElement?: ElementRef<HTMLElement>;
@@ -36,6 +73,7 @@ export class LocationPage implements AfterViewInit {
   readonly searchResults = signal<LocationSearchResult[]>([]);
   readonly tracking = signal(false);
   readonly loading = signal(false);
+  readonly cachedResult = this.locationService.cachedResult;
   readonly permissionState = signal<LocationPermissionState | 'checking'>('checking');
   readonly message = signal('Pulsa “Mi ubicación” para comenzar.');
   searchText = '';
@@ -83,12 +121,15 @@ export class LocationPage implements AfterViewInit {
   }
 
   async ionViewDidEnter() {
+    this.visible = true;
+    this.map?.invalidateSize();
+    if (this.isAdmin() && !this.adminRefreshTimer) this.adminRefreshTimer = window.setInterval(() => void this.refreshAdminLocations(), 20000);
     if (this.requestingEntryLocation || this.showCustomerTracking()) return;
     this.requestingEntryLocation = true;
     try {
       const location = await this.locationService.current();
       this.permissionState.set('granted');
-      if (this.map) {
+      if (this.visible && this.map) {
         this.showCurrentLocation(location, true);
         this.message.set(`Permiso concedido. Ubicación obtenida con una precisión aproximada de ${Math.round(location.accuracy)} metros.`);
       }
@@ -131,13 +172,17 @@ export class LocationPage implements AfterViewInit {
     }
     try {
       await this.locate();
-      this.watchId = await this.locationService.watch((location, error) => {
+      if (!this.visible || !this.currentLocation()) return;
+      const watchId = await this.locationService.watch((location, error) => {
+        if (!this.visible) return;
         if (error) this.message.set(error);
         if (location) {
           this.showCurrentLocation(location, false);
           if (this.role() === 'cliente') void this.persistLocation(location);
         }
       });
+      if (!this.visible) { await this.locationService.stopWatch(watchId); return; }
+      this.watchId = watchId;
       this.tracking.set(true);
       this.message.set(this.role() === 'cliente'
         ? 'Compartiendo tu ubicación con la empresa mientras esta pantalla permanezca abierta.'
@@ -175,7 +220,7 @@ export class LocationPage implements AfterViewInit {
 
   selectSearchResult(result: LocationSearchResult) {
     this.map?.setView([result.latitude, result.longitude], 16);
-    L.marker([result.latitude, result.longitude], { icon: this.placeIcon() }).addTo(this.placeLayer).bindPopup(result.name).openPopup();
+    L.marker([result.latitude, result.longitude], { icon: this.placeIcon() }).addTo(this.placeLayer).bindPopup(this.escape(result.name)).openPopup();
   }
 
   async loadNearby() {
@@ -247,6 +292,7 @@ export class LocationPage implements AfterViewInit {
   }
 
   private showCurrentLocation(location: HermesLocation, center: boolean) {
+    this.updateGeofence(location);
     this.currentLocation.set(location);
     const point: L.LatLngExpression = [location.latitude, location.longitude];
     if (!this.currentMarker) {

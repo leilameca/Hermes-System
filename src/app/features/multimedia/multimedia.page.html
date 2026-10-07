@@ -1,0 +1,19 @@
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="refresh($event)"><ion-refresher-content pullingText="Actualizar contenido" /></ion-refresher>
+  <main class="media-page">
+    <section class="hero"><p class="eyebrow">HERMES EXPERIENCE</p><h1>Tu próximo viaje comienza aquí</h1><p>Explora nuestra galería y escucha la selección instrumental de HERMES.</p></section>
+    <ion-card class="player-card"><ion-card-header><ion-card-title>{{ tracks[selected()].title }}</ion-card-title></ion-card-header><ion-card-content>
+      <p>{{ tracks[selected()].description }}</p>
+      <audio #player [src]="tracks[selected()].src" [volume]="volume()" preload="metadata" (loadedmetadata)="metadata()" (timeupdate)="timeUpdate()" (playing)="started()" (pause)="ended()" (ended)="ended()" (waiting)="loading.set(true)" (error)="failed()"></audio>
+      @if (loading()) { <p role="status"><ion-spinner name="dots" /> Cargando audio…</p> }
+      <ion-range aria-label="Progreso del audio" [min]="0" [max]="duration() || 1" [value]="current()" [disabled]="duration() === 0" (ionChange)="seek($event)" />
+      <div class="time"><span>{{ format(current()) }}</span><span>{{ format(duration()) }}</span></div>
+      <div class="controls"><ion-button fill="outline" (click)="previous()" aria-label="Pista anterior">Anterior</ion-button><ion-button (click)="playPause()">{{ playing() ? 'Pausar' : 'Reproducir' }}</ion-button><ion-button fill="outline" (click)="stop()">Detener</ion-button><ion-button fill="outline" (click)="next()" aria-label="Pista siguiente">Siguiente</ion-button></div>
+      <ion-range aria-label="Volumen" label="Volumen" [min]="0" [max]="1" [step]="0.05" [value]="volume()" (ionChange)="setVolume($event)" />
+      @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+      <ion-list aria-label="Lista de reproducción">@for (track of tracks; track $index) { <ion-item [button]="true" (click)="selectTrack($index)" [class.selected]="selected() === $index"><ion-label><h2>{{ track.title }}</h2><p>{{ selected() === $index ? 'Pista seleccionada' : 'Seleccionar pista' }}</p></ion-label></ion-item> }</ion-list>
+    </ion-card-content></ion-card>
+    <section class="gallery" aria-label="Galería de vehículos">@for (vehicle of vehicles; track vehicle.title) { <ion-card><img [src]="vehicle.src" [alt]="vehicle.title" loading="lazy"><ion-card-header><ion-card-title>{{ vehicle.title }}</ion-card-title></ion-card-header><ion-card-content>{{ vehicle.detail }}</ion-card-content></ion-card> }</section>
+    <ion-card><ion-card-header><ion-card-title>Video promocional</ion-card-title></ion-card-header><ion-card-content><p>Este contenido externo requiere conexión a Internet.</p><iframe title="Video promocional de vehículos" src="https://www.youtube.com/embed/RuA4V2EYZ_o" loading="lazy" allow="encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe><a href="https://www.youtube.com/watch?v=RuA4V2EYZ_o" target="_blank" rel="noopener noreferrer">Abrir video en YouTube</a></ion-card-content></ion-card>
+  </main>
+</ion-content>

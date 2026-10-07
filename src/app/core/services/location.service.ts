@@ -1,7 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { Share } from '@capacitor/share';
+import { Storage } from '@ionic/storage-angular';
+import { AuthService } from './auth.service';
 
 export interface HermesLocation {
   latitude: number;
@@ -39,6 +41,30 @@ interface OverpassElement {
 
 @Injectable({ providedIn: 'root' })
 export class LocationService {
+  private readonly storage = inject(Storage);
+  private readonly auth = inject(AuthService);
+  private readonly ready = this.storage.create();
+  readonly cachedResult = signal(false);
+
+  private async request<T>(key: string, url: string | URL, options?: RequestInit): Promise<T> {
+    const cacheKey = `hermes.maps.v1.${this.auth.user()?.id ?? 'guest'}.${key}`;
+    await this.ready;
+    const cached = await this.storage.get(cacheKey) as { savedAt: number; value: T } | null;
+    this.cachedResult.set(false);
+    if (cached && (!navigator.onLine || Date.now() - cached.savedAt < 300000)) {
+      this.cachedResult.set(true); return cached.value;
+    }
+    try {
+      const response = await fetch(url, { ...options, signal: AbortSignal.timeout(25000) });
+      if (!response.ok) throw new Error('El servicio de mapas no respondió correctamente.');
+      const value = await response.json() as T;
+      await this.storage.set(cacheKey, { savedAt: Date.now(), value });
+      return value;
+    } catch (error) {
+      if (cached) { this.cachedResult.set(true); return cached.value; }
+      throw error;
+    }
+  }
   // Consulta el permiso sin abrir el aviso del sistema.
   async permissionState(): Promise<LocationPermissionState> {
     if (Capacitor.isNativePlatform()) {
@@ -122,9 +148,7 @@ export class LocationService {
     url.searchParams.set('limit', '5');
     url.searchParams.set('countrycodes', 'do');
     url.searchParams.set('q', query.trim());
-    const response = await fetch(url, { headers: { 'Accept-Language': 'es' } });
-    if (!response.ok) throw new Error('El servicio de búsqueda no respondió correctamente.');
-    const rows = await response.json() as Array<{ place_id: number; display_name: string; lat: string; lon: string }>;
+    const rows = await this.request<Array<{ place_id: number; display_name: string; lat: string; lon: string }>>(`search.${encodeURIComponent(query.trim().toLowerCase())}`, url, { headers: { 'Accept-Language': 'es' } });
     return rows.map(row => ({
       id: String(row.place_id),
       name: row.display_name,
@@ -136,13 +160,11 @@ export class LocationService {
   // Busca lugares que esten a menos de 1.5 km.
   async nearby(location: HermesLocation): Promise<NearbyPlace[]> {
     const query = `[out:json][timeout:20];(nwr(around:1500,${location.latitude},${location.longitude})[amenity~"restaurant|cafe|fast_food"];nwr(around:1500,${location.latitude},${location.longitude})[shop];nwr(around:1500,${location.latitude},${location.longitude})[tourism]);out center 30;`;
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
+    const data = await this.request<{ elements: OverpassElement[] }>(`nearby.${location.latitude.toFixed(4)}.${location.longitude.toFixed(4)}`, 'https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ data: query }),
     });
-    if (!response.ok) throw new Error('No fue posible consultar los lugares cercanos.');
-    const data = await response.json() as { elements: OverpassElement[] };
     return data.elements
       .map(element => {
         const latitude = Number(element.lat ?? element.center?.lat);

@@ -12,3 +12,9 @@ android/.gradle/
 android/local.properties
 *.jks
 *.keystore
+
+playwright-report/
+test-results/
+
+# Evidencias locales generadas por pruebas
+docs/screenshots/

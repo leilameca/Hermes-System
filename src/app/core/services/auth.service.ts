@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { AuthState, AuthUserContext, InitialAccount } from '../models/auth-user.model';
 import { SupabaseService } from './supabase.service';
+import { Storage } from '@ionic/storage-angular';
 
 export const INITIAL_ACCOUNTS: readonly InitialAccount[] = [
   { email: 'cliente@hermes.app', name: 'Laura Méndez', role: 'cliente' },
@@ -13,6 +14,8 @@ export const INITIAL_ACCOUNTS: readonly InitialAccount[] = [
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabase = inject(SupabaseService).client;
+  private readonly storage = inject(Storage);
+  private readonly storageReady = this.storage.create();
   private readonly activeUser = signal<AuthUserContext | null>(null);
   private readonly activeState = signal<AuthState>('checking');
   private readonly initialization: Promise<void>;
@@ -127,6 +130,12 @@ export class AuthService {
   }
 
   private async loadContext(user: SupabaseUser): Promise<AuthUserContext> {
+    if (!navigator.onLine) {
+      await this.storageReady;
+      const cached = await this.storage.get(`hermes.authContext.v1.${user.id}`) as AuthUserContext | null;
+      if (cached?.id === user.id) return cached;
+      throw new Error('Esta cuenta necesita conexión para su primer acceso.');
+    }
     const { data: profile, error: profileError } = await this.supabase
       .from('profiles')
       .select('full_name, platform_role, active, must_change_password')
@@ -164,7 +173,7 @@ export class AuthService {
     const organization = linkedOrganization as { name?: string } | null;
     const mustChangePassword = Boolean(profile.must_change_password);
 
-    return {
+    const context: AuthUserContext = {
       id: user.id,
       email: user.email ?? '',
       name: profile.full_name || user.email?.split('@')[0] || 'Usuario',
@@ -174,6 +183,10 @@ export class AuthService {
       organizationName: organization?.name ?? null,
       mustChangePassword,
     };
+    // Solo facilita navegación local sin red. La autorización remota sigue dependiendo de RLS.
+    try { await this.storageReady; await this.storage.set(`hermes.authContext.v1.${user.id}`, context); }
+    catch { console.warn('[Hermes] No fue posible preparar el acceso local sin conexión.'); }
+    return context;
   }
 
   private homeFor(role: AuthUserContext['role']): string {

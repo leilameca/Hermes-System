@@ -82,7 +82,7 @@ export class ConnectivityPage {
   readonly message = signal('');
 
   async saveTestInspection() {
-    await this.data.refresh();
+    if (this.network.connected) await this.data.refresh();
     const vehicle = this.data.vehicles()[0];
     if (!vehicle) {
       this.message.set('No hay vehículos disponibles para crear la inspección de prueba.');
