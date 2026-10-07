@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { IonIcon } from '@ionic/angular/standalone';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { IonIcon, IonTabs, IonTabBar, IonTabButton, IonLabel } from '@ionic/angular/standalone';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { chevronBackOutline, chevronDownOutline, logOutOutline, menuOutline, notificationsOutline } from 'ionicons/icons';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,7 +12,7 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
 @Component({
   selector: 'app-demo-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, OfflineBannerComponent, ThemeToggleComponent],
+  imports: [IonTabs, IonTabBar, IonTabButton, IonLabel, RouterLink, RouterLinkActive, IonIcon, OfflineBannerComponent, ThemeToggleComponent],
   template: `<div class="shell" [class.agent]="role === 'agente'">
     <aside class="sidebar">
       <a class="brand" [routerLink]="homeLink()"><img src="assets/brand/hermes-logo.jpeg" alt="">Hermes <small>System</small></a>
@@ -64,16 +64,16 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
         </nav>
       }
 
-      <div class="content"><router-outlet /></div>
-
-      <nav class="bottom" aria-label="Navegación móvil">
-        @for (area of mobileAreas(); track area.path) {
-          <a [routerLink]="['/', role, area.path]" routerLinkActive="active" ariaCurrentWhenActive="page" [class.scan-tab]="role === 'agente' && area.path === 'escanear'"><ion-icon [icon]="area.icon" aria-hidden="true" />{{ labelFor(area) }}</a>
-        }
-        @if (moreAreas().length) {
-          <button type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()"><ion-icon [icon]="menuIcon" aria-hidden="true" />Más</button>
-        }
-      </nav>
+      <ion-tabs class="content">
+        <ion-tab-bar slot="bottom" class="mobile-tabs" aria-label="Navegación móvil">
+          @for (area of mobileAreas(); track area.path) {
+            <ion-tab-button [tab]="area.path" [href]="'/' + role + '/' + area.path"><ion-icon [icon]="area.icon" aria-hidden="true" /><ion-label>{{ labelFor(area) }}</ion-label></ion-tab-button>
+          }
+          @if (moreAreas().length) {
+            <button class="more-tab" type="button" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()"><ion-icon [icon]="menuIcon" aria-hidden="true" /><span>Más</span></button>
+          }
+        </ion-tab-bar>
+      </ion-tabs>
     </div>
   </div>`,
   styleUrl: './demo-layout.component.scss',
@@ -141,8 +141,8 @@ export class DemoLayoutComponent {
   }
 
   private morePaths() {
-    if (this.role === 'admin') return ['reservas', 'sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'configuracion'];
-    if (this.role === 'agente' || this.role === 'cliente') return ['gps'];
+    if (this.role === 'admin') return ['reservas', 'sucursales', 'usuarios', 'clientes', 'inspecciones', 'contratos', 'facturacion', 'mantenimiento', 'gps', 'bitacora', 'multimedia', 'configuracion'];
+    if (this.role === 'agente' || this.role === 'cliente') return ['gps', 'bitacora', 'multimedia'];
     return [];
   }
 

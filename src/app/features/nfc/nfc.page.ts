@@ -77,14 +77,16 @@ export class NfcPage {
       checklist: ['carrocería', 'luces', 'neumáticos', 'documentos'],
       createdAt: new Date().toISOString(),
     };
-    if (this.network.connected) {
+    try { if (this.network.connected) {
       await this.offline.sendOperation('inspection.nfc.saved', payload);
       this.operationMessage.set('Inspección NFC registrada y sincronizada correctamente.');
     } else {
       await this.offline.savePendingOperation('inspection.nfc.saved', payload);
       this.operationMessage.set('Inspección guardada sin conexión. Se sincronizará cuando vuelva Internet.');
-    }
+    } } catch (error) { this.operationMessage.set(error instanceof Error ? error.message : 'No fue posible guardar la inspección.'); }
   }
+
+  ionViewWillLeave() { void this.nfc.stopScanning(); }
 
   openSettings(): Promise<void> { return this.nfc.openSettings(); }
   vehicleDetailLink(id: string): string[] {
